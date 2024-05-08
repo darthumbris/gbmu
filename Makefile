@@ -1,7 +1,9 @@
 NAME = gbmu
 
 CXX := c++
-CXXFLAGS = `sdl2-config --libs --cflags` -ggdb3 -O0 -lm
+CXXFLAGS := -pedantic -std=c++20
+
+LINKERFLAGS := -lSDL2 -lSDL2_image -L "/home/$(USER)/.capt/root/usr/lib/x86_64-linux-gnu/"
 
 SRC_DIR = src
 OBJ_DIR = obj
@@ -9,13 +11,26 @@ LOG_DIR = test
 INC_DIR = includes
 
 SRC =	main.cpp \
+        events.cpp \
+        input/input.cpp \
+        graphics/init.cpp \
+        graphics/close.cpp \
+        graphics/load_rom.cpp \
+        rom.cpp \
+        cpu/Decoder.cpp \
+        cpu/Operand.cpp \
+        cpu/Instruction.cpp \
+        cpu/Flags.cpp
+
 
 SRC_EXT = cpp
 
 OBJ := $(addprefix $(OBJ_DIR)/, $(SRC:%.$(SRC_EXT)=%.o))
 SRC :=  $(addprefix $(SRC_DIR)/, $(SRC))
 
-INC = -I $(INC_DIR)
+INC := -I $(INC_DIR)
+INC += -I "usr/include/SDL2/SDL.h"
+INC += -I "/home/$(USER)/.capt/root/usr/include/SDL2/"
 
 COM_COLOR   = \033[0;33m
 OBJ_COLOR   = \033[0;36m
@@ -39,15 +54,10 @@ ifeq ($(DEBUG),2)
     COM_STRING = "Compiling[LEAKS]"
 endif
 
-ifeq ($(STD_MODE),1)
-	CXXFLAGS += -D STD_TEST=1
-    COM_STRING = "Compiling[STD_MODE]"
-endif
-
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	@$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME) 2> $@.log; \
+	@$(CXX) $(CXXFLAGS) $(LINKERFLAGS) $(OBJ) -o $(NAME) 2> $@.log; \
         RESULT=$$?; \
         if [ $$RESULT -ne 0 ]; then \
             printf "%-60b%b" "$(COM_COLOR)$(COM_STRING)$(PRG_COLOR) $@" "$(ERROR_COLOR)$(ERROR_STRING)$(NO_COLOR)\n"; \
@@ -64,7 +74,7 @@ $(OBJ_DIR):
 	@mkdir -p $(OBJ_DIR)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.$(SRC_EXT) | $(OBJ_DIR)
-	
+	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) $(INC) -c -o $@ $< 2> $@.log; \
         RESULT=$$?; \
         if [ $$RESULT -ne 0 ]; then \
