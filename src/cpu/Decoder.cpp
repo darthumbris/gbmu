@@ -5,6 +5,18 @@
 #include <utility>
 #include <sstream>
 
+template <typename IntegerType>
+void bitsToInt(IntegerType &result, const char *bits, bool little_endian)
+{
+    result = 0;
+    if (little_endian)
+        for (int n = sizeof(result) - 1; n >= 0; n--)
+            result = (result << 8) + (uint8_t)bits[n];
+    else
+        for (int n = 0; n < sizeof(result); n++)
+            result = (result << 8) + (uint8_t)bits[n];
+}
+
 namespace Dict
 {
 
@@ -31,12 +43,16 @@ namespace Dict
                 std::stringstream ss;
                 ss << std::hex << it.key();
                 ss >> x;
-                prefixed_instructions.emplace(std::make_pair(x, *it));
+                instructions.emplace(std::make_pair(x, *it));
             }
         }
         catch (const json::parse_error &e)
         {
             std::cout << e.what() << std::endl;
+        }
+        for (int i = 0; i < instructions.size(); i++)
+        {
+            std::cout << "instruction: " << instructions[i].mnemonic << "\tbytes: " << instructions[i].bytes << std::endl;
         }
         std::cout << "instructions: " << instructions.size() << std::endl;
         std::cout << "prefixed_instructions: " << prefixed_instructions.size() << std::endl;
@@ -46,13 +62,37 @@ namespace Dict
     {
     }
 
+    void Decoder::set_data(std::string path)
+    {
+        std::ifstream ifs;
+        ifs.open(path.c_str(), std::ifstream::binary);
+        auto size = ifs.tellg();
+        while (!ifs.eof())
+        {
+            char c = ifs.get();
+            data.push_back(static_cast<std::byte>(c));
+        }
+        ifs.close();
+    }
+
     int Decoder::read(int address, int count)
     {
         if (0 <= address + count <= data.size())
         {
             std::vector<std::byte> v(&data[address], &data[address + count]);
-            std::cout << count << std::endl;
-            return 1;
+            int ret;
+            char dat[4];
+            int i = 0;
+            for (i = 0; i < count; i++)
+            {
+                dat[i] = static_cast<char>(v[i]);
+            }
+            for (; i < 4; i++)
+            {
+                dat[i] = 0;
+            }
+            bitsToInt(ret, dat, true);
+            return ret;
         }
         else
         {
@@ -67,7 +107,6 @@ namespace Dict
         Instruction instruction;
         opcode = read(address);
         address += 1;
-
         if (opcode == 0xCB)
         {
             opcode = read(address);
@@ -82,7 +121,7 @@ namespace Dict
         std::vector<Operand> ops;
         for (auto op : instruction.operands)
         {
-            if (op.bytes)
+            if (op.bytes > 0)
             {
                 uint32_t value = read(address, op.bytes);
                 address += op.bytes;
@@ -106,7 +145,9 @@ namespace Dict
         {
             std::pair<uint32_t, Instruction> dec = decode(address);
             // dec .1.print();
+            std::cout << "0" << std::hex << address << " ";
             std::string s;
+            // std::cout << "operands: " << dec.second.operands.size() << std::endl;
             for (auto op : dec.second.operands)
             {
                 s.append(op.name).append(",");

@@ -47,7 +47,7 @@ namespace Dict
         }
         try
         {
-            o.bytes = j.at("increment").get<uint8_t>();
+            o.bytes = j.at("bytes").get<uint32_t>();
         }
         catch (const std::exception &e)
         {

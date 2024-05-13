@@ -1,7 +1,6 @@
 #ifndef DECODER_HPP
 #define DECODER_HPP
 
-#include <tuple>
 #include <string>
 #include <vector>
 #include <map>
@@ -21,6 +20,8 @@ namespace Dict
     public:
         Decoder(std::string &path);
         ~Decoder();
+
+        void set_data(std::string path);
 
         int read(int address, int count = 1);
         std::pair<uint32_t, Instruction> decode(uint32_t address);

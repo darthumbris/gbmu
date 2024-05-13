@@ -13,7 +13,7 @@ namespace Dict
     {
         bool immediate;
         std::string name;
-        uint8_t bytes;
+        uint32_t bytes;
         bool decrement;
         bool increment;
         std::optional<uint32_t> value;

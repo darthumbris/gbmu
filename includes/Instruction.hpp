@@ -12,8 +12,8 @@ namespace Dict
     struct Instruction
     {
         std::string mnemonic;
-        uint8_t bytes;
-        std::vector<uint8_t> cycles;
+        uint32_t bytes;
+        std::vector<uint32_t> cycles;
         std::vector<Operand> operands;
         bool immediate;
         Flags flags;

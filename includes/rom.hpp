@@ -1,5 +1,5 @@
 #ifndef ROM_HPP
-# define ROM_HPP
+#define ROM_HPP
 
 #include <cstdint>
 #include <string>
@@ -13,15 +13,18 @@ enum CGB_FLAGS
     PGB_Mode
 };
 
+template <typename IntegerType>
+void bitsToInt(IntegerType &result, const char *bits, bool little_endian = true);
+
 class Rom
 {
 private:
     /* data */
-    uint32_t entry_point; //0x100-0x103 
+    uint32_t entry_point;      // 0x100-0x103
     std::vector<uint8_t> logo; // 0x104-0x133
 
-    char _name[15];            // 0x134-0x142
-    uint8_t cgb_flag;       // 0x143
+    char _name[15];           // 0x134-0x142
+    uint8_t cgb_flag;         // 0x143
     uint16_t license_code;    // 0x144-0x145
     bool sgb_flag;            // 0x146
     uint8_t cartridge_type;   // 0x147

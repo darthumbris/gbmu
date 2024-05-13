@@ -16,8 +16,8 @@ namespace Dict
     void from_json(const json &j, Instruction &i)
     {
         i.mnemonic = j.at("mnemonic").get<std::string>();
-        i.bytes = j.at("bytes").get<uint8_t>();
-        i.cycles = j.at("cycles").get<std::vector<uint8_t>>();
+        i.bytes = j.at("bytes").get<uint32_t>();
+        i.cycles = j.at("cycles").get<std::vector<uint32_t>>();
         j.at("operands").get_to(i.operands);
         i.immediate = j.at("immediate").get<bool>();
         i.flags = j.at("flags").get<Flags>();
