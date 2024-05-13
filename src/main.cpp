@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
     decode.set_data(path);
 
-    decode.disassemble(0x150, 16);
+    decode.disassemble(0x150, 32);
 
     if (!init_window(&data))
     {

@@ -8,9 +8,17 @@
 
 namespace Dict
 {
-
-    struct Instruction
+    class Instruction
     {
+    private:
+        /* data */
+    public:
+        Instruction(const json &j);
+        Instruction();
+        ~Instruction();
+
+        void print_instruction();
+
         std::string mnemonic;
         uint32_t bytes;
         std::vector<uint32_t> cycles;
@@ -18,8 +26,9 @@ namespace Dict
         bool immediate;
         Flags flags;
     };
-    void to_json(json &j, const Instruction &x);
-    void from_json(const json &j, Instruction &x);
+
+    void to_json(json &j, const Instruction &i);
+    void from_json(const json &j, Instruction &i);
 }
 
 #endif

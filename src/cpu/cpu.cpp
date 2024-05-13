@@ -1,11 +1,4 @@
-class Cpu
-{
-private:
-    /* data */
-public:
-    Cpu(/* args */);
-    ~Cpu();
-};
+#include "Cpu.hpp"
 
 Cpu::Cpu(/* args */)
 {

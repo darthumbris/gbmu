@@ -1,6 +1,6 @@
 NAME = gbmu
 
-CXX := c++
+CXX := clang++
 CXXFLAGS := -pedantic -std=c++20
 
 LINKERFLAGS := -lSDL2 -lSDL2_image -L "/home/$(USER)/.capt/root/usr/lib/x86_64-linux-gnu/"

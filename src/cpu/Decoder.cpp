@@ -34,7 +34,7 @@ namespace Dict
                 std::stringstream ss;
                 ss << std::hex << it.key();
                 ss >> x;
-                instructions.emplace(std::make_pair(x, *it));
+                instructions.emplace(std::make_pair(x, Instruction(*it)));
             }
             json pref = j.at("cbprefixed");
             for (auto it = pref.begin(); it != pref.end(); it++)
@@ -43,16 +43,12 @@ namespace Dict
                 std::stringstream ss;
                 ss << std::hex << it.key();
                 ss >> x;
-                instructions.emplace(std::make_pair(x, *it));
+                instructions.emplace(std::make_pair(x, Instruction(*it)));
             }
         }
         catch (const json::parse_error &e)
         {
             std::cout << e.what() << std::endl;
-        }
-        for (int i = 0; i < instructions.size(); i++)
-        {
-            std::cout << "instruction: " << instructions[i].mnemonic << "\tbytes: " << instructions[i].bytes << std::endl;
         }
         std::cout << "instructions: " << instructions.size() << std::endl;
         std::cout << "prefixed_instructions: " << prefixed_instructions.size() << std::endl;
@@ -144,16 +140,8 @@ namespace Dict
         for (int i = 0; i < count; i++)
         {
             std::pair<uint32_t, Instruction> dec = decode(address);
-            // dec .1.print();
             std::cout << "0" << std::hex << address << " ";
-            std::string s;
-            // std::cout << "operands: " << dec.second.operands.size() << std::endl;
-            for (auto op : dec.second.operands)
-            {
-                s.append(op.name).append(",");
-            }
-            s.append(dec.second.mnemonic);
-            std::cout << s << std::endl;
+            dec.second.print_instruction();
             address = dec.first;
         }
     }

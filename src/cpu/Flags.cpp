@@ -3,13 +3,14 @@
 namespace Dict
 {
 
-    // Flags::Flags()
-    // {
-    // }
+    Flags::Flags()
+    {
+    }
 
-    // Flags::~Flags()
-    // {
-    // }
+    Flags::~Flags()
+    {
+    }
+
     void to_json(json &j, const Flags &f)
     {
         j = json::object();

@@ -6,8 +6,14 @@
 
 namespace Dict
 {
-    struct Flags
+    class Flags
     {
+    private:
+        /* data */
+    public:
+        Flags();
+        ~Flags();
+
         std::string z;
         std::string n;
         std::string h;

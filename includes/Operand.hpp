@@ -9,8 +9,17 @@ using json = nlohmann::json;
 
 namespace Dict
 {
-    struct Operand
+    class Operand
     {
+    private:
+        /* data */
+    public:
+        Operand(/* args */);
+        Operand(const json &j);
+        ~Operand();
+
+        std::string print() const;
+
         bool immediate;
         std::string name;
         uint32_t bytes;
@@ -18,8 +27,10 @@ namespace Dict
         bool increment;
         std::optional<uint32_t> value;
     };
-    void from_json(const json &j, Operand &x);
-    void to_json(json &j, const Operand &x);
+
+    void from_json(const json &j, Operand &o);
+
+    void to_json(json &j, const Operand &o);
 }
 
 #endif
