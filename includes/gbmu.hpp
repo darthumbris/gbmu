@@ -1,5 +1,5 @@
-#ifndef GBMU_H
-#define GBMU_H
+#ifndef GBMU_HPP
+#define GBMU_HPP
 
 #include <SDL2/SDL.h>
 #include <SDL_image.h>

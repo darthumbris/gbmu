@@ -1,7 +1,7 @@
-#ifndef GRAPHICS_H
-#define GRAPHICS_H
+#ifndef GRAPHICS_HPP
+#define GRAPHICS_HPP
 
-#include "gbmu.h"
+#include "gbmu.hpp"
 
 bool init_window(Sdl_Data *data);
 bool load_rom(Sdl_Data *data);

@@ -1,4 +1,4 @@
-#include "gbmu.h"
+#include "gbmu.hpp"
 
 void close(Sdl_Data *data)
 {

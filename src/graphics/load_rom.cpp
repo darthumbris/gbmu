@@ -1,4 +1,4 @@
-#include "gbmu.h"
+#include "gbmu.hpp"
 
 bool load_rom(Sdl_Data *data)
 {

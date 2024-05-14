@@ -24,7 +24,7 @@ namespace Dict
         void set_data(std::string path);
 
         int read(int address, int count = 1);
-        std::pair<uint32_t, Instruction> decode(uint32_t address);
+        std::tuple<uint32_t, Instruction, bool> decode(uint32_t address);
         void disassemble(int address, int count);
     };
 

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "gbmu.h"
+#include "gbmu.hpp"
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;

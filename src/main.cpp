@@ -1,10 +1,11 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <fstream>
-#include "graphics.h"
-#include "gbmu.h"
+#include "graphics.hpp"
+#include "gbmu.hpp"
 #include "rom.hpp"
 #include "Decoder.hpp"
+#include "Cpu.hpp"
 #include <cstddef>
 #include <iostream>
 
@@ -23,6 +24,10 @@ int main(int argc, char *argv[])
     decode.set_data(path);
 
     decode.disassemble(0x150, 32);
+
+    Cpu cpu = Cpu(decode);
+
+    cpu.tick();
 
     if (!init_window(&data))
     {

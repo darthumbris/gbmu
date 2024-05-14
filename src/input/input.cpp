@@ -1,4 +1,4 @@
-#include "gbmu.h"
+#include "gbmu.hpp"
 
 void handle_input(Sdl_Data *data, SDL_Event &e)
 {

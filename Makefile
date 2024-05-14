@@ -20,7 +20,8 @@ SRC =	main.cpp \
         cpu/Decoder.cpp \
         cpu/Operand.cpp \
         cpu/Instruction.cpp \
-        cpu/Flags.cpp
+        cpu/Flags.cpp \
+        cpu/cpu.cpp \
 
 
 SRC_EXT = cpp

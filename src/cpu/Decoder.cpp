@@ -97,17 +97,19 @@ namespace Dict
         }
     }
 
-    std::pair<uint32_t, Instruction> Decoder::decode(uint32_t address)
+    std::tuple<uint32_t, Instruction, bool> Decoder::decode(uint32_t address)
     {
         uint32_t opcode;
         Instruction instruction;
         opcode = read(address);
         address += 1;
+        bool prefix = false;
         if (opcode == 0xCB)
         {
             opcode = read(address);
             address += 1;
             instruction = prefixed_instructions[opcode];
+            prefix = true;
         }
         else
         {
@@ -132,17 +134,17 @@ namespace Dict
         }
         Instruction decoded = instruction;
         decoded.operands = ops;
-        return std::make_pair(address, decoded);
+        return {address, decoded, prefix};
     }
 
     void Decoder::disassemble(int address, int count)
     {
         for (int i = 0; i < count; i++)
         {
-            std::pair<uint32_t, Instruction> dec = decode(address);
+            auto dec = decode(address);
             std::cout << "0" << std::hex << address << " ";
-            dec.second.print_instruction();
-            address = dec.first;
+            std::get<1>(dec).print_instruction();
+            address = std::get<0>(dec);
         }
     }
 
