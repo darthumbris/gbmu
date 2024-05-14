@@ -94,6 +94,7 @@ void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_in
     }
     if (in.mnemonic == "NOP")
         return;
+    // TODO might also use the opcode itself? probably faster than checking the string_hash
     switch (string_hash(in.mnemonic))
     {
     case "RST"_:
@@ -216,71 +217,13 @@ void Cpu::ld(uint16_t opcode)
     case 0x3E:
         ld_r8_imm8();
         break;
-    case 0x40:
-    case 0x41:
-    case 0x42:
-    case 0x43:
-    case 0x44:
-    case 0x45:
-    case 0x46:
-    case 0x47:
-    case 0x48:
-    case 0x49:
-    case 0x4A:
-    case 0x4B:
-    case 0x4C:
-    case 0x4D:
-    case 0x4E:
-    case 0x4F:
-    case 0x50:
-    case 0x51:
-    case 0x52:
-    case 0x53:
-    case 0x54:
-    case 0x55:
-    case 0x56:
-    case 0x57:
-    case 0x58:
-    case 0x59:
-    case 0x5A:
-    case 0x5B:
-    case 0x5C:
-    case 0x5D:
-    case 0x5E:
-    case 0x5F:
-    case 0x60:
-    case 0x61:
-    case 0x62:
-    case 0x63:
-    case 0x64:
-    case 0x65:
-    case 0x66:
-    case 0x67:
-    case 0x68:
-    case 0x69:
-    case 0x6A:
-    case 0x6B:
-    case 0x6C:
-    case 0x6D:
-    case 0x6E:
-    case 0x6F:
-    case 0x70:
-    case 0x71:
-    case 0x72:
-    case 0x73:
-    case 0x74:
-    case 0x75:
+    case 0x40 ... 0x75:
         ld_r8_r8();
         break;
     case 0x77:
         ld_r16_a();
         break;
-    case 0x78:
-    case 0x79:
-    case 0x7A:
-    case 0x7B:
-    case 0x7C:
-    case 0x7D:
+    case 0x78 ... 0x7D:
         ld_r8_r8();
         break;
     case 0x7E:
