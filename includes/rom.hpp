@@ -13,9 +13,6 @@ enum CGB_FLAGS
     PGB_Mode
 };
 
-template <typename IntegerType>
-void bitsToInt(IntegerType &result, const char *bits, bool little_endian = true);
-
 class Rom
 {
 private:

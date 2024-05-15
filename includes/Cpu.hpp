@@ -70,12 +70,14 @@ private:
 	uint16_t pc; // Program counter
 	Decoder decoder;
 
-	// Block 0
+	// TODO check all functions are actually used
+
+	//  Block 0
 	void nop();
 
 	void ld_r16_imm16();
-	void ld_r16_a();
-	void ld_a_r16();
+	void ld_r16_a(uint16_t opcode);
+	void ld_a_r16(uint16_t opcode);
 	void ld_imm16_sp();
 
 	void inc_r16();
@@ -102,7 +104,7 @@ private:
 	void stop();
 
 	// block1 register to register loads
-	void ld_r8_r8();
+	void ld_r8_r8(uint16_t opcode);
 	void halt();
 
 	// block2 8-bit arithmetic
@@ -133,12 +135,10 @@ private:
 	void jp_hl();
 	void call_cond_imm16();
 	void call_imm16();
-	void rst_tg3();
+	void rst_tg3(Instruction in);
 
 	void pop_r16stk();
 	void push_r16stk();
-
-	// void prefix();
 
 	void ldh_c_a();
 	void ldh_imm8_a();
@@ -169,12 +169,15 @@ private:
 	void res_b3_r8();
 	void set_b3_r8();
 
-	void unimplemented();
+	void unimplemented(uint16_t opcode);
 
 	void lockup(); //$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
 
-	void ld_increment_hl();
-	void ld_decrement_hl();
+	// TODO check which of these functions correspond to the above functions
+	void ld_i_hl_a();
+	void ld_d_hl_a();
+	void ld_i_a_hl();
+	void ld_d_a_hl();
 	void ld_hl_imm8();
 	void ld_c_a();
 	void ld_a_c();
@@ -182,6 +185,19 @@ private:
 	void ld(uint16_t opcode);  // to go to the correct ld function
 	void inc(uint16_t opcode); // to go to the correct inc function
 	void dec(uint16_t opcode); // to go to the correct dec function
+	void add(Instruction in, uint16_t opcode);
+	void jr(uint16_t opcode);
+	void adc(u_int16_t opcode);
+	void sub(u_int16_t opcode);
+	void sbc(u_int16_t opcode);
+	void and_(u_int16_t opcode);
+	void xor_(u_int16_t opcode);
+	void or_(u_int16_t opcode);
+	void cp_(u_int16_t opcode);
+	void ret(u_int16_t opcode);
+	void jp(u_int16_t opcode);
+	void call(u_int16_t opcode);
+	void ldh(u_int16_t opcode);
 
 public:
 	Cpu(Decoder dec);
