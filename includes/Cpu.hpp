@@ -158,14 +158,19 @@ private:
 
 	// CB prefix
 	void prefix(Instruction in, uint16_t opcode);
-	void rlc_r8();
-	void rrc_r8();
-	void rl_r8();
-	void rr_r8();
-	void sla_r8();
-	void sra_r8();
+	void rlc_r8(uint16_t opcode);
+	void rrc_r8(uint16_t opcode);
+	void rl_r8(uint16_t opcode);
+	void rr_r8(uint16_t opcode);
+	void sla_r8(uint16_t opcode);
+	void sra_r8(uint16_t opcode);
 	void swap_r8(uint16_t opcode);
-	void srl_r8();
+	void srl_r8(uint16_t opcode);
+
+	uint8_t get_rlc(uint8_t val, bool reset = false);
+	uint8_t get_rrc(uint8_t val, bool reset = false);
+	uint8_t get_rr(uint8_t val, bool reset = false);
+	uint8_t get_rl(uint8_t val, bool reset = false);
 
 	void bit_b3_r8(uint16_t opcode);
 	void res_b3_r8(uint16_t opcode);
