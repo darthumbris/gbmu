@@ -90,6 +90,8 @@ inline constexpr auto operator"" _(const char *str, size_t len)
 
 void Cpu::tick()
 {
+    std::cout << "0x41 & 0xf: " << std::dec << (uint16_t)(0x42 & 0xF) << std::endl;
+    std::cout << "0x41 & 0x38 >> 3: " << (uint16_t)((0x41 & 0x38) >> 3) << std::endl;
     uint16_t opcode = pc;
     auto dec = decoder.decode(opcode);
     std::cout << "opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << opcode << std::dec << std::endl;
@@ -197,7 +199,7 @@ void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_in
         ret(opcode);
         break;
     case "POP"_:
-        pop_r16stk();
+        pop_r16stk(opcode);
         break;
     case "JP"_:
         jp(opcode);
@@ -206,7 +208,7 @@ void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_in
         call(opcode);
         break;
     case "PUSH"_:
-        push_r16stk();
+        push_r16stk(opcode);
         break;
     case "ILLEGAL_D3"_:
         lockup();

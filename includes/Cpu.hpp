@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <array>
 #include "Decoder.hpp"
+#include "MemoryMap.hpp"
 
 using namespace Dict;
 
@@ -69,25 +70,26 @@ private:
 
 	uint16_t pc; // Program counter
 	Decoder decoder;
+	MemoryMap mmap;
 
 	// TODO check all functions are actually used
 
 	//  Block 0
 	void nop();
 
-	void ld_r16_imm16();
+	void ld_r16_imm16(uint16_t opcode);
 	void ld_r16_a(uint16_t opcode);
 	void ld_a_r16(uint16_t opcode);
 	void ld_imm16_sp();
 
-	void inc_r16();
-	void dec_r16();
-	void add_hl_r16();
+	void inc_r16(uint16_t opcode);
+	void dec_r16(uint16_t opcode);
+	void add_hl_r16(uint16_t opcode);
 
-	void inc_r8();
-	void dec_r8();
+	void inc_r8(uint16_t opcode);
+	void dec_r8(uint16_t opcode);
 
-	void ld_r8_imm8();
+	void ld_r8_imm8(uint16_t opcode);
 
 	void rlca();
 	void rrca();
@@ -108,10 +110,10 @@ private:
 	void halt();
 
 	// block2 8-bit arithmetic
-	void add_a_r8();
-	void adc_a_r8();
-	void sub_a_r8();
-	void sbc_a_r8();
+	void add_a_r8(uint16_t opcode);
+	void adc_a_r8(uint16_t opcode);
+	void sub_a_r8(uint16_t opcode);
+	void sbc_a_r8(uint16_t opcode);
 	void and_a_r8();
 	void xor_a_r8();
 	void or_a_r8();
@@ -137,13 +139,11 @@ private:
 	void call_imm16();
 	void rst_tg3(Instruction in);
 
-	void pop_r16stk();
-	void push_r16stk();
+	void pop_r16stk(uint16_t opcode);
+	void push_r16stk(uint16_t opcode);
 
-	void ldh_c_a();
 	void ldh_imm8_a();
 	void ld_imm16_a();
-	void ldh_a_c();
 	void ldh_a_imm8();
 	void ld_a_imm16();
 
@@ -198,6 +198,19 @@ private:
 	void jp(u_int16_t opcode);
 	void call(u_int16_t opcode);
 	void ldh(u_int16_t opcode);
+
+	// TODO template these
+	template <typename IntegerType1, typename IntegerType2>
+	bool half_carry_flag_set(IntegerType1 val1, IntegerType2 val2)
+	{
+		return (((val1 & 0xF) + (val2 & 0xF)) > 0xF);
+	}
+
+	template <typename IntegerType1, typename IntegerType2>
+	bool carry_flag_set(IntegerType1 val1, IntegerType2 val2)
+	{
+		return (((val1 & 0xFF) + (val2 & 0xFF)) > 0xFF);
+	}
 
 public:
 	Cpu(Decoder dec);
