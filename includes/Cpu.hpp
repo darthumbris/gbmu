@@ -71,6 +71,8 @@ private:
 	uint16_t pc; // Program counter
 	Decoder decoder;
 	MemoryMap mmap;
+	bool halted = false;	 // TODO check if this can be handled by the interrupt in the memorymap
+	bool interrupts = false; // TODO check if can be done with interrupt in the memorymap?
 
 	// TODO check all functions are actually used
 
@@ -114,10 +116,10 @@ private:
 	void adc_a_r8(uint16_t opcode);
 	void sub_a_r8(uint16_t opcode);
 	void sbc_a_r8(uint16_t opcode);
-	void and_a_r8();
-	void xor_a_r8();
-	void or_a_r8();
-	void cp_a_r8();
+	void and_a_r8(uint16_t opcode);
+	void xor_a_r8(uint16_t opcode);
+	void or_a_r8(uint16_t opcode);
+	void cp_a_r8(uint16_t opcode);
 
 	// block3
 	void add_a_imm8();
@@ -162,18 +164,17 @@ private:
 	void rr_r8();
 	void sla_r8();
 	void sra_r8();
-	void swap_r8();
+	void swap_r8(uint16_t opcode);
 	void srl_r8();
 
-	void bit_b3_r8();
-	void res_b3_r8();
-	void set_b3_r8();
+	void bit_b3_r8(uint16_t opcode);
+	void res_b3_r8(uint16_t opcode);
+	void set_b3_r8(uint16_t opcode);
 
 	void unimplemented(uint16_t opcode);
 
 	void lockup(); //$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
 
-	// TODO check which of these functions correspond to the above functions
 	void ld_i_hl_a();
 	void ld_d_hl_a();
 	void ld_i_a_hl();

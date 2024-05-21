@@ -284,19 +284,19 @@ void Cpu::prefix(Instruction in, uint16_t opcode)
         sra_r8();
         break;
     case "SWAP"_:
-        swap_r8();
+        swap_r8(opcode);
         break;
     case "SRL"_:
         srl_r8();
         break;
     case "BIT"_:
-        bit_b3_r8();
+        bit_b3_r8(opcode);
         break;
     case "RES"_:
-        res_b3_r8();
+        res_b3_r8(opcode);
         break;
     case "SET"_:
-        set_b3_r8();
+        set_b3_r8(opcode);
         break;
     default:
         unimplemented(opcode);
