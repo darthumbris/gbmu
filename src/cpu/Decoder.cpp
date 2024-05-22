@@ -74,6 +74,7 @@ namespace Dict
 
     std::vector<std::byte> Decoder::get_data() const
     {
+        std::cout << "rom size: " << data.size() << std::endl;
         return data;
     }
 

@@ -1,34 +1,45 @@
 #include "MemoryMap.hpp"
 #include <cstddef>
 #include <iostream>
+#include <fstream>
 
 MemoryMap::MemoryMap()
 {
 }
 
-MemoryMap::MemoryMap(std::vector<std::byte> rom_data)
+MemoryMap::MemoryMap(const std::string path)
 {
-    std::cout << "rom size: " << rom.size() << std::endl;
+    std::vector<std::byte> data;
+    std::ifstream ifs;
+    ifs.open(path.c_str(), std::ifstream::binary);
+    auto size = ifs.tellg();
+    while (!ifs.eof())
+    {
+        char c = ifs.get();
+        data.push_back(static_cast<std::byte>(c));
+    }
+    ifs.close();
+    std::cout << "rom size: " << data.size() << std::endl;
     size_t i;
     for (i = 0; i < 16384; i++)
     {
-        if (i >= rom_data.size())
+        if (i >= data.size())
         {
             break;
         }
-        rom[i] = (uint8_t)rom_data[i];
+        rom[i] = (uint8_t)data[i];
     }
-    if (i < rom_data.size())
+    if (i < data.size())
     {
         rom_banks.push_back(Mem16k());
     }
     for (size_t j = 0; j < 16384; j++)
     {
-        if (i >= rom_data.size())
+        if (i >= data.size())
         {
             break;
         }
-        rom_banks[0][j] = (uint8_t)rom_data[i];
+        rom_banks[0][j] = (uint8_t)data[i];
         i += 1;
     }
     ext_ram.push_back(Mem8k());

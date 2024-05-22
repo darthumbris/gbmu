@@ -4,11 +4,11 @@
 #include <typeinfo>
 #include <fstream>
 
-Cpu::Cpu(Decoder dec) : decoder(dec)
+Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
 {
     registers = {};
     pc = 0;
-    mmap = MemoryMap(dec.get_data());
+    mmap = MemoryMap(path);
 }
 
 Cpu::~Cpu()

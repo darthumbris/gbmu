@@ -23,9 +23,10 @@ int main(int argc, char *argv[])
 
     decode.set_data(path);
 
+    std::cout << "decoder rom size: " << decode.get_data().size() << std::endl;
     decode.disassemble(0x150, 32);
 
-    Cpu cpu = Cpu(decode);
+    Cpu cpu = Cpu(decode, path);
 
     cpu.tick();
 

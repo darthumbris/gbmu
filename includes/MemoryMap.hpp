@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <cstdint>
+#include <string>
 
 // https://gbdev.io/pandocs/Memory_Map.html
 
@@ -28,7 +29,7 @@ private:
 
 public:
     MemoryMap();
-    MemoryMap(std::vector<std::byte> rom_data);
+    MemoryMap(const std::string path);
 
     ~MemoryMap();
 

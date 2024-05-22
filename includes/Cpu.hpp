@@ -194,7 +194,7 @@ private:
 	}
 
 public:
-	Cpu(Decoder dec);
+	Cpu(Decoder dec, const std::string path);
 	~Cpu();
 
 	uint16_t get_register(Registers reg) const;
