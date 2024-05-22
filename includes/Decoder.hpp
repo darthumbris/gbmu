@@ -22,6 +22,7 @@ namespace Dict
         ~Decoder();
 
         void set_data(std::string path);
+        std::vector<std::byte> get_data() const;
 
         int read(int address, int count = 1);
         std::tuple<uint32_t, Instruction, bool> decode(uint32_t address);

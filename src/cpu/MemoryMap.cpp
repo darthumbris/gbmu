@@ -6,6 +6,34 @@ MemoryMap::MemoryMap()
 {
 }
 
+MemoryMap::MemoryMap(std::vector<std::byte> rom_data)
+{
+    std::cout << "rom size: " << rom.size() << std::endl;
+    size_t i;
+    for (i = 0; i < 16384; i++)
+    {
+        if (i >= rom_data.size())
+        {
+            break;
+        }
+        rom[i] = (uint8_t)rom_data[i];
+    }
+    if (i < rom_data.size())
+    {
+        rom_banks.push_back(Mem16k());
+    }
+    for (size_t j = 0; j < 16384; j++)
+    {
+        if (i >= rom_data.size())
+        {
+            break;
+        }
+        rom_banks[0][j] = (uint8_t)rom_data[i];
+        i += 1;
+    }
+    ext_ram.push_back(Mem8k());
+}
+
 MemoryMap::~MemoryMap()
 {
 }
@@ -13,7 +41,7 @@ MemoryMap::~MemoryMap()
 uint8_t MemoryMap::read_u8(uint16_t addr)
 {
     // TODO check if the bitwise operators for the addresses are correct
-    // std::cout << "trying to read addr: " << std::dec << (std::size_t)addr << std::dec << std::endl;
+    // std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
     {
     case 0x0000 ... 0x3FFF:

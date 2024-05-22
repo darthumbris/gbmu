@@ -28,6 +28,7 @@ private:
 
 public:
     MemoryMap();
+    MemoryMap(std::vector<std::byte> rom_data);
 
     ~MemoryMap();
 

@@ -69,6 +69,12 @@ namespace Dict
             data.push_back(static_cast<std::byte>(c));
         }
         ifs.close();
+        std::cout << "rom size: " << data.size() << std::endl;
+    }
+
+    std::vector<std::byte> Decoder::get_data() const
+    {
+        return data;
     }
 
     int Decoder::read(int address, int count)
