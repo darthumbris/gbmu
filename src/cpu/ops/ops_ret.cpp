@@ -25,6 +25,46 @@ void Cpu::ret(uint16_t opcode)
     }
 }
 
-void Cpu::ret_cond(Condition c) {}
-void Cpu::ret() {}
-void Cpu::reti() {}
+void Cpu::ret_cond(Condition c)
+{
+    switch (c)
+    {
+    case Condition::NotZeroFlag:
+        if (get_register_bit(Registers::F, FlagRegisters::z))
+        {
+            return;
+        }
+        break;
+    case Condition::ZeroFlag:
+        if (!get_register_bit(Registers::F, FlagRegisters::z))
+        {
+            return;
+        }
+        break;
+    case Condition::NotCarryFlag:
+        if (get_register_bit(Registers::F, FlagRegisters::c))
+        {
+            return;
+        }
+        break;
+    case Condition::CarryFlag:
+        if (!get_register_bit(Registers::F, FlagRegisters::c))
+        {
+            return;
+        }
+        break;
+    default:
+        break;
+    }
+    ret();
+}
+void Cpu::ret()
+{
+    pc = mmap.read_u16(get_register(Registers::SP));
+    set_register(Registers::SP, get_register(Registers::SP) + 2);
+}
+void Cpu::reti()
+{
+    ret();
+    interrupts = true;
+}
