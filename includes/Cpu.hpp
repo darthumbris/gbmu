@@ -5,6 +5,7 @@
 #include <array>
 #include "Decoder.hpp"
 #include "MemoryMap.hpp"
+#include <iostream>
 
 using namespace Dict;
 
@@ -193,13 +194,17 @@ private:
 		return (((val1 & 0xFF) + (val2 & 0xFF)) > 0xFF);
 	}
 
+	std::tuple<uint16_t, Instruction, bool> get_instruction();
+
+	void debug_print(Instruction in, uint16_t opcode);
+
 public:
 	Cpu(Decoder dec, const std::string path);
 	~Cpu();
 
 	uint16_t get_register(Registers reg) const;
 	uint8_t get_register_bit(Registers reg, uint8_t bit_loc) const;
-	uint8_t get_flag(uint8_t flag) const;
+	bool get_flag(uint8_t flag) const;
 
 	void set_register(Registers reg, uint16_t val);
 	void set_register_bit(Registers reg, uint8_t bit_loc, uint8_t val);

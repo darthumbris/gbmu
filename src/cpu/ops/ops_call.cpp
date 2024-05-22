@@ -31,25 +31,25 @@ void Cpu::call_cond_imm16(Condition c)
     switch (c)
     {
     case Condition::NotZeroFlag:
-        if (get_register_bit(Registers::F, FlagRegisters::z))
+        if (get_flag(FlagRegisters::z))
         {
             return;
         }
         break;
     case Condition::ZeroFlag:
-        if (!get_register_bit(Registers::F, FlagRegisters::z))
+        if (!get_flag(FlagRegisters::z))
         {
             return;
         }
         break;
     case Condition::NotCarryFlag:
-        if (get_register_bit(Registers::F, FlagRegisters::c))
+        if (get_flag(FlagRegisters::c))
         {
             return;
         }
         break;
     case Condition::CarryFlag:
-        if (!get_register_bit(Registers::F, FlagRegisters::c))
+        if (!get_flag(FlagRegisters::c))
         {
             return;
         }

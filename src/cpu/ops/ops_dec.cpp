@@ -64,7 +64,7 @@ void Cpu::dec_r8(Operand op_r)
         val = get_register(op_r.reg);
         set_register(op_r.reg, val - 1);
     }
-    set_register_bit(Registers::F, FlagRegisters::z, (val - 1) == 0);
-    set_register_bit(Registers::F, FlagRegisters::n, 1);
-    set_register_bit(Registers::F, FlagRegisters::h, half_carry_flag_set(val, -1)); // TODO check this correct
+    set_flag(FlagRegisters::z, (val - 1) == 0);
+    set_flag(FlagRegisters::n, 1);
+    set_flag(FlagRegisters::h, half_carry_flag_set(val, -1)); // TODO check this correct
 }

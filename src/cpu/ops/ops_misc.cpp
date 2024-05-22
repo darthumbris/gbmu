@@ -16,10 +16,10 @@ void Cpu::swap_r8(uint16_t opcode, Operand op_r)
         set_register(op_r.reg, (val & 0xF) << 4);
         set_register(op_r.reg, get_register(op_r.reg) | ((val & 0xF0) >> 4));
     }
-    set_register_bit(Registers::F, FlagRegisters::z, val == 0);
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::c, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, 0);
+    set_flag(FlagRegisters::z, val == 0);
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::c, 0);
+    set_flag(FlagRegisters::h, 0);
 }
 
 void Cpu::nop()
@@ -32,47 +32,47 @@ void Cpu::nop()
 void Cpu::daa()
 {
     uint8_t a_val = get_register(Registers::A);
-    if (get_register_bit(Registers::F, FlagRegisters::n))
+    if (get_flag(FlagRegisters::n))
     {
-        if (get_register_bit(Registers::F, FlagRegisters::c))
+        if (get_flag(FlagRegisters::c))
             a_val -= 0x60;
-        if (get_register_bit(Registers::F, FlagRegisters::h))
+        if (get_flag(FlagRegisters::h))
             a_val -= 0x6;
     }
     else
     {
-        if (get_register_bit(Registers::F, FlagRegisters::c) || a_val > 0x99)
+        if (get_flag(FlagRegisters::c) || a_val > 0x99)
         {
             a_val += 0x60;
-            set_register_bit(Registers::F, FlagRegisters::c, 1);
+            set_flag(FlagRegisters::c, 1);
         }
-        if (get_register_bit(Registers::F, FlagRegisters::h) || ((a_val & 0x0F) > 0x09))
+        if (get_flag(FlagRegisters::h) || ((a_val & 0x0F) > 0x09))
             a_val += 0x6;
     }
-    set_register_bit(Registers::F, FlagRegisters::z, a_val == 0);
-    set_register_bit(Registers::F, FlagRegisters::h, 1);
+    set_flag(FlagRegisters::z, a_val == 0);
+    set_flag(FlagRegisters::h, 1);
     set_register(Registers::A, a_val);
 }
 
 void Cpu::cpl()
 {
     set_register(Registers::A, ~get_register(Registers::A));
-    set_register_bit(Registers::F, FlagRegisters::n, 1);
-    set_register_bit(Registers::F, FlagRegisters::h, 1);
+    set_flag(FlagRegisters::n, 1);
+    set_flag(FlagRegisters::h, 1);
 }
 
 void Cpu::scf()
 {
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, 0);
-    set_register_bit(Registers::F, FlagRegisters::c, 1);
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, 0);
+    set_flag(FlagRegisters::c, 1);
 }
 
 void Cpu::ccf()
 {
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, 0);
-    set_register_bit(Registers::F, FlagRegisters::c, !get_register_bit(Registers::F, FlagRegisters::c));
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, 0);
+    set_flag(FlagRegisters::c, !get_flag(FlagRegisters::c));
 }
 
 void Cpu::stop() { pc += 1; }

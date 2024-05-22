@@ -22,13 +22,19 @@ int main(int argc, char *argv[])
     Dict::Decoder decode = Dict::Decoder(p);
 
     decode.set_data(path);
-
-    std::cout << "decoder rom size: " << decode.get_data().size() << std::endl;
-    decode.disassemble(0x150, 32);
+    // decode.disassemble(0x150, 32);
 
     Cpu cpu = Cpu(decode, path);
 
-    cpu.tick();
+    for (int i = 0; i < 32; i++)
+    {
+        cpu.tick();
+    }
+
+    // while (true)
+    // {
+    //     cpu.tick();
+    // }
 
     if (!init_window(&data))
     {

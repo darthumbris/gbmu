@@ -68,16 +68,16 @@ void Cpu::jr_cond_imm8(Condition c)
     switch (c)
     {
     case Condition::NotZeroFlag:
-        offset = get_register_bit(Registers::F, FlagRegisters::z) == 0;
+        offset = get_flag(FlagRegisters::z) == 0;
         break;
     case Condition::ZeroFlag:
-        offset = get_register_bit(Registers::F, FlagRegisters::z) == 1;
+        offset = get_flag(FlagRegisters::z) == 1;
         break;
     case Condition::NotCarryFlag:
-        offset = get_register_bit(Registers::F, FlagRegisters::c) == 0;
+        offset = get_flag(FlagRegisters::c) == 0;
         break;
     case Condition::CarryFlag:
-        offset = get_register_bit(Registers::F, FlagRegisters::c) == 1;
+        offset = get_flag(FlagRegisters::c) == 1;
         break;
     default:
         break;
@@ -101,16 +101,16 @@ void Cpu::jp_cond_imm16(Condition c)
     switch (c)
     {
     case Condition::NotZeroFlag:
-        offset = get_register_bit(Registers::F, FlagRegisters::z) == 0;
+        offset = get_flag(FlagRegisters::z) == 0;
         break;
     case Condition::ZeroFlag:
-        offset = get_register_bit(Registers::F, FlagRegisters::z) == 1;
+        offset = get_flag(FlagRegisters::z) == 1;
         break;
     case Condition::NotCarryFlag:
-        offset = get_register_bit(Registers::F, FlagRegisters::c) == 0;
+        offset = get_flag(FlagRegisters::c) == 0;
         break;
     case Condition::CarryFlag:
-        offset = get_register_bit(Registers::F, FlagRegisters::c) == 1;
+        offset = get_flag(FlagRegisters::c) == 1;
         break;
     default:
         break;

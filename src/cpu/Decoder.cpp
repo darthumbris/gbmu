@@ -30,20 +30,22 @@ namespace Dict
             json ins = j.at("unprefixed");
             for (auto it = ins.begin(); it != ins.end(); it++)
             {
-                uint32_t x;
+                uint16_t x;
                 std::stringstream ss;
                 ss << std::hex << it.key();
                 ss >> x;
+                std::cout << "adding instruction for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << x << std::dec << std::endl;
                 instructions.emplace(std::make_pair(x, Instruction(*it)));
             }
             json pref = j.at("cbprefixed");
             for (auto it = pref.begin(); it != pref.end(); it++)
             {
-                uint32_t x;
+                uint16_t x;
                 std::stringstream ss;
                 ss << std::hex << it.key();
                 ss >> x;
-                instructions.emplace(std::make_pair(x, Instruction(*it)));
+                std::cout << "adding prefixed_instructions for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << x << std::dec << std::endl;
+                prefixed_instructions.emplace(std::make_pair(x, Instruction(*it)));
             }
         }
         catch (const json::parse_error &e)
@@ -60,6 +62,7 @@ namespace Dict
 
     void Decoder::set_data(std::string path)
     {
+        std::cout << "decoder path: " << path << std::endl;
         std::ifstream ifs;
         ifs.open(path.c_str(), std::ifstream::binary);
         auto size = ifs.tellg();
@@ -78,12 +81,12 @@ namespace Dict
         return data;
     }
 
-    int Decoder::read(int address, int count)
+    uint16_t Decoder::read(uint16_t address, int count)
     {
         if (0 <= address + count <= data.size())
         {
             std::vector<std::byte> v(&data[address], &data[address + count]);
-            int ret;
+            uint16_t ret;
             char dat[4];
             int i = 0;
             for (i = 0; i < count; i++)
@@ -104,9 +107,9 @@ namespace Dict
         }
     }
 
-    std::tuple<uint32_t, Instruction, bool> Decoder::decode(uint32_t address)
+    std::tuple<uint16_t, Instruction, bool> Decoder::decode(uint16_t address)
     {
-        uint32_t opcode;
+        uint16_t opcode;
         Instruction instruction;
         opcode = read(address);
         address += 1;
@@ -122,13 +125,12 @@ namespace Dict
         {
             instruction = instructions[opcode];
         }
-
         std::vector<Operand> ops;
         for (auto op : instruction.operands)
         {
             if (op.bytes > 0)
             {
-                uint32_t value = read(address, op.bytes);
+                uint16_t value = read(address, op.bytes);
                 address += op.bytes;
                 Operand nop = op;
                 nop.value = value;
@@ -141,10 +143,19 @@ namespace Dict
         }
         Instruction decoded = instruction;
         decoded.operands = ops;
-        return {address, decoded, prefix};
+        if (instruction.operands.size() != decoded.operands.size())
+        {
+
+            std::cout << "predecoded instruction operands: " << instruction.operands.size() << std::endl;
+            std::cout << "decoded instruction operands: " << decoded.operands.size() << std::endl;
+        }
+        // std::cout << "trying to get ins for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << opcode << std::dec << std::endl;
+        // std::cout << "trying to get ins for address: 0x" << std::setfill('0') << std::setw(4) << std::hex << address << std::dec << std::endl;
+        // TODO check if address or opcode needs te be returned?
+        return {opcode, decoded, prefix};
     }
 
-    void Decoder::disassemble(int address, int count)
+    void Decoder::disassemble(uint16_t address, int count)
     {
         for (int i = 0; i < count; i++)
         {

@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "gbmu.hpp"
 
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 160;
+const int SCREEN_HEIGHT = 144;
 
 bool init_window(Sdl_Data *data)
 {

@@ -24,12 +24,12 @@ namespace Dict
         void set_data(std::string path);
         std::vector<std::byte> get_data() const;
 
-        int read(int address, int count = 1);
-        std::tuple<uint32_t, Instruction, bool> decode(uint32_t address);
-        void disassemble(int address, int count);
+        uint16_t read(uint16_t address, int count = 1);
+        std::tuple<uint16_t, Instruction, bool> decode(uint16_t address);
+        void disassemble(uint16_t address, int count);
 
-        std::map<uint32_t, Instruction> prefixed_instructions;
-        std::map<uint32_t, Instruction> instructions;
+        std::map<uint16_t, Instruction> prefixed_instructions;
+        std::map<uint16_t, Instruction> instructions;
     };
 
 }

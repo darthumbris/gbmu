@@ -45,10 +45,10 @@ void Cpu::sub_a_r8(Operand op_s)
         val = get_register(op_s.reg);
     }
     set_register(Registers::A, a_val - val);
-    set_register_bit(Registers::F, FlagRegisters::z, (a_val - val) == 0);
-    set_register_bit(Registers::F, FlagRegisters::n, 1);
-    set_register_bit(Registers::F, FlagRegisters::h, ((get_register(Registers::A) ^ val ^ a_val) & 0x10) != 0);
-    set_register_bit(Registers::F, FlagRegisters::c, val > a_val);
+    set_flag(FlagRegisters::z, (a_val - val) == 0);
+    set_flag(FlagRegisters::n, 1);
+    set_flag(FlagRegisters::h, ((get_register(Registers::A) ^ val ^ a_val) & 0x10) != 0);
+    set_flag(FlagRegisters::c, val > a_val);
 }
 void Cpu::sub_a_imm8()
 {
@@ -56,10 +56,10 @@ void Cpu::sub_a_imm8()
     pc += 1;
     uint16_t a_val = get_register(Registers::A);
 
-    set_register_bit(Registers::F, FlagRegisters::z, (a_val - val) == 0);
-    set_register_bit(Registers::F, FlagRegisters::n, 1);
-    set_register_bit(Registers::F, FlagRegisters::h, ((get_register(Registers::A) ^ val ^ a_val) & 0x10) != 0);
-    set_register_bit(Registers::F, FlagRegisters::c, val > a_val);
+    set_flag(FlagRegisters::z, (a_val - val) == 0);
+    set_flag(FlagRegisters::n, 1);
+    set_flag(FlagRegisters::h, ((get_register(Registers::A) ^ val ^ a_val) & 0x10) != 0);
+    set_flag(FlagRegisters::c, val > a_val);
 
     set_register(Registers::A, a_val - val);
 }
@@ -76,22 +76,22 @@ void Cpu::sbc_a_r8(Operand op_s)
     {
         val = get_register(op_s.reg);
     }
-    set_register_bit(Registers::F, FlagRegisters::n, 1);
-    set_register_bit(Registers::F, FlagRegisters::c, val > a_val);
-    set_register(Registers::A, a_val - val - get_register_bit(Registers::F, FlagRegisters::c));
-    set_register_bit(Registers::F, FlagRegisters::z, get_register(Registers::A) == 0);
-    set_register_bit(Registers::F, FlagRegisters::h, ((get_register(Registers::A) ^ (a_val + 1) ^ val) & 0x10) != 0);
+    set_flag(FlagRegisters::n, 1);
+    set_flag(FlagRegisters::c, val > a_val);
+    set_register(Registers::A, a_val - val - get_flag(FlagRegisters::c));
+    set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
+    set_flag(FlagRegisters::h, ((get_register(Registers::A) ^ (a_val + 1) ^ val) & 0x10) != 0);
 }
 
 void Cpu::sbc_a_imm8()
 {
-    uint16_t val = mmap.read_u8(pc) + get_register_bit(Registers::F, FlagRegisters::c);
+    uint16_t val = mmap.read_u8(pc) + get_flag(FlagRegisters::c);
     pc += 1;
     uint16_t a_val = get_register(Registers::A);
 
-    set_register_bit(Registers::F, FlagRegisters::n, 1);
-    set_register_bit(Registers::F, FlagRegisters::z, (a_val - val) == 0);
-    set_register_bit(Registers::F, FlagRegisters::c, val > a_val);
+    set_flag(FlagRegisters::n, 1);
+    set_flag(FlagRegisters::z, (a_val - val) == 0);
+    set_flag(FlagRegisters::c, val > a_val);
     set_register(Registers::A, a_val - val);
-    set_register_bit(Registers::F, FlagRegisters::h, ((get_register(Registers::A) ^ (a_val + 1) ^ val) & 0x10) != 0);
+    set_flag(FlagRegisters::h, ((get_register(Registers::A) ^ (a_val + 1) ^ val) & 0x10) != 0);
 }

@@ -8,6 +8,7 @@ Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
 {
     registers = {};
     pc = 0;
+    // pc = 0x100;
     mmap = MemoryMap(path);
 }
 
@@ -36,9 +37,9 @@ uint8_t Cpu::get_register_bit(Registers reg, uint8_t bit_loc) const
     return (get_register(reg) >> bit_loc) & 1;
 }
 
-uint8_t Cpu::get_flag(uint8_t flag) const
+bool Cpu::get_flag(uint8_t flag) const
 {
-    return get_register_bit(Registers::F, flag);
+    return (registers[3] >> flag & 1);
 }
 
 void Cpu::set_register(Registers reg, uint16_t val)
@@ -46,15 +47,18 @@ void Cpu::set_register(Registers reg, uint16_t val)
     if (reg % 2 == 0 && reg < 8) // High register
     {
         uint16_t cur = get_register(reg);
+        // std::cout << "setting 8 bit high reg: " << reg / 2 << std::endl;
         registers[reg / 2] = (cur & 0x00FF | (val << 8));
     }
     else if (reg < 8) // Low Register
     {
         uint16_t cur = get_register(reg);
+        // std::cout << "setting 8 bit low reg: " << reg / 2 << std::endl;
         registers[reg / 2] = (cur & 0xFF00 | val);
     }
     else // 16-bit register
     {
+        // std::cout << "setting 16 bit reg: " << reg - Registers::BC << std::endl;
         registers[reg - Registers::BC] = val;
     }
 }
@@ -71,7 +75,15 @@ void Cpu::set_register_bit(Registers reg, uint8_t bit_loc, uint8_t val)
 
 void Cpu::set_flag(uint8_t flag, uint8_t val)
 {
-    set_register_bit(Registers::F, flag, val);
+    if (val)
+    {
+        registers[3] |= val << flag;
+    }
+    else
+    {
+        registers[3] &= 0xFF ^ (val << flag);
+    }
+    // set_register_bit(Registers::F, flag, val);
 }
 
 inline constexpr auto string_hash(const std::string_view sv)
@@ -91,30 +103,52 @@ inline constexpr auto operator"" _(const char *str, size_t len)
 
 void Cpu::tick()
 {
-    uint16_t opcode = pc;
-    auto dec = decoder.decode(opcode);
-    std::cout << "opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << opcode << std::dec << std::endl;
-    pc = std::get<0>(dec);
-    std::get<1>(dec).print_instruction();
-    execute_instruction(std::get<1>(dec), pc, std::get<2>(dec));
+    auto dec = get_instruction();
+    debug_print(std::get<1>(dec), std::get<0>(dec));
 
-    opcode = 0;
-    for (auto in : decoder.prefixed_instructions)
+    execute_instruction(std::get<1>(dec), std::get<0>(dec), std::get<2>(dec));
+    pc &= 0xFFFF;
+    if (pc == 0x0100)
     {
-        execute_instruction(in.second, opcode, true);
-        opcode += 1;
+        std::cout << "Start of ROM" << std::endl;
+        mmap.bios_loaded = true;
+        exit(1);
     }
+}
 
-    opcode = 0;
-    for (auto in : decoder.instructions)
+void Cpu::debug_print(Instruction in, uint16_t opcode)
+{
+    std::cout << "[0x" << std::setfill('0') << std::setw(4) << std::hex << pc - 1;
+    std::cout << "]  0x" << std::setfill('0') << std::setw(2) << opcode << std::dec << "\t";
+    in.print_instruction();
+
+    if (interrupts)
+        std::cout << "interrupts: 0x" << std::setfill('0') << std::setw(4) << std::hex << interrupts << std::dec << std::endl;
+}
+
+std::tuple<uint16_t, Instruction, bool> Cpu::get_instruction()
+{
+    bool prefix = false;
+    uint16_t opcode = mmap.read_u8(pc);
+    Instruction instruction;
+    pc += 1;
+    if (opcode == 0xCB)
     {
-        execute_instruction(in.second, opcode, false);
-        opcode += 1;
+        opcode = mmap.read_u8(pc);
+        pc += 1;
+        instruction = decoder.prefixed_instructions[opcode];
+        prefix = true;
     }
+    else
+    {
+        instruction = decoder.instructions[opcode];
+    }
+    return {opcode, instruction, prefix};
 }
 
 void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_ins)
 {
+    // std::cout << "mnemnomic: " << in.mnemonic << ", opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << opcode << std::dec << std::endl;
     if (is_prefix_ins)
     {
         prefix(in, opcode);

@@ -199,10 +199,10 @@ void Cpu::ld_hl_sp_imm8()
     pc += 1;
     uint16_t val = get_register(Registers::SP);
     set_register(Registers::HL, static_cast<uint16_t>(val + e8));
-    set_register_bit(Registers::F, FlagRegisters::z, 0);
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, half_carry_flag_set(e8, val));
-    set_register_bit(Registers::F, FlagRegisters::c, carry_flag_set(e8, val));
+    set_flag(FlagRegisters::z, 0);
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, half_carry_flag_set(e8, val));
+    set_flag(FlagRegisters::c, carry_flag_set(e8, val));
 }
 
 void Cpu::ldh_a_imm8()

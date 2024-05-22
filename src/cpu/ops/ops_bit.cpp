@@ -12,16 +12,19 @@ void Cpu::bit_b3_r8(uint16_t opcode, Operand op_s)
         val = get_register(op_s.reg);
     }
     uint8_t bit_loc = (opcode >> 3) & 0x7;
-    set_register_bit(Registers::F, FlagRegisters::h, 1);
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, 1);
+    set_flag(FlagRegisters::n, 0);
     if ((val & (1 << bit_loc)) == 0)
     {
-        set_register_bit(Registers::F, FlagRegisters::z, 1);
+        set_flag(FlagRegisters::z, 1);
+        // set_register_bit(Registers::F, FlagRegisters::z, 1);
     }
     else
     {
-        set_register_bit(Registers::F, FlagRegisters::z, 0);
+        set_flag(FlagRegisters::z, 0);
+        // set_register_bit(Registers::F, FlagRegisters::z, 0);
     }
+    // std::cout << "flag register: 0x" << std::setfill('0') << std::setw(4) << std::hex << get_register(Registers::F) << std::dec << std::endl;
 }
 
 void Cpu::res_b3_r8(uint16_t opcode, Operand op_s)

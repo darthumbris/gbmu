@@ -36,6 +36,7 @@ SRC =	main.cpp \
         cpu/ops/ops_rotate_shift.cpp \
         cpu/ops/ops_sub.cpp \
         cpu/MemoryMap.cpp \
+        cpu/PixelProcessingUnit.cpp \
 
 
 SRC_EXT = cpp

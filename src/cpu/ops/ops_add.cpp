@@ -60,10 +60,10 @@ void Cpu::add_a_r8(Operand op_s)
         val = get_register(op_s.reg);
     }
     set_register(Registers::A, a_val + val);
-    set_register_bit(Registers::F, FlagRegisters::z, (val + a_val) == 0);
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, half_carry_flag_set(val, a_val));
-    set_register_bit(Registers::F, FlagRegisters::c, carry_flag_set(val, a_val));
+    set_flag(FlagRegisters::z, (val + a_val) == 0);
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
+    set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
 }
 
 void Cpu::add_a_imm8()
@@ -71,10 +71,10 @@ void Cpu::add_a_imm8()
     uint16_t val = mmap.read_u8(pc);
     pc += 1;
     uint16_t a_val = get_register(Registers::A);
-    set_register_bit(Registers::F, FlagRegisters::z, (val + a_val) == 0);
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, half_carry_flag_set(val, a_val));
-    set_register_bit(Registers::F, FlagRegisters::c, carry_flag_set(val, a_val));
+    set_flag(FlagRegisters::z, (val + a_val) == 0);
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
+    set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
 }
 
 void Cpu::add_hl_r16(Operand op_s)
@@ -82,9 +82,9 @@ void Cpu::add_hl_r16(Operand op_s)
     uint16_t val = get_register(op_s.reg);
     uint16_t hl_val = get_register(Registers::HL);
     set_register(Registers::HL, val + hl_val);
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, half_carry_flag_set(val, hl_val));
-    set_register_bit(Registers::F, FlagRegisters::c, carry_flag_set(val, hl_val));
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, half_carry_flag_set(val, hl_val));
+    set_flag(FlagRegisters::c, carry_flag_set(val, hl_val));
 }
 
 void Cpu::add_sp_imm8()
@@ -93,10 +93,10 @@ void Cpu::add_sp_imm8()
     pc += 1;
     uint16_t sp_val = get_register(Registers::SP);
     set_register(Registers::SP, static_cast<uint16_t>(e8 + sp_val));
-    set_register_bit(Registers::F, FlagRegisters::z, 0);
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, half_carry_flag_set(e8, sp_val));
-    set_register_bit(Registers::F, FlagRegisters::c, carry_flag_set(e8, sp_val));
+    set_flag(FlagRegisters::z, 0);
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, half_carry_flag_set(e8, sp_val));
+    set_flag(FlagRegisters::c, carry_flag_set(e8, sp_val));
 }
 
 void Cpu::adc_a_r8(Operand op_s)
@@ -111,11 +111,11 @@ void Cpu::adc_a_r8(Operand op_s)
     {
         val = get_register(op_s.reg);
     }
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, half_carry_flag_set(val, a_val));
-    set_register_bit(Registers::F, FlagRegisters::c, carry_flag_set(val, a_val));
-    set_register(Registers::A, a_val + val + get_register_bit(Registers::F, FlagRegisters::c));
-    set_register_bit(Registers::F, FlagRegisters::z, get_register(Registers::A) == 0);
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
+    set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
+    set_register(Registers::A, a_val + val + get_flag(FlagRegisters::c));
+    set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
 }
 
 void Cpu::adc_a_imm8()
@@ -123,9 +123,9 @@ void Cpu::adc_a_imm8()
     uint16_t val = mmap.read_u8(pc);
     pc += 1;
     uint16_t a_val = get_register(Registers::A);
-    set_register_bit(Registers::F, FlagRegisters::n, 0);
-    set_register_bit(Registers::F, FlagRegisters::h, half_carry_flag_set(val, a_val));
-    set_register_bit(Registers::F, FlagRegisters::c, carry_flag_set(val, a_val));
-    set_register(Registers::A, a_val + val + get_register_bit(Registers::F, FlagRegisters::c));
-    set_register_bit(Registers::F, FlagRegisters::z, get_register(Registers::A) == 0);
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
+    set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
+    set_register(Registers::A, a_val + val + get_flag(FlagRegisters::c));
+    set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
 }
