@@ -130,13 +130,13 @@ void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_in
         rst_tg3(in);
         break;
     case "LD"_:
-        ld(opcode);
+        ld(opcode, in.operands);
         break;
     case "INC"_:
-        inc(opcode);
+        inc(opcode, in.operands[0]);
         break;
     case "DEC"_:
-        dec(opcode);
+        dec(opcode, in.operands[0]);
         break;
     case "RLCA"_:
         rlca();
@@ -145,7 +145,7 @@ void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_in
         rla();
         break;
     case "ADD"_:
-        add(in, opcode);
+        add(opcode, in.operands[1]);
         break;
     case "RRCA"_:
         rrca();
@@ -175,31 +175,31 @@ void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_in
         halt();
         break;
     case "ADC"_:
-        adc(opcode);
+        adc(opcode, in.operands[1]);
         break;
     case "SUB"_:
-        sub(opcode);
+        sub(opcode, in.operands[1]);
         break;
     case "SBC"_:
-        sbc(opcode);
+        sbc(opcode, in.operands[1]);
         break;
     case "AND"_:
-        and_(opcode);
+        and_(opcode, in.operands[1]);
         break;
     case "XOR"_:
-        xor_(opcode);
+        xor_(opcode, in.operands[1]);
         break;
     case "OR"_:
-        or_(opcode);
+        or_(opcode, in.operands[1]);
         break;
     case "CP"_:
-        cp_(opcode);
+        cp_(opcode, in.operands[1]);
         break;
     case "RET"_:
         ret(opcode);
         break;
     case "POP"_:
-        pop_r16stk(opcode);
+        pop_r16stk(in.operands[0]);
         break;
     case "JP"_:
         jp(opcode);
@@ -208,7 +208,7 @@ void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_in
         call(opcode);
         break;
     case "PUSH"_:
-        push_r16stk(opcode);
+        push_r16stk(in.operands[0]);
         break;
     case "ILLEGAL_D3"_:
         lockup();
@@ -266,37 +266,37 @@ void Cpu::prefix(Instruction in, uint16_t opcode)
     switch (string_hash(in.mnemonic))
     {
     case "RLC"_:
-        rlc_r8();
+        rlc_r8(opcode, in.operands[0]);
         break;
     case "RRC"_:
-        rrc_r8();
+        rrc_r8(opcode, in.operands[0]);
         break;
     case "RL"_:
-        rl_r8();
+        rl_r8(opcode, in.operands[0]);
         break;
     case "RR"_:
-        rr_r8();
+        rr_r8(opcode, in.operands[0]);
         break;
     case "SLA"_:
-        sla_r8();
+        sla_r8(opcode, in.operands[0]);
         break;
     case "SRA"_:
-        sra_r8();
+        sra_r8(opcode, in.operands[0]);
         break;
     case "SWAP"_:
-        swap_r8(opcode);
+        swap_r8(opcode, in.operands[0]);
         break;
     case "SRL"_:
-        srl_r8();
+        srl_r8(opcode, in.operands[0]);
         break;
     case "BIT"_:
-        bit_b3_r8(opcode);
+        bit_b3_r8(opcode, in.operands[1]);
         break;
     case "RES"_:
-        res_b3_r8(opcode);
+        res_b3_r8(opcode, in.operands[1]);
         break;
     case "SET"_:
-        set_b3_r8(opcode);
+        set_b3_r8(opcode, in.operands[1]);
         break;
     default:
         unimplemented(opcode);

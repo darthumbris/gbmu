@@ -8,45 +8,20 @@
 
 using namespace Dict;
 
-enum LowRegisters
-{
-	L_C = 1,
-	L_E = 3,
-	L_L = 5,
-	L_F = 7,
-};
-
-enum HighRegisters
-{
-	H_B = 0,
-	H_D = 2,
-	H_H = 4,
-	H_A = 6,
-};
-
-enum Registers
-{
-	B = HighRegisters::H_B,
-	C = LowRegisters::L_C,
-	D = HighRegisters::H_D,
-	E = LowRegisters::L_E,
-	H = HighRegisters::H_H,
-	L = LowRegisters::L_L,
-	A = HighRegisters::H_A,
-	F = LowRegisters::L_F,
-	BC = 8,
-	DE = 9,
-	HL = 10,
-	AF = 11,
-	SP = 12,
-};
-
 enum FlagRegisters
 {
 	c = 4,
 	h = 5,
 	n = 6,
 	z = 7
+};
+
+enum Condition
+{
+	NotZeroFlag,
+	ZeroFlag,
+	NotCarryFlag,
+	CarryFlag,
 };
 
 class Cpu
@@ -79,19 +54,19 @@ private:
 	//  Block 0
 	void nop();
 
-	void ld_r16_imm16(uint16_t opcode);
-	void ld_r16_a(uint16_t opcode);
-	void ld_a_r16(uint16_t opcode);
+	void ld_r16_imm16(Operand op_r);
+	void ld_r16_a(Operand op_r);
+	void ld_a_r16(Operand op_s);
 	void ld_imm16_sp();
 
-	void inc_r16(uint16_t opcode);
-	void dec_r16(uint16_t opcode);
-	void add_hl_r16(uint16_t opcode);
+	void inc_r16(Operand op_r);
+	void dec_r16(Operand op_r);
+	void add_hl_r16(Operand op_s);
 
-	void inc_r8(uint16_t opcode);
-	void dec_r8(uint16_t opcode);
+	void inc_r8(Operand op_r);
+	void dec_r8(Operand op_r);
 
-	void ld_r8_imm8(uint16_t opcode);
+	void ld_r8_imm8(Operand op_r);
 
 	void rlca();
 	void rrca();
@@ -103,23 +78,23 @@ private:
 	void ccf();
 
 	void jr_imm8();
-	void jr_cond_imm8();
+	void jr_cond_imm8(Condition c);
 
 	void stop();
 
 	// block1 register to register loads
-	void ld_r8_r8(uint16_t opcode);
+	void ld_r8_r8(Operand op_r, Operand op_s);
 	void halt();
 
 	// block2 8-bit arithmetic
-	void add_a_r8(uint16_t opcode);
-	void adc_a_r8(uint16_t opcode);
-	void sub_a_r8(uint16_t opcode);
-	void sbc_a_r8(uint16_t opcode);
-	void and_a_r8(uint16_t opcode);
-	void xor_a_r8(uint16_t opcode);
-	void or_a_r8(uint16_t opcode);
-	void cp_a_r8(uint16_t opcode);
+	void add_a_r8(Operand op_s);
+	void adc_a_r8(Operand op_s);
+	void sub_a_r8(Operand op_s);
+	void sbc_a_r8(Operand op_s);
+	void and_a_r8(Operand op_s);
+	void xor_a_r8(Operand op_s);
+	void or_a_r8(Operand op_s);
+	void cp_a_r8(Operand op_s);
 
 	// block3
 	void add_a_imm8();
@@ -131,18 +106,18 @@ private:
 	void or_a_imm8();
 	void cp_a_imm8();
 
-	void ret_cond();
+	void ret_cond(Condition c);
 	void ret();
 	void reti();
-	void jp_cond_imm16();
+	void jp_cond_imm16(Condition c);
 	void jp_imm16();
 	void jp_hl();
-	void call_cond_imm16();
+	void call_cond_imm16(Condition c);
 	void call_imm16();
 	void rst_tg3(Instruction in);
 
-	void pop_r16stk(uint16_t opcode);
-	void push_r16stk(uint16_t opcode);
+	void pop_r16stk(Operand op_r);
+	void push_r16stk(Operand op_s);
 
 	void ldh_imm8_a();
 	void ld_imm16_a();
@@ -158,23 +133,23 @@ private:
 
 	// CB prefix
 	void prefix(Instruction in, uint16_t opcode);
-	void rlc_r8(uint16_t opcode);
-	void rrc_r8(uint16_t opcode);
-	void rl_r8(uint16_t opcode);
-	void rr_r8(uint16_t opcode);
-	void sla_r8(uint16_t opcode);
-	void sra_r8(uint16_t opcode);
-	void swap_r8(uint16_t opcode);
-	void srl_r8(uint16_t opcode);
+	void rlc_r8(uint16_t opcode, Operand op_r);
+	void rrc_r8(uint16_t opcode, Operand op_r);
+	void rl_r8(uint16_t opcode, Operand op_r);
+	void rr_r8(uint16_t opcode, Operand op_r);
+	void sla_r8(uint16_t opcode, Operand op_r);
+	void sra_r8(uint16_t opcode, Operand op_r);
+	void swap_r8(uint16_t opcode, Operand op_r);
+	void srl_r8(uint16_t opcode, Operand op_r);
 
 	uint8_t get_rlc(uint8_t val, bool reset = false);
 	uint8_t get_rrc(uint8_t val, bool reset = false);
 	uint8_t get_rr(uint8_t val, bool reset = false);
 	uint8_t get_rl(uint8_t val, bool reset = false);
 
-	void bit_b3_r8(uint16_t opcode);
-	void res_b3_r8(uint16_t opcode);
-	void set_b3_r8(uint16_t opcode);
+	void bit_b3_r8(uint16_t opcode, Operand op_s);
+	void res_b3_r8(uint16_t opcode, Operand op_s);
+	void set_b3_r8(uint16_t opcode, Operand op_s);
 
 	void unimplemented(uint16_t opcode);
 
@@ -188,18 +163,18 @@ private:
 	void ld_c_a();
 	void ld_a_c();
 
-	void ld(uint16_t opcode);  // to go to the correct ld function
-	void inc(uint16_t opcode); // to go to the correct inc function
-	void dec(uint16_t opcode); // to go to the correct dec function
-	void add(Instruction in, uint16_t opcode);
+	void ld(uint16_t opcode, std::vector<Operand> operands); // to go to the correct ld function
+	void inc(uint16_t opcode, Operand op_r);				 // to go to the correct inc function
+	void dec(uint16_t opcode, Operand op_r);				 // to go to the correct dec function
+	void add(uint16_t opcode, Operand op_s);
 	void jr(uint16_t opcode);
-	void adc(u_int16_t opcode);
-	void sub(u_int16_t opcode);
-	void sbc(u_int16_t opcode);
-	void and_(u_int16_t opcode);
-	void xor_(u_int16_t opcode);
-	void or_(u_int16_t opcode);
-	void cp_(u_int16_t opcode);
+	void adc(u_int16_t opcode, Operand op_s);
+	void sub(u_int16_t opcode, Operand op_s);
+	void sbc(u_int16_t opcode, Operand op_s);
+	void and_(u_int16_t opcode, Operand op_s);
+	void xor_(u_int16_t opcode, Operand op_s);
+	void or_(u_int16_t opcode, Operand op_s);
+	void cp_(u_int16_t opcode, Operand op_s);
 	void ret(u_int16_t opcode);
 	void jp(u_int16_t opcode);
 	void call(u_int16_t opcode);

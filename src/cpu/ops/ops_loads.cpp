@@ -1,59 +1,59 @@
 #include "Cpu.hpp"
 
-void Cpu::ld(uint16_t opcode)
+void Cpu::ld(uint16_t opcode, std::vector<Operand> operands)
 {
     switch (opcode)
     {
     case 0x01:
-        ld_r16_imm16(opcode);
+        ld_r16_imm16(operands[0]);
         break;
     case 0x02:
-        ld_r16_a(opcode);
+        ld_r16_a(operands[0]);
         break;
     case 0x06:
-        ld_r8_imm8(opcode);
+        ld_r8_imm8(operands[0]);
         break;
     case 0x08:
         ld_imm16_sp();
         break;
     case 0x0A:
-        ld_a_r16(opcode);
+        ld_a_r16(operands[1]);
         break;
     case 0x0E:
-        ld_r8_imm8(opcode);
+        ld_r8_imm8(operands[0]);
         break;
     case 0x11:
-        ld_r16_imm16(opcode);
+        ld_r16_imm16(operands[0]);
         break;
     case 0x12:
-        ld_r16_a(opcode);
+        ld_r16_a(operands[0]);
         break;
     case 0x16:
-        ld_r8_imm8(opcode);
+        ld_r8_imm8(operands[0]);
         break;
     case 0x1A:
-        ld_a_r16(opcode);
+        ld_a_r16(operands[1]);
         break;
     case 0x1E:
-        ld_r8_imm8(opcode);
+        ld_r8_imm8(operands[0]);
         break;
     case 0x21:
-        ld_r16_imm16(opcode);
+        ld_r16_imm16(operands[0]);
         break;
     case 0x22:
         ld_i_hl_a();
         break;
     case 0x26:
-        ld_r8_imm8(opcode);
+        ld_r8_imm8(operands[0]);
         break;
     case 0x2A:
         ld_i_a_hl();
         break;
     case 0x2E:
-        ld_r8_imm8(opcode);
+        ld_r8_imm8(operands[0]);
         break;
     case 0x31:
-        ld_r16_imm16(opcode);
+        ld_r16_imm16(operands[0]);
         break;
     case 0x32:
         ld_d_hl_a();
@@ -65,16 +65,16 @@ void Cpu::ld(uint16_t opcode)
         ld_d_a_hl();
         break;
     case 0x3E:
-        ld_r8_imm8(opcode);
+        ld_r8_imm8(operands[0]);
         break;
     case 0x40 ... 0x75:
-        ld_r8_r8(opcode);
+        ld_r8_r8(operands[0], operands[1]);
         break;
     case 0x77:
-        ld_r16_a(opcode);
+        ld_r16_a(operands[0]);
         break;
     case 0x78 ... 0x7F:
-        ld_r8_r8(opcode);
+        ld_r8_r8(operands[0], operands[1]);
         break;
     case 0xE2:
         ld_c_a();
@@ -117,155 +117,45 @@ void Cpu::ldh(uint16_t opcode)
     }
 }
 
-void Cpu::ld_r8_r8(uint16_t opcode)
+void Cpu::ld_r8_r8(Operand op_r, Operand op_s)
 {
     uint8_t val;
-    switch (opcode & 0xF)
+    if (op_s.reg == Registers::HL)
     {
-    case 0x8:
-    case 0x0:
-        val = get_register(Registers::B);
-        break;
-    case 0x9:
-    case 0x1:
-        val = get_register(Registers::C);
-        break;
-    case 0xA:
-    case 0x2:
-        val = get_register(Registers::D);
-        break;
-    case 0xB:
-    case 0x3:
-        val = get_register(Registers::E);
-        break;
-    case 0xC:
-    case 0x4:
-        val = get_register(Registers::H);
-        break;
-    case 0xD:
-    case 0x5:
-        val = get_register(Registers::L);
-        break;
-    case 0xE:
-    case 0x6:
-        val = mmap.read_u8(get_register(Registers::HL));
-        break;
-    case 0xF:
-    case 0x7:
-        val = get_register(Registers::A);
-        break;
-
-    default:
-        break;
+        mmap.read_u8(get_register(Registers::HL));
+    }
+    else
+    {
+        val = get_register(op_s.reg);
     }
 
-    switch (opcode)
+    if (op_r.reg == Registers::HL)
     {
-    case 0x40 ... 0x47:
-        set_register(Registers::B, val);
-        break;
-    case 0x48 ... 0x4F:
-        set_register(Registers::C, val);
-        break;
-    case 0x50 ... 0x57:
-        set_register(Registers::D, val);
-        break;
-    case 0x58 ... 0x5F:
-        set_register(Registers::E, val);
-        break;
-    case 0x60 ... 0x67:
-        set_register(Registers::H, val);
-        break;
-    case 0x68 ... 0x6F:
-        set_register(Registers::L, val);
-        break;
-    case 0x77:
-    case 0x70 ... 0x75:
         mmap.write_u8(get_register(Registers::HL), val);
-        break;
-    case 0x78 ... 0x7F:
-        set_register(Registers::A, val);
-        break;
-
-    default:
-        break;
+    }
+    else
+    {
+        set_register(op_r.reg, val);
     }
 }
 
-void Cpu::ld_r16_a(uint16_t opcode)
+void Cpu::ld_r16_a(Operand op_r)
 {
-    uint16_t address;
-    switch (opcode)
-    {
-    case 0x02:
-        address = get_register(Registers::BC);
-        break;
-    case 0x12:
-        address = get_register(Registers::DE);
-        break;
-    case 0x77:
-        address = get_register(Registers::HL);
-        break;
-    default:
-        address = 0;
-        break;
-    }
+    uint16_t address = get_register(op_r.reg);
     mmap.write_u16(address, get_register(Registers::A));
 }
 
-void Cpu::ld_a_r16(uint16_t opcode)
+void Cpu::ld_a_r16(Operand op_s)
 {
-    uint16_t address;
-    switch (opcode)
-    {
-    case 0x0A:
-        address = get_register(Registers::BC);
-        break;
-    case 0x1A:
-        address = get_register(Registers::DE);
-        break;
-    case 0x7E:
-        address = get_register(Registers::HL);
-        break;
-    default:
-        address = 0;
-        break;
-    }
+    uint16_t address = get_register(op_s.reg);
     set_register(Registers::A, mmap.read_u16(address));
 }
 
-void Cpu::ld_r8_imm8(uint16_t opcode)
+void Cpu::ld_r8_imm8(Operand op_r)
 {
     uint8_t val = mmap.read_u8(pc);
     pc += 1;
-
-    switch (opcode)
-    {
-    case 0x06:
-        set_register(Registers::B, val);
-        break;
-    case 0x0E:
-        set_register(Registers::C, val);
-        break;
-    case 0x16:
-        set_register(Registers::D, val);
-        break;
-    case 0x1E:
-        set_register(Registers::E, val);
-        break;
-    case 0x26:
-        set_register(Registers::H, val);
-        break;
-    case 0x2E:
-        set_register(Registers::L, val);
-        break;
-    case 0x3E:
-        set_register(Registers::A, val);
-        break;
-
-    default:
-        break;
-    }
+    set_register(op_r.reg, val);
 }
 
 void Cpu::ld_hl_imm8()
@@ -275,28 +165,11 @@ void Cpu::ld_hl_imm8()
     mmap.write_u8(get_register(Registers::HL), val);
 }
 
-void Cpu::ld_r16_imm16(uint16_t opcode)
+void Cpu::ld_r16_imm16(Operand op_r)
 {
     uint16_t val = mmap.read_u16(pc);
     pc += 2;
-    switch (opcode)
-    {
-    case 0x01:
-        set_register(Registers::BC, val);
-        break;
-    case 0x11:
-        set_register(Registers::DE, val);
-        break;
-    case 0x21:
-        set_register(Registers::HL, val);
-        break;
-    case 0x31:
-        set_register(Registers::SP, val);
-        break;
-
-    default:
-        break;
-    }
+    set_register(op_r.reg, val);
 }
 
 void Cpu::ld_a_imm16()
@@ -389,54 +262,17 @@ void Cpu::ld_d_a_hl()
     set_register(Registers::HL, hl - 1);
 }
 
-void Cpu::pop_r16stk(uint16_t opcode)
+void Cpu::pop_r16stk(Operand op_r)
 {
     uint16_t val = get_register(Registers::SP);
-    switch (opcode)
-    {
-    case 0xC1:
-        set_register(Registers::BC, val);
-        break;
-    case 0xD1:
-        set_register(Registers::DE, val);
-        break;
-    case 0xE1:
-        set_register(Registers::HL, val);
-        break;
-    case 0xF1:
-        set_register(Registers::AF, val);
-        break;
-
-    default:
-        break;
-    }
+    set_register(op_r.reg, val);
     set_register(Registers::SP, val + 2);
 }
 
-void Cpu::push_r16stk(uint16_t opcode)
+void Cpu::push_r16stk(Operand op_s)
 {
     // Push ss
-    uint16_t val;
-    switch (opcode)
-    {
-    case 0xC5:
-        val = get_register(Registers::BC);
-        break;
-    case 0xD5:
-        val = get_register(Registers::DE);
-        break;
-    case 0xE5:
-        val = get_register(Registers::HL);
-        break;
-    case 0xF5:
-        val = get_register(Registers::AF);
-        break;
-
-    default:
-        val = 0;
-        break;
-    }
-
+    uint16_t val = get_register(op_s.reg);
     uint16_t sp = get_register(Registers::SP);
 
     //(SP - 1) <- ssh (high byte)
