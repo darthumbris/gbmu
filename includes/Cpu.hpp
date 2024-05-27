@@ -6,6 +6,7 @@
 #include "Decoder.hpp"
 #include "MemoryMap.hpp"
 #include <iostream>
+#include "PixelProcessingUnit.hpp"
 
 using namespace Dict;
 
@@ -52,6 +53,10 @@ private:
 	MemoryMap mmap;
 	bool halted = false;	 // TODO check if this can be handled by the interrupt in the memorymap
 	bool interrupts = false; // TODO check if can be done with interrupt in the memorymap?
+	uint16_t m_cycle;
+	uint16_t t_cycle;
+
+	PixelProcessingUnit ppu;
 
 	// TODO check all functions are actually used
 
@@ -215,6 +220,9 @@ public:
 
 	void execute_instruction(Instruction in, uint8_t opcode, bool is_prefix_ins);
 	void tick();
+	void event_handler();
+	void handle_input(SDL_Event &e);
+	inline bool status() {return ppu.status();}
 };
 
 #endif

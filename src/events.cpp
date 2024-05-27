@@ -1,18 +1,15 @@
-#include "gbmu.hpp"
+#include "Cpu.hpp"
 
-void event_handler(Sdl_Data *data)
+void Cpu::event_handler()
 {
     SDL_Event e;
-    while (!data->status)
+    while (SDL_PollEvent(&e))
     {
-        while (SDL_PollEvent(&e))
+        if (e.type == SDL_QUIT)
+            ppu.set_status(true);
+        else if (e.type == SDL_KEYDOWN)
         {
-            if (e.type == SDL_QUIT)
-                data->status = true;
-            else if (e.type == SDL_KEYDOWN)
-            {
-                handle_input(data, e);
-            }
+            handle_input(e);
         }
     }
 }

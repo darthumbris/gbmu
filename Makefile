@@ -13,9 +13,6 @@ INC_DIR = includes
 SRC =	main.cpp \
         events.cpp \
         input/input.cpp \
-        graphics/init.cpp \
-        graphics/close.cpp \
-        graphics/load_rom.cpp \
         rom.cpp \
         cpu/Decoder.cpp \
         cpu/Operand.cpp \

@@ -13,6 +13,8 @@ Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
     debug_count = 0;
     // pc = 0x100;
     mmap = MemoryMap(path);
+    ppu = PixelProcessingUnit();
+    ppu.init_window();
 }
 
 Cpu::~Cpu()
@@ -115,26 +117,25 @@ void Cpu::tick()
 {
     auto dec = get_instruction();
     if (debug_count < 33) {
-    std::cout << "debug count: " << debug_count << "\t";
+        std::cout << "debug count: " << debug_count << "\t";
         debug_print(std::get<1>(dec), std::get<0>(dec));
+    }
+    else {
+        // std::cout << "debug count: " << debug_count << std::endl;
     }
     if (debug_count < 2147483647) {
         debug_count += 1;
     }
-    // if (pc <= 0x100) {
-    // }
-    // else {
-    //     throw std::runtime_error("reached start of rom");
-    // }
-
     execute_instruction(std::get<1>(dec), std::get<0>(dec), std::get<2>(dec));
     pc &= 0xFFFF;
     if (pc == 0x0100)
     {
         std::cout << "Start of ROM" << std::endl;
-        mmap.bios_loaded = true;
+        // mmap.bios_loaded = true;
         exit(1);
     }
+    ppu.tick(m_cycle, mmap);
+    event_handler();
 }
 
 void Cpu::debug_print(Instruction in, uint8_t opcode)

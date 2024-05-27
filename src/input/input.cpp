@@ -1,11 +1,11 @@
-#include "gbmu.hpp"
+#include "Cpu.hpp"
 
-void handle_input(Sdl_Data *data, SDL_Event &e)
+void Cpu::handle_input(SDL_Event &e)
 {
     switch (e.key.keysym.sym)
     {
     case SDLK_ESCAPE:
-        data->status = true;
+        ppu.set_status(true);
         break;
 
     default:

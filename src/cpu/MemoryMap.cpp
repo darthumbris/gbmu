@@ -57,10 +57,10 @@ uint8_t MemoryMap::read_u8(uint16_t addr)
     switch (addr)
     {
     case 0x0000 ... 0x00FE:
-        if (!bios_loaded)
+        if (!is_boot_rom_enabled())
         {
             // std::cout << "reading from bios" << std::endl;
-            return bios[(std::size_t)addr];
+            return boot_rom[(std::size_t)addr];
         }
         return rom[(std::size_t)addr];
     case 0x00FF ... 0x3FFF:
@@ -96,17 +96,20 @@ uint16_t MemoryMap::read_u16(uint16_t addr)
 }
 void MemoryMap::write_u8(uint16_t addr, uint8_t val)
 {
+    if (addr == 0xFF50) {
+        std::cout << "this is for disabling boot rom?" << std::endl;
+    }
     // TODO check if the bitwise operators for the addresses are correct
     // std::cout << "trying to write addr: 0x" << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
     {
     case 0x0000 ... 0x00FE:
-        if (!bios_loaded)
+        if (!is_boot_rom_enabled())
         {
             // printf("trying to write to bios at addr: %d bios is size: %d\n", (std::size_t)(addr), bios.size());
             // std::cout << "bios trying to write addr: " << st::dec << (std::size_t)(addr) << std::dec << std::endl;
             // std::cout << "writing to bios" << std::endl;
-            bios[(std::size_t)(addr)] = val;
+            boot_rom[(std::size_t)(addr)] = val;
         }
         // std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
         rom[(std::size_t)(addr)] = val;
@@ -121,7 +124,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         break;
     case 0x8000 ... 0x9FFF:
         // std::cout << "vram: trying to write addr: " << std::dec << (std::size_t)(addr & 0x1FFF) << std::dec << std::endl;
-        vram[0][(std::size_t)(addr & 0x1FFF)] = val; // TODO check how to get what vram_bank
+        vram[vram_bank_select()][(std::size_t)(addr & 0x1FFF)] = val; // TODO check how to get what vram_bank
         break;
     case 0xA000 ... 0xBFFF:
         // std::cout << "ext[0] trying to write addr: " << std::dec << (std::size_t)(addr & 0x1FFF) << std::dec << std::endl;
@@ -129,11 +132,11 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         break;
     case 0xC000 ... 0xDFFF:
         // std::cout << "work[0] trying to write addr: " << std::dec << (std::size_t)(addr & 0x0FFF) << std::dec << std::endl;
-        work_ram[0][(std::size_t)(addr & 0x0FFF)] = val; // TODO check how to get what workram_bank
+        work_ram[wram_bank_select()][(std::size_t)(addr & 0x0FFF)] = val;
         break;
     case 0xE000 ... 0xFDFF:
         // std::cout << "echo trying to write addr: " << std::dec << (std::size_t)(addr & 0x0FFF) << std::dec << std::endl;
-        echo_ram[0][(std::size_t)(addr & 0x0FFF)] = val; // TODO check how to get what echo_ram_bank
+        echo_ram[wram_bank_select()][(std::size_t)(addr & 0x0FFF)] = val;
         break;
     case 0xFE00 ... 0xFE9F:
         // std::cout << "oam: trying to write addr: " << std::dec << (std::size_t)(addr & 0x9F) << std::dec << std::endl;
@@ -164,4 +167,9 @@ void MemoryMap::write_u16(uint16_t addr, uint16_t val)
 {
     write_u8(addr, (uint8_t)(val & 0xFF));
     write_u8(addr + 1, (uint8_t)((val & 0xFF00) >> 8));
+}
+
+void MemoryMap::set_ppu_mode(uint8_t mode) {
+    io_registers[(std::size_t)(0xFF41 & 0x7F)] ^= ((-mode)) ^ io_registers[(std::size_t)(0xFF41 & 0x7F)] & (1U << 0);
+    io_registers[(std::size_t)(0xFF41 & 0x7F)] ^= ((-mode)) ^ io_registers[(std::size_t)(0xFF41 & 0x7F)] & (1U << 1);
 }

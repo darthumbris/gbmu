@@ -1,4 +1,4 @@
-#include "gbmu.hpp"
+#include "PixelProcessingUnit.hpp"
 
 bool load_rom(Sdl_Data *data)
 {
@@ -18,8 +18,8 @@ bool load_rom(Sdl_Data *data)
             success = false;
         }
 
-        data->image = SDL_ConvertSurface(loaded_image, data->surface->format, 0);
-        if (data->image == NULL)
+        data->screen = SDL_ConvertSurface(loaded_image, data->surface->format, 0);
+        if (data->screen == NULL)
         {
             printf("Unable to load image %s! SDL Error: %s\n", "Cannon_Exterior.png", SDL_GetError());
             success = false;
