@@ -27,15 +27,15 @@ class PixelProcessingUnit
 {
 private:
     uint16_t lcd_clock;
-    PPU_Modes mode;
-    uint8_t lcd_control; //0xFF40 (bits: 7:lcd/ppu enable, 6:window tilemap, 5: window enable, 4: bg/window tiles, 3: bg tilemap, 2: objsize, 1: obj enable, 0: bg/window enable/priority)
-    uint8_t stat;        //0xFF41 (bits: 6:LYC select, 5:mode2 select, 4:mode1 select, 3:mode0 select,2:LYC==LY,(1,0): ppu_mode)
-    uint8_t ly;          //0xFF44 (Line y)
-    uint8_t lcy;         //0xFF45 (Line y compare)
-    uint8_t scy;         //background viewport y pos
-    uint8_t scx;         //background viewport x pos
-    uint8_t wy;          //window y pos
-    uint8_t wx;          //window x pos
+    // PPU_Modes mode;
+    // uint8_t lcd_control; //0xFF40 (bits: 7:lcd/ppu enable, 6:window tilemap, 5: window enable, 4: bg/window tiles, 3: bg tilemap, 2: objsize, 1: obj enable, 0: bg/window enable/priority)
+    // uint8_t stat;        //0xFF41 (bits: 6:LYC select, 5:mode2 select, 4:mode1 select, 3:mode0 select,2:LYC==LY,(1,0): ppu_mode)
+    // uint8_t ly;          //0xFF44 (Line y)
+    // uint8_t lcy;         //0xFF45 (Line y compare)
+    // uint8_t scy;         //background viewport y pos
+    // uint8_t scx;         //background viewport x pos
+    // uint8_t wy;          //window y pos
+    // uint8_t wx;          //window x pos
     Sdl_Data data;
 
     void handle_interrupt(bool val, MemoryMap &mmap);

@@ -59,6 +59,12 @@ using Mem4k = std::array<uint8_t, 4096>;
                 11: increment every 64 M-cycles    freq 16384(DMG)     16780(SGB1)     32768(CGB double speed)
  */
 
+ /* VRAM DMA
+  * 0xFF51-0xFF52 VRAM DMA SOURCE
+  * 0xFF53-0xFF54 VRAM DMA Destination
+  * 0xFF55        VRAM DMA length/mode/start
+ */
+
  /* Interrupt
   * 0x40 Vblank interrupt
   * 0x48 STAT interrupt
