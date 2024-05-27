@@ -56,12 +56,14 @@ uint8_t MemoryMap::read_u8(uint16_t addr)
     // std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
     {
-    case 0x0000 ... 0x3FFF:
+    case 0x0000 ... 0x00FE:
         if (!bios_loaded)
         {
             // std::cout << "reading from bios" << std::endl;
             return bios[(std::size_t)addr];
         }
+        return rom[(std::size_t)addr];
+    case 0x00FF ... 0x3FFF:
         return rom[(std::size_t)addr];
     case 0x4000 ... 0x7FFF:
         return rom_banks[0][(std::size_t)(addr & 0x3FFF)]; // TODO check how to get what rom_bank
@@ -95,42 +97,59 @@ uint16_t MemoryMap::read_u16(uint16_t addr)
 void MemoryMap::write_u8(uint16_t addr, uint8_t val)
 {
     // TODO check if the bitwise operators for the addresses are correct
-    // std::cout << "trying to write addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
+    // std::cout << "trying to write addr: 0x" << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
     {
-    case 0x0000 ... 0x3FFF:
+    case 0x0000 ... 0x00FE:
         if (!bios_loaded)
         {
+            // printf("trying to write to bios at addr: %d bios is size: %d\n", (std::size_t)(addr), bios.size());
+            // std::cout << "bios trying to write addr: " << st::dec << (std::size_t)(addr) << std::dec << std::endl;
             // std::cout << "writing to bios" << std::endl;
-            bios[(std::size_t)addr] = val;
+            bios[(std::size_t)(addr)] = val;
         }
-        rom[(std::size_t)addr] = val;
+        // std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
+        rom[(std::size_t)(addr)] = val;
+        break;
+    case 0x00FF ... 0x3FFF:
+        // std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
+        rom[(std::size_t)(addr)] = val;
         break;
     case 0x4000 ... 0x7FFF:
+        // std::cout << "rom[0] trying to write addr: " << std::dec << (std::size_t)(addr & 0x3FFF) << std::dec << std::endl;
         rom_banks[0][(std::size_t)(addr & 0x3FFF)] = val; // TODO check how to get what rom_bank
         break;
     case 0x8000 ... 0x9FFF:
+        // std::cout << "vram: trying to write addr: " << std::dec << (std::size_t)(addr & 0x1FFF) << std::dec << std::endl;
         vram[0][(std::size_t)(addr & 0x1FFF)] = val; // TODO check how to get what vram_bank
         break;
     case 0xA000 ... 0xBFFF:
+        // std::cout << "ext[0] trying to write addr: " << std::dec << (std::size_t)(addr & 0x1FFF) << std::dec << std::endl;
         ext_ram[0][(std::size_t)(addr & 0x1FFF)] = val; // TODO check how to get what extram_bank
         break;
     case 0xC000 ... 0xDFFF:
+        // std::cout << "work[0] trying to write addr: " << std::dec << (std::size_t)(addr & 0x0FFF) << std::dec << std::endl;
         work_ram[0][(std::size_t)(addr & 0x0FFF)] = val; // TODO check how to get what workram_bank
         break;
     case 0xE000 ... 0xFDFF:
+        // std::cout << "echo trying to write addr: " << std::dec << (std::size_t)(addr & 0x0FFF) << std::dec << std::endl;
         echo_ram[0][(std::size_t)(addr & 0x0FFF)] = val; // TODO check how to get what echo_ram_bank
         break;
     case 0xFE00 ... 0xFE9F:
+        // std::cout << "oam: trying to write addr: " << std::dec << (std::size_t)(addr & 0x9F) << std::dec << std::endl;
         oam[(std::size_t)(addr & 0x9F)] = val;
         break;
     case 0xFEA0 ... 0xFEFF:
+        // std::cout << "Not usable trying to write addr: " << std::dec << (std::size_t)(addr & 0x5F) << std::dec << std::endl;
         not_usable[(std::size_t)(addr & 0x5F)] = val;
         break;
     case 0xFF00 ... 0xFF7F:
+        // std::cout << "io trying to write addr: " << std::dec << (std::size_t)(addr & 0x7F) << std::dec << std::endl;
         io_registers[(std::size_t)(addr & 0x7F)] = val;
         break;
     case 0xFF80 ... 0xFFFE:
+        // printf("trying to write to high_ram at addr: %d\n", (std::size_t)(addr & 0x7E));
+        // std::cout << "high ram trying to write addr: " << std::dec << (std::size_t)(addr & 0x7E) << std::dec << std::endl;
         high_ram[(std::size_t)(addr & 0x7E)] = val;
         break;
     case 0xFFFF:

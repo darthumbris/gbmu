@@ -1,6 +1,6 @@
 #include "Cpu.hpp"
 
-void Cpu::inc(uint16_t opcode, Operand op_r)
+void Cpu::inc(uint8_t opcode, Operand op_r)
 {
     switch (opcode)
     {
@@ -49,16 +49,16 @@ void Cpu::inc(uint16_t opcode, Operand op_r)
 
 void Cpu::inc_r16(Operand op_r)
 {
-    set_register(op_r.reg, get_register(op_r.reg) + 1);
+    set_16bitregister(op_r.reg, get_16bitregister(op_r.reg) + 1);
 }
 
 void Cpu::inc_r8(Operand op_r)
 {
-    uint16_t val;
+    uint8_t val;
     if (op_r.reg == Registers::HL)
     {
-        val = mmap.read_u16(get_register(Registers::HL));
-        mmap.write_u16(get_register(Registers::HL), val + 1);
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
+        mmap.write_u8(get_16bitregister(Registers::HL), val + 1);
     }
     else
     {

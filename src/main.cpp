@@ -26,15 +26,15 @@ int main(int argc, char *argv[])
 
     Cpu cpu = Cpu(decode, path);
 
-    for (int i = 0; i < 32; i++)
-    {
-        cpu.tick();
-    }
-
-    // while (true)
+    // for (int i = 0; i < 32; i++)
     // {
     //     cpu.tick();
     // }
+
+    while (true)
+    {
+        cpu.tick();
+    }
 
     if (!init_window(&data))
     {

@@ -1,6 +1,6 @@
 #include "Cpu.hpp"
 
-void Cpu::jr(uint16_t opcode)
+void Cpu::jr(uint8_t opcode)
 {
     switch (opcode)
     {
@@ -25,7 +25,7 @@ void Cpu::jr(uint16_t opcode)
     }
 }
 
-void Cpu::jp(uint16_t opcode)
+void Cpu::jp(uint8_t opcode)
 {
     switch (opcode)
     {
@@ -130,6 +130,6 @@ void Cpu::jp_imm16()
 void Cpu::jp_hl()
 {
     uint16_t val;
-    val = mmap.read_u16(get_register(Registers::HL));
+    val = mmap.read_u16(get_16bitregister(Registers::HL));
     pc = val;
 }

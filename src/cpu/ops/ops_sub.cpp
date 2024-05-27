@@ -1,6 +1,6 @@
 #include "Cpu.hpp"
 
-void Cpu::sub(uint16_t opcode, Operand op_s)
+void Cpu::sub(uint8_t opcode, Operand op_s)
 {
     switch (opcode)
     {
@@ -16,7 +16,7 @@ void Cpu::sub(uint16_t opcode, Operand op_s)
     }
 }
 
-void Cpu::sbc(uint16_t opcode, Operand op_s)
+void Cpu::sbc(uint8_t opcode, Operand op_s)
 {
     switch (opcode)
     {
@@ -34,11 +34,11 @@ void Cpu::sbc(uint16_t opcode, Operand op_s)
 
 void Cpu::sub_a_r8(Operand op_s)
 {
-    uint16_t val;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t val;
+    uint8_t a_val = get_register(Registers::A);
     if (op_s.reg == Registers::HL)
     {
-        val = mmap.read_u8(get_register(Registers::B));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
@@ -52,9 +52,9 @@ void Cpu::sub_a_r8(Operand op_s)
 }
 void Cpu::sub_a_imm8()
 {
-    uint16_t val = mmap.read_u8(pc);
+    uint8_t val = mmap.read_u8(pc);
     pc += 1;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t a_val = get_register(Registers::A);
 
     set_flag(FlagRegisters::z, (a_val - val) == 0);
     set_flag(FlagRegisters::n, 1);
@@ -66,11 +66,11 @@ void Cpu::sub_a_imm8()
 
 void Cpu::sbc_a_r8(Operand op_s)
 {
-    uint16_t val;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t val;
+    uint8_t a_val = get_register(Registers::A);
     if (op_s.reg == Registers::HL)
     {
-        val = mmap.read_u8(get_register(Registers::B));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
@@ -85,9 +85,9 @@ void Cpu::sbc_a_r8(Operand op_s)
 
 void Cpu::sbc_a_imm8()
 {
-    uint16_t val = mmap.read_u8(pc) + get_flag(FlagRegisters::c);
+    uint8_t val = mmap.read_u8(pc) + get_flag(FlagRegisters::c);
     pc += 1;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t a_val = get_register(Registers::A);
 
     set_flag(FlagRegisters::n, 1);
     set_flag(FlagRegisters::z, (a_val - val) == 0);

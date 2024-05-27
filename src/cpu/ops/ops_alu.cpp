@@ -1,6 +1,6 @@
 #include "Cpu.hpp"
 
-void Cpu::and_(uint16_t opcode, Operand op_s)
+void Cpu::and_(uint8_t opcode, Operand op_s)
 {
     switch (opcode)
     {
@@ -16,7 +16,7 @@ void Cpu::and_(uint16_t opcode, Operand op_s)
     }
 }
 
-void Cpu::xor_(uint16_t opcode, Operand op_s)
+void Cpu::xor_(uint8_t opcode, Operand op_s)
 {
     switch (opcode)
     {
@@ -32,7 +32,7 @@ void Cpu::xor_(uint16_t opcode, Operand op_s)
     }
 }
 
-void Cpu::or_(uint16_t opcode, Operand op_s)
+void Cpu::or_(uint8_t opcode, Operand op_s)
 {
     switch (opcode)
     {
@@ -48,7 +48,7 @@ void Cpu::or_(uint16_t opcode, Operand op_s)
     }
 }
 
-void Cpu::cp_(uint16_t opcode, Operand op_s)
+void Cpu::cp_(uint8_t opcode, Operand op_s)
 {
     switch (opcode)
     {
@@ -66,11 +66,11 @@ void Cpu::cp_(uint16_t opcode, Operand op_s)
 
 void Cpu::and_a_r8(Operand op_s)
 {
-    uint16_t val;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t val;
+    uint8_t a_val = get_register(Registers::A);
     if (op_s.reg == Registers::HL)
     {
-        val = mmap.read_u8(get_register(Registers::HL));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
@@ -87,7 +87,7 @@ void Cpu::and_a_imm8()
 {
     uint8_t n8 = mmap.read_u8(pc);
     pc += 1;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t a_val = get_register(Registers::A);
     set_register(Registers::A, a_val & n8);
     set_flag(FlagRegisters::z, (a_val & n8) == 0);
     set_flag(FlagRegisters::n, 0);
@@ -97,11 +97,11 @@ void Cpu::and_a_imm8()
 
 void Cpu::xor_a_r8(Operand op_s)
 {
-    uint16_t val;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t val;
+    uint8_t a_val = get_register(Registers::A);
     if (op_s.reg == Registers::HL)
     {
-        val = mmap.read_u8(get_register(Registers::HL));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
@@ -109,37 +109,33 @@ void Cpu::xor_a_r8(Operand op_s)
     }
     a_val ^= val;
     set_register(Registers::A, a_val);
+    set_register(Registers::F, 0);
     set_flag(FlagRegisters::z, a_val == 0);
-    set_flag(FlagRegisters::n, 0);
-    set_flag(FlagRegisters::h, 0);
-    set_flag(FlagRegisters::c, 0);
 }
 
 void Cpu::or_a_r8(Operand op_s)
 {
-    uint16_t val;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t val;
+    uint8_t a_val = get_register(Registers::A);
     if (op_s.reg == Registers::HL)
     {
-        val = mmap.read_u8(get_register(Registers::HL));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
         val = get_register(op_s.reg);
     }
     set_register(Registers::A, a_val | val);
+    set_register(Registers::F, 0);
     set_flag(FlagRegisters::z, (a_val | val) == 0);
-    set_flag(FlagRegisters::n, 0);
-    set_flag(FlagRegisters::h, 0);
-    set_flag(FlagRegisters::c, 0);
 }
 void Cpu::cp_a_r8(Operand op_s)
 {
-    uint16_t val;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t val;
+    uint8_t a_val = get_register(Registers::A);
     if (op_s.reg == Registers::HL)
     {
-        val = mmap.read_u8(get_register(Registers::HL));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
@@ -155,29 +151,25 @@ void Cpu::xor_a_imm8()
 {
     uint8_t n8 = mmap.read_u8(pc);
     pc += 1;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t a_val = get_register(Registers::A);
+    set_register(Registers::F, 0);
     set_register(Registers::A, a_val ^ n8);
     set_flag(FlagRegisters::z, (a_val ^ n8) == 0);
-    set_flag(FlagRegisters::n, 0);
-    set_flag(FlagRegisters::h, 0);
-    set_flag(FlagRegisters::c, 0);
 }
 void Cpu::or_a_imm8()
 {
     uint8_t n8 = mmap.read_u8(pc);
     pc += 1;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t a_val = get_register(Registers::A);
+    set_register(Registers::F, 0);
     set_register(Registers::A, a_val | n8);
     set_flag(FlagRegisters::z, (a_val | n8) == 0);
-    set_flag(FlagRegisters::n, 0);
-    set_flag(FlagRegisters::h, 0);
-    set_flag(FlagRegisters::c, 0);
 }
 void Cpu::cp_a_imm8()
 {
     uint8_t cp = mmap.read_u8(pc);
     pc += 1;
-    uint16_t a_val = get_register(Registers::A);
+    uint8_t a_val = get_register(Registers::A);
     set_flag(FlagRegisters::z, (a_val == cp));
     set_flag(FlagRegisters::n, 1);
     set_flag(FlagRegisters::c, a_val < cp);

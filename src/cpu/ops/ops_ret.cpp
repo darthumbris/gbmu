@@ -1,6 +1,6 @@
 #include "Cpu.hpp"
 
-void Cpu::ret(uint16_t opcode)
+void Cpu::ret(uint8_t opcode)
 {
     switch (opcode)
     {
@@ -60,8 +60,8 @@ void Cpu::ret_cond(Condition c)
 }
 void Cpu::ret()
 {
-    pc = mmap.read_u16(get_register(Registers::SP));
-    set_register(Registers::SP, get_register(Registers::SP) + 2);
+    pc = mmap.read_u16(sp);
+    sp += 2;
 }
 void Cpu::reti()
 {

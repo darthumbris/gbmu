@@ -1,14 +1,14 @@
 #include "Cpu.hpp"
 #include <iostream>
 
-void Cpu::swap_r8(uint16_t opcode, Operand op_r)
+void Cpu::swap_r8(uint8_t opcode, Operand op_r)
 {
-    uint16_t val;
+    uint8_t val;
     if (op_r.reg == Registers::HL)
     {
-        val = mmap.read_u16(get_register(Registers::HL));
-        mmap.write_u8(get_register(Registers::HL), (val & 0xF) << 4);
-        mmap.write_u8(get_register(Registers::HL), mmap.read_u16(get_register(Registers::HL)) | ((val & 0xF0) >> 4));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
+        mmap.write_u8(get_16bitregister(Registers::HL), (val & 0xF) << 4);
+        mmap.write_u8(get_16bitregister(Registers::HL), mmap.read_u8(get_16bitregister(Registers::HL)) | ((val & 0xF0) >> 4));
     }
     else
     {

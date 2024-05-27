@@ -1,6 +1,6 @@
 #include "Cpu.hpp"
 
-void Cpu::ld(uint16_t opcode, std::vector<Operand> operands)
+void Cpu::ld(uint8_t opcode, std::vector<Operand> operands)
 {
     switch (opcode)
     {
@@ -101,7 +101,7 @@ void Cpu::ld(uint16_t opcode, std::vector<Operand> operands)
     }
 }
 
-void Cpu::ldh(uint16_t opcode)
+void Cpu::ldh(uint8_t opcode)
 {
     switch (opcode)
     {
@@ -122,7 +122,7 @@ void Cpu::ld_r8_r8(Operand op_r, Operand op_s)
     uint8_t val;
     if (op_s.reg == Registers::HL)
     {
-        mmap.read_u8(get_register(Registers::HL));
+        mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
@@ -131,7 +131,7 @@ void Cpu::ld_r8_r8(Operand op_r, Operand op_s)
 
     if (op_r.reg == Registers::HL)
     {
-        mmap.write_u8(get_register(Registers::HL), val);
+        mmap.write_u8(get_16bitregister(Registers::HL), val);
     }
     else
     {
@@ -141,14 +141,14 @@ void Cpu::ld_r8_r8(Operand op_r, Operand op_s)
 
 void Cpu::ld_r16_a(Operand op_r)
 {
-    uint16_t address = get_register(op_r.reg);
-    mmap.write_u16(address, get_register(Registers::A));
+    uint16_t address = get_16bitregister(op_r.reg);
+    mmap.write_u8(address, get_register(Registers::A));
 }
 
 void Cpu::ld_a_r16(Operand op_s)
 {
-    uint16_t address = get_register(op_s.reg);
-    set_register(Registers::A, mmap.read_u16(address));
+    uint16_t address = get_16bitregister(op_s.reg);
+    set_register(Registers::A, mmap.read_u8(address));
 }
 
 void Cpu::ld_r8_imm8(Operand op_r)
@@ -162,14 +162,14 @@ void Cpu::ld_hl_imm8()
 {
     uint8_t val = mmap.read_u8(pc);
     pc += 1;
-    mmap.write_u8(get_register(Registers::HL), val);
+    mmap.write_u8(get_16bitregister(Registers::HL), val);
 }
 
 void Cpu::ld_r16_imm16(Operand op_r)
 {
     uint16_t val = mmap.read_u16(pc);
     pc += 2;
-    set_register(op_r.reg, val);
+    set_16bitregister(op_r.reg, val);
 }
 
 void Cpu::ld_a_imm16()
@@ -190,15 +190,15 @@ void Cpu::ld_imm16_sp()
 {
     uint16_t addr = mmap.read_u16(pc);
     pc += 2;
-    mmap.write_u16(addr, get_register(Registers::SP));
+    mmap.write_u16(addr, sp);
 }
 
 void Cpu::ld_hl_sp_imm8()
 {
     uint8_t e8 = mmap.read_u8(pc);
     pc += 1;
-    uint16_t val = get_register(Registers::SP);
-    set_register(Registers::HL, static_cast<uint16_t>(val + e8));
+    uint16_t val = sp;
+    set_16bitregister(Registers::HL, static_cast<uint16_t>(val + e8));
     set_flag(FlagRegisters::z, 0);
     set_flag(FlagRegisters::n, 0);
     set_flag(FlagRegisters::h, half_carry_flag_set(e8, val));
@@ -231,55 +231,55 @@ void Cpu::ld_a_c()
 
 void Cpu::ld_sp_hl()
 {
-    set_register(Registers::SP, get_register(Registers::HL));
+    sp = get_16bitregister(Registers::HL);
 }
 
 void Cpu::ld_i_hl_a()
 {
-    mmap.write_u8(get_register(Registers::HL), get_register(Registers::A));
-    uint16_t hl = get_register(Registers::HL);
-    set_register(Registers::HL, hl + 1);
+    mmap.write_u8(get_16bitregister(Registers::HL), get_register(Registers::A));
+    uint16_t hl = get_16bitregister(Registers::HL);
+    set_16bitregister(Registers::HL, hl + 1);
 }
 
 void Cpu::ld_i_a_hl()
 {
-    set_register(Registers::A, mmap.read_u8(get_register(Registers::HL)));
-    uint16_t hl = get_register(Registers::HL);
-    set_register(Registers::HL, hl + 1);
+    set_register(Registers::A, mmap.read_u8(get_16bitregister(Registers::HL)));
+    uint16_t hl = get_16bitregister(Registers::HL);
+    set_16bitregister(Registers::HL, hl + 1);
 }
 
 void Cpu::ld_d_hl_a()
 {
-    mmap.write_u8(get_register(Registers::HL), get_register(Registers::A));
-    uint16_t hl = get_register(Registers::HL);
-    set_register(Registers::HL, hl - 1);
+    mmap.write_u8(get_16bitregister(Registers::HL), get_register(Registers::A));
+    uint16_t hl = get_16bitregister(Registers::HL);
+    set_16bitregister(Registers::HL, hl - 1);
 }
 
 void Cpu::ld_d_a_hl()
 {
-    set_register(Registers::A, mmap.read_u8(get_register(Registers::HL)));
-    uint16_t hl = get_register(Registers::HL);
-    set_register(Registers::HL, hl - 1);
+    set_register(Registers::A, mmap.read_u8(get_16bitregister(Registers::HL)));
+    uint16_t hl = get_16bitregister(Registers::HL);
+    set_16bitregister(Registers::HL, hl - 1);
 }
 
 void Cpu::pop_r16stk(Operand op_r)
 {
-    uint16_t val = get_register(Registers::SP);
-    set_register(op_r.reg, val);
-    set_register(Registers::SP, val + 2);
+    uint16_t val = sp;
+    set_16bitregister(op_r.reg, val);
+    sp = val + 2;
 }
 
 void Cpu::push_r16stk(Operand op_s)
 {
     // Push ss
-    uint16_t val = get_register(op_s.reg);
-    uint16_t sp = get_register(Registers::SP);
+    uint16_t val = get_16bitregister(op_s.reg);
+    uint16_t sp_val = this->sp;
 
     //(SP - 1) <- ssh (high byte)
-    mmap.write_u8(sp - 1, (uint8_t)((val & 0xFF00) >> 8));
+    mmap.write_u8(sp_val - 1, (uint8_t)((val & 0xFF00) >> 8));
     //(SP - 2) <- ssl (low byte)
-    mmap.write_u8(sp - 2, (uint8_t)((val & 0xFF)));
+    mmap.write_u8(sp_val - 2, (uint8_t)((val & 0xFF)));
 
     // SP <- (SP - 2)
-    set_register(Registers::SP, sp - 2);
+    sp = sp_val - 2;
 }

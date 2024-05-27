@@ -5,37 +5,37 @@
 #include "json.hpp"
 #include <optional>
 
-enum LowRegisters
-{
-    L_C = 1,
-    L_E = 3,
-    L_L = 5,
-    L_F = 7,
-};
+// enum LowRegisters
+// {
+//     L_C = 1,
+//     L_E = 3,
+//     L_L = 5,
+//     L_F = 7,
+// };
 
-enum HighRegisters
-{
-    H_B = 0,
-    H_D = 2,
-    H_H = 4,
-    H_A = 6,
-};
+// enum HighRegisters
+// {
+//     H_B = 0,
+//     H_D = 2,
+//     H_H = 4,
+//     H_A = 6,
+// };
 
 enum Registers
 {
-    B = HighRegisters::H_B,
-    C = LowRegisters::L_C,
-    D = HighRegisters::H_D,
-    E = LowRegisters::L_E,
-    H = HighRegisters::H_H,
-    L = LowRegisters::L_L,
-    A = HighRegisters::H_A,
-    F = LowRegisters::L_F,
-    BC = 8,
-    DE = 9,
-    HL = 10,
-    AF = 11,
-    SP = 12,
+    B = 0,
+    C = 1,
+    D = 2,
+    E = 3,
+    H = 4,
+    L = 5,
+    A = 6,
+    F = 7,
+    BC = 8, //8-8 > 0-1
+    DE = 10, //10-8 -> 2-3
+    HL = 12, //12-8 ->4-5
+    AF = 14,//14-8 ->6-7
+    SP = 16, //sp
 };
 
 namespace Dict

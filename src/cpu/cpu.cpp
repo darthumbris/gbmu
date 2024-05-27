@@ -3,11 +3,14 @@
 #include <math.h>
 #include <typeinfo>
 #include <fstream>
+#include <stdexcept>
 
 Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
 {
-    registers = {};
+    u8_registers = {0};
     pc = 0;
+    sp = 0;
+    debug_count = 0;
     // pc = 0x100;
     mmap = MemoryMap(path);
 }
@@ -16,74 +19,81 @@ Cpu::~Cpu()
 {
 }
 
-uint16_t Cpu::get_register(Registers reg) const
+uint16_t Cpu::get_16bitregister(Registers reg) const
 {
-    if (reg % 2 == 0 && reg < 8) // High register
+    if (reg < 8) // 8bit register
     {
-        return (registers[reg / 2] >> 8);
-    }
-    else if (reg < 8) // Low Register
-    {
-        return (registers[reg / 2] & 0xFF);
+        return (u8_registers[reg]);
     }
     else // 16-bit register
     {
-        return registers[reg - Registers::BC];
+        if (reg == Registers::SP) {
+            return sp;
+        }
+        return (u8_registers[reg - Registers::BC] << 8) + u8_registers[reg - Registers::BC + 1];
     }
 }
 
-uint8_t Cpu::get_register_bit(Registers reg, uint8_t bit_loc) const
+uint8_t Cpu::get_register(Registers reg) const
 {
-    return (get_register(reg) >> bit_loc) & 1;
-}
-
-bool Cpu::get_flag(uint8_t flag) const
-{
-    return (registers[3] >> flag & 1);
-}
-
-void Cpu::set_register(Registers reg, uint16_t val)
-{
-    if (reg % 2 == 0 && reg < 8) // High register
+    if (reg < 8) // 8bit register
     {
-        uint16_t cur = get_register(reg);
-        // std::cout << "setting 8 bit high reg: " << reg / 2 << std::endl;
-        registers[reg / 2] = (cur & 0x00FF | (val << 8));
-    }
-    else if (reg < 8) // Low Register
-    {
-        uint16_t cur = get_register(reg);
-        // std::cout << "setting 8 bit low reg: " << reg / 2 << std::endl;
-        registers[reg / 2] = (cur & 0xFF00 | val);
+        return (u8_registers[reg]);
     }
     else // 16-bit register
     {
-        // std::cout << "setting 16 bit reg: " << reg - Registers::BC << std::endl;
-        registers[reg - Registers::BC] = val;
+        throw std::runtime_error("getting register");
+        // if (reg == Registers::SP) {
+        //     return sp;
+        // }
     }
 }
 
-void Cpu::set_register_bit(Registers reg, uint8_t bit_loc, uint8_t val)
+uint8_t Cpu::get_flag(uint8_t flag) const
 {
-    /*to get the new value: Xor the val with current register value
-     * and then and compare with 1 (unsigned) bit shifted to the bit_loc wanted
-     */
-    uint8_t new_value = ((-val) ^ registers[reg]) & (1U << bit_loc);
-    // This value is then Xor with the current register value so it only changes the value for the bit_loc
-    registers[reg] ^= new_value;
+    return ((u8_registers[Registers::F] >> flag) & 1); //TODO check if this bit shift is correct
+}
+
+void Cpu::set_16bitregister(Registers reg, uint16_t val)
+{
+    if (reg < 8) //8bit register
+    {
+        u8_registers[reg] = (uint8_t)val; //TODO check bit shifting here
+    }
+    else // 16-bit register
+    {
+        if (reg == Registers::SP) {
+            sp = val;
+        }
+        else {
+            u8_registers[reg - Registers::BC] = (uint8_t)(val >> 8);
+            u8_registers[reg - Registers::BC + 1] = (uint8_t)(val & 0xff);
+        }
+    }
+}
+
+void Cpu::set_register(Registers reg, uint8_t val)
+{
+    if (reg < 8) //8bit register
+    {
+        u8_registers[reg] = val;
+    }
+    else // 16-bit register
+    {
+        throw std::runtime_error("setting register");
+        if (reg == Registers::SP) {
+            sp = val;
+        }
+        else {
+            u8_registers[reg - Registers::BC] = (uint8_t)(val >> 8);
+            u8_registers[reg - Registers::BC + 1] = (uint8_t)(val & 0xff);
+        }
+    }
 }
 
 void Cpu::set_flag(uint8_t flag, uint8_t val)
 {
-    if (val)
-    {
-        registers[3] |= val << flag;
-    }
-    else
-    {
-        registers[3] &= 0xFF ^ (val << flag);
-    }
-    // set_register_bit(Registers::F, flag, val);
+    u8_registers[Registers::F] ^= ((-val) ^ u8_registers[Registers::F]) & (1U << flag);
 }
 
 inline constexpr auto string_hash(const std::string_view sv)
@@ -104,7 +114,18 @@ inline constexpr auto operator"" _(const char *str, size_t len)
 void Cpu::tick()
 {
     auto dec = get_instruction();
-    debug_print(std::get<1>(dec), std::get<0>(dec));
+    if (debug_count < 33) {
+    std::cout << "debug count: " << debug_count << "\t";
+        debug_print(std::get<1>(dec), std::get<0>(dec));
+    }
+    if (debug_count < 2147483647) {
+        debug_count += 1;
+    }
+    // if (pc <= 0x100) {
+    // }
+    // else {
+    //     throw std::runtime_error("reached start of rom");
+    // }
 
     execute_instruction(std::get<1>(dec), std::get<0>(dec), std::get<2>(dec));
     pc &= 0xFFFF;
@@ -116,20 +137,20 @@ void Cpu::tick()
     }
 }
 
-void Cpu::debug_print(Instruction in, uint16_t opcode)
+void Cpu::debug_print(Instruction in, uint8_t opcode)
 {
     std::cout << "[0x" << std::setfill('0') << std::setw(4) << std::hex << pc - 1;
-    std::cout << "]  0x" << std::setfill('0') << std::setw(2) << opcode << std::dec << "\t";
+    std::cout << "]  0x" << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << "\t";
     in.print_instruction();
 
     if (interrupts)
         std::cout << "interrupts: 0x" << std::setfill('0') << std::setw(4) << std::hex << interrupts << std::dec << std::endl;
 }
 
-std::tuple<uint16_t, Instruction, bool> Cpu::get_instruction()
+std::tuple<uint8_t, Instruction, bool> Cpu::get_instruction()
 {
     bool prefix = false;
-    uint16_t opcode = mmap.read_u8(pc);
+    uint8_t opcode = mmap.read_u8(pc);
     Instruction instruction;
     pc += 1;
     if (opcode == 0xCB)
@@ -146,9 +167,8 @@ std::tuple<uint16_t, Instruction, bool> Cpu::get_instruction()
     return {opcode, instruction, prefix};
 }
 
-void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_ins)
+void Cpu::execute_instruction(Instruction in, uint8_t opcode, bool is_prefix_ins)
 {
-    // std::cout << "mnemnomic: " << in.mnemonic << ", opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << opcode << std::dec << std::endl;
     if (is_prefix_ins)
     {
         prefix(in, opcode);
@@ -294,7 +314,7 @@ void Cpu::execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_in
     }
 }
 
-void Cpu::prefix(Instruction in, uint16_t opcode)
+void Cpu::prefix(Instruction in, uint8_t opcode)
 {
     switch (string_hash(in.mnemonic))
     {
@@ -337,5 +357,5 @@ void Cpu::prefix(Instruction in, uint16_t opcode)
     }
 }
 
-void Cpu::unimplemented(uint16_t opcode) { std::cout << "unimplemented opcode: 0x" << std::setfill('0') << std::setw(2) << std::hex << opcode << std::dec << std::endl; }
+void Cpu::unimplemented(uint8_t opcode) { std::cout << "unimplemented opcode: 0x" << std::setfill('0') << std::setw(2) << std::hex << opcode << std::dec << std::endl; }
 void Cpu::lockup() {}

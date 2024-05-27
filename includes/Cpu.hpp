@@ -42,8 +42,11 @@ private:
 	 *
 	 * The registers are made uint16_t because the gameboy uses 16-bit registers
 	 */
-	std::array<uint16_t, 5> registers; //(all low and high register values and the StackPointer (the combined (so 8 uint8_t > 4 uint16_t)))
+	// std::array<uint16_t, 5> registers; //(all low and high register values and the StackPointer (the combined (so 8 uint8_t > 4 uint16_t)))
+	std::array<uint8_t, 8> u8_registers;
+	uint32_t debug_count;
 
+	uint16_t sp; //stack pointer
 	uint16_t pc; // Program counter
 	Decoder decoder;
 	MemoryMap mmap;
@@ -133,26 +136,26 @@ private:
 	void ei();
 
 	// CB prefix
-	void prefix(Instruction in, uint16_t opcode);
-	void rlc_r8(uint16_t opcode, Operand op_r);
-	void rrc_r8(uint16_t opcode, Operand op_r);
-	void rl_r8(uint16_t opcode, Operand op_r);
-	void rr_r8(uint16_t opcode, Operand op_r);
-	void sla_r8(uint16_t opcode, Operand op_r);
-	void sra_r8(uint16_t opcode, Operand op_r);
-	void swap_r8(uint16_t opcode, Operand op_r);
-	void srl_r8(uint16_t opcode, Operand op_r);
+	void prefix(Instruction in, uint8_t opcode);
+	void rlc_r8(uint8_t opcode, Operand op_r);
+	void rrc_r8(uint8_t opcode, Operand op_r);
+	void rl_r8(uint8_t opcode, Operand op_r);
+	void rr_r8(uint8_t opcode, Operand op_r);
+	void sla_r8(uint8_t opcode, Operand op_r);
+	void sra_r8(uint8_t opcode, Operand op_r);
+	void swap_r8(uint8_t opcode, Operand op_r);
+	void srl_r8(uint8_t opcode, Operand op_r);
 
 	uint8_t get_rlc(uint8_t val, bool reset = false);
 	uint8_t get_rrc(uint8_t val, bool reset = false);
 	uint8_t get_rr(uint8_t val, bool reset = false);
 	uint8_t get_rl(uint8_t val, bool reset = false);
 
-	void bit_b3_r8(uint16_t opcode, Operand op_s);
-	void res_b3_r8(uint16_t opcode, Operand op_s);
-	void set_b3_r8(uint16_t opcode, Operand op_s);
+	void bit_b3_r8(uint8_t opcode, Operand op_s);
+	void res_b3_r8(uint8_t opcode, Operand op_s);
+	void set_b3_r8(uint8_t opcode, Operand op_s);
 
-	void unimplemented(uint16_t opcode);
+	void unimplemented(uint8_t opcode);
 
 	void lockup(); //$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
 
@@ -164,22 +167,22 @@ private:
 	void ld_c_a();
 	void ld_a_c();
 
-	void ld(uint16_t opcode, std::vector<Operand> operands); // to go to the correct ld function
-	void inc(uint16_t opcode, Operand op_r);				 // to go to the correct inc function
-	void dec(uint16_t opcode, Operand op_r);				 // to go to the correct dec function
-	void add(uint16_t opcode, Operand op_s);
-	void jr(uint16_t opcode);
-	void adc(u_int16_t opcode, Operand op_s);
-	void sub(u_int16_t opcode, Operand op_s);
-	void sbc(u_int16_t opcode, Operand op_s);
-	void and_(u_int16_t opcode, Operand op_s);
-	void xor_(u_int16_t opcode, Operand op_s);
-	void or_(u_int16_t opcode, Operand op_s);
-	void cp_(u_int16_t opcode, Operand op_s);
-	void ret(u_int16_t opcode);
-	void jp(u_int16_t opcode);
-	void call(u_int16_t opcode);
-	void ldh(u_int16_t opcode);
+	void ld(uint8_t opcode, std::vector<Operand> operands); // to go to the correct ld function
+	void inc(uint8_t opcode, Operand op_r);				 // to go to the correct inc function
+	void dec(uint8_t opcode, Operand op_r);				 // to go to the correct dec function
+	void add(uint8_t opcode, Operand op_s);
+	void jr(uint8_t opcode);
+	void adc(uint8_t opcode, Operand op_s);
+	void sub(uint8_t opcode, Operand op_s);
+	void sbc(uint8_t opcode, Operand op_s);
+	void and_(uint8_t opcode, Operand op_s);
+	void xor_(uint8_t opcode, Operand op_s);
+	void or_(uint8_t opcode, Operand op_s);
+	void cp_(uint8_t opcode, Operand op_s);
+	void ret(uint8_t opcode);
+	void jp(uint8_t opcode);
+	void call(uint8_t opcode);
+	void ldh(uint8_t opcode);
 
 	// TODO template these
 	template <typename IntegerType1, typename IntegerType2>
@@ -194,23 +197,23 @@ private:
 		return (((val1 & 0xFF) + (val2 & 0xFF)) > 0xFF);
 	}
 
-	std::tuple<uint16_t, Instruction, bool> get_instruction();
+	std::tuple<uint8_t, Instruction, bool> get_instruction();
 
-	void debug_print(Instruction in, uint16_t opcode);
+	void debug_print(Instruction in, uint8_t opcode);
 
 public:
 	Cpu(Decoder dec, const std::string path);
 	~Cpu();
 
-	uint16_t get_register(Registers reg) const;
-	uint8_t get_register_bit(Registers reg, uint8_t bit_loc) const;
-	bool get_flag(uint8_t flag) const;
+	uint8_t get_register(Registers reg) const;
+	uint16_t get_16bitregister(Registers reg) const;
+	uint8_t get_flag(uint8_t flag) const;
 
-	void set_register(Registers reg, uint16_t val);
-	void set_register_bit(Registers reg, uint8_t bit_loc, uint8_t val);
+	void set_16bitregister(Registers reg, uint16_t val);
+	void set_register(Registers reg, uint8_t val);
 	void set_flag(uint8_t flag, uint8_t val);
 
-	void execute_instruction(Instruction in, uint16_t opcode, bool is_prefix_ins);
+	void execute_instruction(Instruction in, uint8_t opcode, bool is_prefix_ins);
 	void tick();
 };
 

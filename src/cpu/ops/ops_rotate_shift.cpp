@@ -71,11 +71,11 @@ void Cpu::rra()
     set_register(Registers::A, get_rr(get_register(Registers::A), true));
 }
 
-void Cpu::rlc_r8(uint16_t opcode, Operand op_r)
+void Cpu::rlc_r8(uint8_t opcode, Operand op_r)
 {
     if (op_r.reg == Registers::HL)
     {
-        mmap.write_u8(get_register(Registers::HL), get_rlc(mmap.read_u8(get_register(Registers::HL))));
+        mmap.write_u8(get_16bitregister(Registers::HL), get_rlc(mmap.read_u8(get_16bitregister(Registers::HL))));
     }
     else
     {
@@ -83,11 +83,11 @@ void Cpu::rlc_r8(uint16_t opcode, Operand op_r)
     }
 }
 
-void Cpu::rl_r8(uint16_t opcode, Operand op_r)
+void Cpu::rl_r8(uint8_t opcode, Operand op_r)
 {
     if (op_r.reg == Registers::HL)
     {
-        mmap.write_u8(get_register(Registers::HL), get_rl(mmap.read_u8(get_register(Registers::HL))));
+        mmap.write_u8(get_16bitregister(Registers::HL), get_rl(mmap.read_u8(get_16bitregister(Registers::HL))));
     }
     else
     {
@@ -95,11 +95,11 @@ void Cpu::rl_r8(uint16_t opcode, Operand op_r)
     }
 }
 
-void Cpu::rrc_r8(uint16_t opcode, Operand op_r)
+void Cpu::rrc_r8(uint8_t opcode, Operand op_r)
 {
     if (op_r.reg == Registers::HL)
     {
-        mmap.write_u8(get_register(Registers::HL), get_rrc(mmap.read_u8(get_register(Registers::HL))));
+        mmap.write_u8(get_16bitregister(Registers::HL), get_rrc(mmap.read_u8(get_16bitregister(Registers::HL))));
     }
     else
     {
@@ -107,11 +107,11 @@ void Cpu::rrc_r8(uint16_t opcode, Operand op_r)
     }
 }
 
-void Cpu::rr_r8(uint16_t opcode, Operand op_r)
+void Cpu::rr_r8(uint8_t opcode, Operand op_r)
 {
     if (op_r.reg == Registers::HL)
     {
-        mmap.write_u8(get_register(Registers::HL), get_rr(mmap.read_u8(get_register(Registers::HL))));
+        mmap.write_u8(get_16bitregister(Registers::HL), get_rr(mmap.read_u8(get_16bitregister(Registers::HL))));
     }
     else
     {
@@ -119,12 +119,12 @@ void Cpu::rr_r8(uint16_t opcode, Operand op_r)
     }
 }
 
-void Cpu::sla_r8(uint16_t opcode, Operand op_r)
+void Cpu::sla_r8(uint8_t opcode, Operand op_r)
 {
     uint8_t val;
     if (op_r.reg == Registers::HL)
     {
-        val = mmap.read_u8(get_register(Registers::HL));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
@@ -137,7 +137,7 @@ void Cpu::sla_r8(uint16_t opcode, Operand op_r)
     set_flag(FlagRegisters::z, val == 0);
     if (op_r.reg == Registers::HL)
     {
-        mmap.write_u8(get_register(Registers::HL), val);
+        mmap.write_u8(get_16bitregister(Registers::HL), val);
     }
     else
     {
@@ -145,12 +145,12 @@ void Cpu::sla_r8(uint16_t opcode, Operand op_r)
     }
 }
 
-void Cpu::sra_r8(uint16_t opcode, Operand op_r)
+void Cpu::sra_r8(uint8_t opcode, Operand op_r)
 {
     uint8_t val;
     if (op_r.reg == Registers::HL)
     {
-        val = mmap.read_u8(get_register(Registers::HL));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
@@ -163,7 +163,7 @@ void Cpu::sra_r8(uint16_t opcode, Operand op_r)
     set_flag(FlagRegisters::z, val == 0);
     if (op_r.reg == Registers::HL)
     {
-        mmap.write_u8(get_register(Registers::HL), val);
+        mmap.write_u8(get_16bitregister(Registers::HL), val);
     }
     else
     {
@@ -171,12 +171,12 @@ void Cpu::sra_r8(uint16_t opcode, Operand op_r)
     }
 }
 
-void Cpu::srl_r8(uint16_t opcode, Operand op_r)
+void Cpu::srl_r8(uint8_t opcode, Operand op_r)
 {
     uint8_t val;
     if (op_r.reg == Registers::HL)
     {
-        val = mmap.read_u8(get_register(Registers::HL));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
@@ -189,7 +189,7 @@ void Cpu::srl_r8(uint16_t opcode, Operand op_r)
     set_flag(FlagRegisters::z, val == 0);
     if (op_r.reg == Registers::HL)
     {
-        mmap.write_u8(get_register(Registers::HL), val);
+        mmap.write_u8(get_16bitregister(Registers::HL), val);
     }
     else
     {

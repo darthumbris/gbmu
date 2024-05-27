@@ -1,6 +1,6 @@
 #include "Cpu.hpp"
 
-void Cpu::call(uint16_t opcode)
+void Cpu::call(uint8_t opcode)
 {
     switch (opcode)
     {
@@ -57,14 +57,14 @@ void Cpu::call_cond_imm16(Condition c)
     default:
         break;
     }
-    set_register(Registers::SP, get_register(Registers::SP) - 2);
-    mmap.write_u16(get_register(Registers::SP), pc);
+    sp -= 2;
+    mmap.write_u16(sp, pc);
     pc = mmap.read_u16(pc - 2);
 }
 void Cpu::call_imm16()
 {
     pc += 2;
-    set_register(Registers::SP, get_register(Registers::SP) - 2);
-    mmap.write_u16(get_register(Registers::SP), pc);
+    sp -= 2;
+    mmap.write_u16(sp, pc);
     pc = mmap.read_u16(pc - 2);
 }
