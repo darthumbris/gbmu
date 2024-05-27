@@ -49,6 +49,7 @@ public:
     void tick(uint8_t interrupt, MemoryMap &mmap);
     bool init_window();
     void close();
+    void render_screen();
     inline bool status() {return data.status;}
     inline void set_status(bool val) {data.status = val;}
 };

@@ -2,7 +2,7 @@
 
 PixelProcessingUnit::PixelProcessingUnit(/* args */)
 {
-    mode = PPU_Modes::Horizontal_Blank;
+    // mode = PPU_Modes::Horizontal_Blank;
     lcd_clock = 0;
     data.status = false;
 }
@@ -28,6 +28,7 @@ void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
                 if (ly == 144) {
                     mmap.set_ppu_mode(PPU_Modes::Vertical_Blank);
                     handle_interrupt(true, mmap);
+                    render_screen();
                 }
                 else {
                     mmap.set_ppu_mode(PPU_Modes::OAM_Scan);
@@ -87,9 +88,14 @@ void PixelProcessingUnit::handle_interrupt(bool val, MemoryMap &mmap) {
 
 void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
     if (mmap.get_obj_enable()) {
-        SDL_BlitSurface(data.screen, NULL, data.surface, NULL);
-        SDL_UpdateWindowSurface(data.window);
     }
+        
+}
+
+void PixelProcessingUnit::render_screen() {
+    SDL_BlitSurface(data.screen, NULL, data.surface, NULL);
+    SDL_UpdateWindowSurface(data.window);
+    //TODO check what are best functions to do this stuff?
 }
 
 bool PixelProcessingUnit::init_window()
