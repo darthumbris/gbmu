@@ -132,7 +132,7 @@ public:
     inline uint8_t wram_bank_select() {return io_registers[(std::size_t)(0xFF70 & 0x7F)];} //TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
     
 
-    inline Sprite get_sprite(size_t index) {return }
+    Sprite get_sprite(size_t index);
 
     //PPU IO Registers
     inline uint8_t get_lcd_control() {return io_registers[(std::size_t)(0xFF40 & 0x7F)];}

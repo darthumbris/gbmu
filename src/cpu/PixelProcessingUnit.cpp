@@ -87,13 +87,17 @@ void PixelProcessingUnit::handle_interrupt(bool val, MemoryMap &mmap) {
 }
 
 void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
+    std::vector<Sprite> sprites;
     if (mmap.get_obj_enable()) {
         uint8_t ly = mmap.get_lcd_line_y();
         for (int i = 0; i < 40; i++) {
             //Sprite stuff
             Sprite spr = mmap.get_sprite(i);
-            if (ly < spr.y_pos && ly >= spr.y_pos - 16) {
-                
+            if (ly < spr.y_pos && ly >= spr.y_pos - 16) { //obj can be 8*8 or 8*16 //TODO maybe do a obj_size check that returns 8 or 16
+                if (get_obj_size() || ly < s.y_pos - 8) {
+                    sprites.push_back(spr);
+                    //TODO maybe have a check for sprites.size == 10
+                }
             }
         }
     }
