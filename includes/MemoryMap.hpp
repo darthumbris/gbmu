@@ -21,6 +21,13 @@ using Mem16k = std::array<uint8_t, 16384>;
 using Mem8k = std::array<uint8_t, 8192>;
 using Mem4k = std::array<uint8_t, 4096>;
 
+struct Sprite {
+    uint8_t y_pos;
+    uint8_t x_pos;
+    uint8_t tile_index;
+    uint8_t att_flags;
+};
+
 
 /*IO_Registers
  * 0xFF00           Joypad input
@@ -124,6 +131,9 @@ public:
     inline uint8_t vram_bank_select() {return io_registers[(std::size_t)(0xFF4F & 0x7F)];} //only bit 0 matters
     inline uint8_t wram_bank_select() {return io_registers[(std::size_t)(0xFF70 & 0x7F)];} //TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
     
+
+    inline Sprite get_sprite(size_t index) {return }
+
     //PPU IO Registers
     inline uint8_t get_lcd_control() {return io_registers[(std::size_t)(0xFF40 & 0x7F)];}
     inline uint8_t get_lcd_status() {return io_registers[(std::size_t)(0xFF41 & 0x7F)];}
@@ -169,6 +179,7 @@ public:
     void set_ppu_mode(uint8_t mode);
     inline void increase_lcd_line_y() {io_registers[(std::size_t)(0xFF44 & 0x7F)] += 1;}
     inline void reset_lcd_line_y() {io_registers[(std::size_t)(0xFF44 & 0x7F)] = 0;}
+    inline void reset_lcd_window_y() {io_registers[(std::size_t)(0xFF4A & 0x7F)] = 0;}
     inline void set_bg_window_enable_priority(bool val) { io_registers[(std::size_t)(0xFF40 & 0x7F)] = ((-val)) ^ io_registers[(std::size_t)(0xFF40 & 0x7F)] & (1U << 0) ;}
 };
 

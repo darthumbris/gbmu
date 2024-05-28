@@ -173,3 +173,11 @@ void MemoryMap::set_ppu_mode(uint8_t mode) {
     io_registers[(std::size_t)(0xFF41 & 0x7F)] ^= ((-mode)) ^ io_registers[(std::size_t)(0xFF41 & 0x7F)] & (1U << 0);
     io_registers[(std::size_t)(0xFF41 & 0x7F)] ^= ((-mode)) ^ io_registers[(std::size_t)(0xFF41 & 0x7F)] & (1U << 1);
 }
+
+Sprite MemoryMap::get_sprite(size_t index) {
+    uint8_t y_pos = oam[index * 4];
+    uint8_t x_pos = oam[index * 4 + 1];
+    uint8_t tile_index = oam[index * 4 + 2];
+    uint8_t attr_flags = oam[index * 4 + 3];
+    return Sprite(y_pos, x_pos, tile_index, attr_flags);
+}

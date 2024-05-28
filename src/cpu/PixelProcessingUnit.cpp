@@ -28,7 +28,7 @@ void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
                 if (ly == 144) {
                     mmap.set_ppu_mode(PPU_Modes::Vertical_Blank);
                     handle_interrupt(true, mmap);
-                    render_screen();
+                    render_screen(); //Renders the full screen when at the end of the 144 lines
                 }
                 else {
                     mmap.set_ppu_mode(PPU_Modes::OAM_Scan);
@@ -44,8 +44,8 @@ void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
                 lcd_clock -= 456;
                 mmap.increase_lcd_line_y();
                 uint8_t ly = mmap.get_lcd_line_y();
-                if (ly == 153) {
-                    //window line = 0; ?
+                if (ly > 153) {
+                    mmap.reset_lcd_window_y();
                     mmap.reset_lcd_line_y();
                     mmap.set_ppu_mode(PPU_Modes::OAM_Scan);
                     handle_interrupt(true, mmap);
@@ -88,6 +88,14 @@ void PixelProcessingUnit::handle_interrupt(bool val, MemoryMap &mmap) {
 
 void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
     if (mmap.get_obj_enable()) {
+        uint8_t ly = mmap.get_lcd_line_y();
+        for (int i = 0; i < 40; i++) {
+            //Sprite stuff
+            Sprite spr = mmap.get_sprite(i);
+            if (ly < spr.y_pos && ly >= spr.y_pos - 16) {
+                
+            }
+        }
     }
         
 }
