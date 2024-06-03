@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
     {
         cpu.tick();
     }
+    cpu.close();
 
     // if (!init_window(&data))
     // {

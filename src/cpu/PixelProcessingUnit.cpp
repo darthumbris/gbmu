@@ -5,10 +5,13 @@ PixelProcessingUnit::PixelProcessingUnit(/* args */)
     // mode = PPU_Modes::Horizontal_Blank;
     lcd_clock = 0;
     data.status = false;
+    init_window();
+    std::cout << "made ppu" << std::endl;
 }
 
 PixelProcessingUnit::~PixelProcessingUnit()
 {
+    // close();
 }
 
 void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
@@ -17,7 +20,7 @@ void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
     if (mmap.get_lcd_enable()) {
         //TODO have a check for the dma (CGB only?) ?
         // std::cout << "ppu mode: " << (uint16_t)mmap.get_ppu_mode() << ", lcd_clock: " << lcd_clock << ", ly: "<< (uint16_t)mmap.get_lcd_line_y() << std::endl;
-
+        // std::cout << "ly: " << (uint16_t)mmap.get_lcd_line_y() << std::endl;
         lcd_clock += (uint16_t)cycle;
         switch (mmap.get_ppu_mode())
         {
@@ -114,6 +117,22 @@ void PixelProcessingUnit::fill_pixels(std::deque<std::array<uint8_t, 2>> &pixels
     }
 }
 
+void PixelProcessingUnit::set_pixel(uint32_t x, uint32_t y, uint32_t pixel) {
+    // std::cout << "set trying to set pixel: " << x <<", " << y<< std::endl;
+    // std::cout << "pixels: " << data.screen->w << ", " << data.screen->h << ", pitch: " << data.screen->pitch << std::endl;
+    uint32_t * const target_pixel = (uint32_t *) ((uint8_t *) data.screen->pixels
+                                             + y * data.screen->pitch
+                                             + x * data.screen->format->BytesPerPixel);
+    // std::cout << "pixel offset: " << y * data.screen->pitch
+    //                                          + x * data.screen->format->BytesPerPixel << std::endl;
+    *target_pixel = pixel;
+    // uint8_t* pixels = (uint8_t*)data.screen->pixels;
+    // pixels[4 * (y * data.screen->pitch + x) + 0] = pixel;
+    // pixels[4 * (y * data.screen->pitch + x) + 1] = pixel << 8;
+    // pixels[4 * (y * data.screen->pitch + x) + 2] = pixel << 16;
+    // pixels[4 * (y * data.screen->pitch + x) + 3] = pixel << 24;
+}
+
 void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
     std::deque<std::array<uint8_t, 2>> pixels;
     std::vector<Sprite> sprites;
@@ -121,7 +140,7 @@ void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
     uint8_t y = (mmap.get_lcd_line_y() + mmap.get_lcd_scrolling_y()) % 255;
     uint8_t x = mmap.get_lcd_scrolling_x();
     fill_pixels(pixels, x, 16, y, mmap);
-    std::cout << "pixels filled: " << pixels.size() << std::endl;
+    // std::cout << "pixels filled: " << pixels.size() << std::endl;
     if (mmap.get_obj_enable()) {
         uint8_t ly = mmap.get_lcd_line_y();
         for (int i = 0; i < 40; i++) {
@@ -135,17 +154,23 @@ void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
             }
         }
     }
-        
+    // std::cout << "ly: " << (uint16_t)mmap.get_lcd_line_y() << std::endl;
+    // std::cout << "trying to set pixel: " << 0 <<", " << static_cast<uint32_t>(mmap.get_lcd_line_y()) * 160<< std::endl;
+    // set_pixel(0, static_cast<uint32_t>(mmap.get_lcd_line_y()), 1);
+    // data.screen->pixels[y * 160] = pixels[0][0];
+    pixels.clear();
+    sprites.clear();
 }
 
 void PixelProcessingUnit::render_screen() {
-    // SDL_BlitSurface(data.screen, NULL, data.surface, NULL);
-    // SDL_UpdateWindowSurface(data.window);
+    SDL_BlitSurface(data.screen, NULL, data.surface, NULL);
+    SDL_UpdateWindowSurface(data.window);
     //TODO check what are best functions to do this stuff?
 }
 
 bool PixelProcessingUnit::init_window()
-{
+{   
+    std::cout << "init window" << std::endl;
     bool success = true;
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -166,16 +191,22 @@ bool PixelProcessingUnit::init_window()
         {
             // Get window surface
             data.surface = SDL_GetWindowSurface(data.window);
+            data.screen = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 4, 0, 0, 0, 0);
+            if (data.screen == NULL || data.surface == NULL) {
+                printf("Screen surface could not be created! SDL_Error: %s\n", SDL_GetError());
+                success = false;
+            }
         }
     }
+    std::cout << "success: " << success << std::endl;
     return success;
 }
 
 void PixelProcessingUnit::close() {
-    SDL_FreeSurface(data.surface);
-    data.surface = NULL;
     SDL_FreeSurface(data.screen);
     data.screen = NULL;
+    SDL_FreeSurface(data.surface);
+    data.surface = NULL;
 
     // Destroy window
     SDL_DestroyWindow(data.window);

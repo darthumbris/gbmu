@@ -16,8 +16,9 @@ Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
     debug_count = 0;
     // pc = 0x100;
     mmap = MemoryMap(path);
-    ppu = PixelProcessingUnit();
-    ppu.init_window();
+    // ppu = PixelProcessingUnit();
+    // ppu.init_window();
+    std::cout << "made cpu" << std::endl;
 }
 
 Cpu::~Cpu()

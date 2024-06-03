@@ -224,6 +224,7 @@ public:
 	void event_handler();
 	void handle_input(SDL_Event &e);
 	inline bool status() {return ppu.status();}
+	inline void close() {ppu.close();}
 };
 
 #endif

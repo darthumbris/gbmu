@@ -46,6 +46,7 @@ private:
     void render_scanline(MemoryMap &mmap);
     uint8_t get_pixel(uint8_t tile_index, uint8_t x, uint8_t y, MemoryMap &mmap);
     void fill_pixels(std::deque<std::array<uint8_t, 2>> &pixels, uint16_t x, uint8_t n, uint8_t y, MemoryMap &mmap);
+    void set_pixel(uint32_t x, uint32_t y, uint32_t pixel);
 
 public:
     PixelProcessingUnit(/* args */);
