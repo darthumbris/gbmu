@@ -195,6 +195,7 @@ void Cpu::ld_imm16_sp()
 
 void Cpu::ld_hl_sp_imm8()
 {
+    std::cout << "calling this one" << std::endl;
     uint8_t e8 = mmap.read_u8(pc);
     pc += 1;
     uint16_t val = sp;
@@ -265,8 +266,11 @@ void Cpu::ld_d_a_hl()
 void Cpu::pop_r16stk(Operand op_r)
 {
     uint16_t val = sp;
-    set_16bitregister(op_r.reg, val);
-    sp = val + 2;
+    if (op_r.reg == Registers::BC) {
+        // std::cout << "popping BC with val: " << std::hex << mmap.read_u16(sp) << " and sp: " << sp <<std::dec << std::endl;
+    }
+    set_16bitregister(op_r.reg, mmap.read_u16(sp));
+    sp += 2;
 }
 
 void Cpu::push_r16stk(Operand op_s)

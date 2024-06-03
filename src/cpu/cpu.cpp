@@ -5,6 +5,9 @@
 #include <fstream>
 #include <stdexcept>
 
+uint32_t const DEBUG_START = 0;
+uint32_t const DEBUG_COUNT = 25000;
+
 Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
 {
     u8_registers = {0};
@@ -25,6 +28,7 @@ uint16_t Cpu::get_16bitregister(Registers reg) const
 {
     if (reg < 8) // 8bit register
     {
+        std::cout << "what" << std::endl;
         return (u8_registers[reg]);
     }
     else // 16-bit register
@@ -32,7 +36,7 @@ uint16_t Cpu::get_16bitregister(Registers reg) const
         if (reg == Registers::SP) {
             return sp;
         }
-        return (u8_registers[reg - Registers::BC] << 8) + u8_registers[reg - Registers::BC + 1];
+        return ((uint16_t)(u8_registers[reg - Registers::BC] << 8) + (uint16_t)u8_registers[reg - Registers::BC + 1]);
     }
 }
 
@@ -60,6 +64,7 @@ void Cpu::set_16bitregister(Registers reg, uint16_t val)
 {
     if (reg < 8) //8bit register
     {
+        std::cout << "what" << std::endl;
         u8_registers[reg] = (uint8_t)val; //TODO check bit shifting here
     }
     else // 16-bit register
@@ -68,6 +73,10 @@ void Cpu::set_16bitregister(Registers reg, uint16_t val)
             sp = val;
         }
         else {
+            if (debug_count == 24601 || debug_count == 24602) {
+
+            // std::cout << "setting 16bit register: " << reg - Registers::BC << ", " << reg - Registers::BC + 1 << ", with val: " << val << std::endl;
+            }
             u8_registers[reg - Registers::BC] = (uint8_t)(val >> 8);
             u8_registers[reg - Registers::BC + 1] = (uint8_t)(val & 0xff);
         }
@@ -116,16 +125,19 @@ inline constexpr auto operator"" _(const char *str, size_t len)
 void Cpu::tick()
 {
     auto dec = get_instruction();
-    if (debug_count < 33) {
-        std::cout << "debug count: " << debug_count << "\t";
-        debug_print(std::get<1>(dec), std::get<0>(dec));
+    if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
+        // std::cout << "debug count: "  << debug_count << "  ";
+        // debug_print(std::get<1>(dec), std::get<0>(dec));
+        printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
     }
     else {
         // std::cout << "debug count: " << debug_count << std::endl;
     }
-    if (debug_count < 2147483647) {
-        debug_count += 1;
-    }
+    // if (debug_count > 24578 && debug_count < 24630) {
+        // std::bitset<8> x(get_register(Registers::F));
+        // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
+        // std::cout << "debug count: "  << debug_count << ", register: " << x << std::endl;
+    // }
     execute_instruction(std::get<1>(dec), std::get<0>(dec), std::get<2>(dec));
     pc &= 0xFFFF;
     if (pc == 0x0100)
@@ -136,11 +148,14 @@ void Cpu::tick()
     }
     ppu.tick(m_cycle, mmap);
     event_handler();
+    if (debug_count < 2147483647) {
+        debug_count += 1;
+    }
 }
 
 void Cpu::debug_print(Instruction in, uint8_t opcode)
 {
-    std::cout << "[0x" << std::setfill('0') << std::setw(4) << std::hex << pc - 1;
+    std::cout << "[0x" << std::setfill('0') << std::setw(4) << std::hex << pc;
     std::cout << "]  0x" << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << "\t";
     in.print_instruction();
 

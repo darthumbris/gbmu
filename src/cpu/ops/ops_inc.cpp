@@ -67,5 +67,5 @@ void Cpu::inc_r8(Operand op_r)
     }
     set_flag(FlagRegisters::z, (val + 1) == 0);
     set_flag(FlagRegisters::n, 0);
-    set_flag(FlagRegisters::h, half_carry_flag_set(val, 1));
+    set_flag(FlagRegisters::h, (val & 0xF) == 0xF);
 }

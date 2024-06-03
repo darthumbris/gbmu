@@ -60,29 +60,32 @@ uint8_t MemoryMap::read_u8(uint16_t addr)
         if (!is_boot_rom_enabled())
         {
             // std::cout << "reading from bios" << std::endl;
-            return boot_rom[(std::size_t)addr];
+            return boot_rom[addr];
         }
-        return rom[(std::size_t)addr];
+        std::cout << "reading from rom" << std::endl;
+        return rom[addr];
     case 0x00FF ... 0x3FFF:
-        return rom[(std::size_t)addr];
+        return rom[addr];
     case 0x4000 ... 0x7FFF:
-        return rom_banks[0][(std::size_t)(addr & 0x3FFF)]; // TODO check how to get what rom_bank
+        return rom_banks[0][addr - 0x4000]; // TODO check how to get what rom_bank
     case 0x8000 ... 0x9FFF:
-        return vram[0][(std::size_t)(addr & 0x1FFF)]; // TODO check how to get what vram_bank
+        return vram[vram_bank_select()][addr - 0x8000]; // TODO check how to get what vram_bank
     case 0xA000 ... 0xBFFF:
-        return ext_ram[0][(std::size_t)(addr & 0x1FFF)]; // TODO check how to get what extram_bank
+        return ext_ram[0][addr - 0xA000]; // TODO check how to get what extram_bank
     case 0xC000 ... 0xDFFF:
-        return work_ram[0][(std::size_t)(addr & 0x0FFF)]; // TODO check how to get what workram_bank
+        return work_ram[wram_bank_select()][addr - 0xC000]; // TODO check how to get what workram_bank
     case 0xE000 ... 0xFDFF:
-        return echo_ram[0][(std::size_t)(addr & 0x0FFF)]; // TODO check how to get what echo_ram_bank
+        return echo_ram[wram_bank_select()][addr - 0xE000]; // TODO check how to get what echo_ram_bank
     case 0xFE00 ... 0xFE9F:
-        return oam[(std::size_t)(addr & 0x9F)];
+        return oam[addr - 0xFE00];
     case 0xFEA0 ... 0xFEFF:
-        return not_usable[(std::size_t)(addr & 0x5F)];
+        return not_usable[addr - 0xFEA0];
     case 0xFF00 ... 0xFF7F:
-        return io_registers[(std::size_t)(addr & 0x7F)];
+        return io_registers[addr - 0xFF00];
     case 0xFF80 ... 0xFFFE:
-        return high_ram[(std::size_t)(addr & 0x7E)];
+        // std::cout << "reading from highram: " << std::hex << addr << ", val: "<< (uint16_t)high_ram[(std::size_t)(addr & 0x7E)] << std::dec << std::endl;
+        // std::cout << "address: " << std::dec << (std::size_t)(addr & 0x7E) << std::endl;
+        return high_ram[addr - 0xFF80];
     case 0xFFFF:
         return interrupt;
 
@@ -106,54 +109,60 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
     case 0x0000 ... 0x00FE:
         if (!is_boot_rom_enabled())
         {
-            // printf("trying to write to bios at addr: %d bios is size: %d\n", (std::size_t)(addr), bios.size());
+            printf("trying to write to bios at addr: %lu bios is size: %lu\n", (std::size_t)(addr), boot_rom.size());
             // std::cout << "bios trying to write addr: " << st::dec << (std::size_t)(addr) << std::dec << std::endl;
             // std::cout << "writing to bios" << std::endl;
-            boot_rom[(std::size_t)(addr)] = val;
+            boot_rom[addr] = val;
+            break;
         }
-        // std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
-        rom[(std::size_t)(addr)] = val;
+        std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
+        rom[addr] = val;
         break;
     case 0x00FF ... 0x3FFF:
         // std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
-        rom[(std::size_t)(addr)] = val;
+        rom[addr - 0x00FF] = val;
         break;
     case 0x4000 ... 0x7FFF:
         // std::cout << "rom[0] trying to write addr: " << std::dec << (std::size_t)(addr & 0x3FFF) << std::dec << std::endl;
-        rom_banks[0][(std::size_t)(addr & 0x3FFF)] = val; // TODO check how to get what rom_bank
+        rom_banks[0][addr - 0x4000] = val; // TODO check how to get what rom_bank
         break;
     case 0x8000 ... 0x9FFF:
         // std::cout << "vram: trying to write addr: " << std::dec << (std::size_t)(addr & 0x1FFF) << std::dec << std::endl;
-        vram[vram_bank_select()][(std::size_t)(addr & 0x1FFF)] = val; // TODO check how to get what vram_bank
+        vram[vram_bank_select()][addr - 0x8000] = val; // TODO check how to get what vram_bank
         break;
     case 0xA000 ... 0xBFFF:
         // std::cout << "ext[0] trying to write addr: " << std::dec << (std::size_t)(addr & 0x1FFF) << std::dec << std::endl;
-        ext_ram[0][(std::size_t)(addr & 0x1FFF)] = val; // TODO check how to get what extram_bank
+        ext_ram[0][addr - 0xA000] = val; // TODO check how to get what extram_bank
         break;
     case 0xC000 ... 0xDFFF:
         // std::cout << "work[0] trying to write addr: " << std::dec << (std::size_t)(addr & 0x0FFF) << std::dec << std::endl;
-        work_ram[wram_bank_select()][(std::size_t)(addr & 0x0FFF)] = val;
+        work_ram[wram_bank_select()][addr - 0xC000] = val;
         break;
     case 0xE000 ... 0xFDFF:
         // std::cout << "echo trying to write addr: " << std::dec << (std::size_t)(addr & 0x0FFF) << std::dec << std::endl;
-        echo_ram[wram_bank_select()][(std::size_t)(addr & 0x0FFF)] = val;
+        echo_ram[wram_bank_select()][addr - 0xE000] = val;
         break;
     case 0xFE00 ... 0xFE9F:
         // std::cout << "oam: trying to write addr: " << std::dec << (std::size_t)(addr & 0x9F) << std::dec << std::endl;
-        oam[(std::size_t)(addr & 0x9F)] = val;
+        oam[addr - 0xFE00] = val;
         break;
     case 0xFEA0 ... 0xFEFF:
         // std::cout << "Not usable trying to write addr: " << std::dec << (std::size_t)(addr & 0x5F) << std::dec << std::endl;
-        not_usable[(std::size_t)(addr & 0x5F)] = val;
+        not_usable[addr - 0xFEA0] = val;
         break;
     case 0xFF00 ... 0xFF7F:
-        // std::cout << "io trying to write addr: " << std::dec << (std::size_t)(addr & 0x7F) << std::dec << std::endl;
-        io_registers[(std::size_t)(addr & 0x7F)] = val;
+        // std::cout << "io trying to write addr: 0x" << std::hex << (std::size_t)(addr) << std::dec << std::endl;
+        io_registers[addr - 0xFF00] = val;
         break;
     case 0xFF80 ... 0xFFFE:
+        // std::cout << "reading from highram: " << std::hex << addr << ", val: "<< (uint16_t)high_ram[(std::size_t)(addr & 0x7E)] << std::dec << std::endl;
         // printf("trying to write to high_ram at addr: %d\n", (std::size_t)(addr & 0x7E));
-        // std::cout << "high ram trying to write addr: " << std::dec << (std::size_t)(addr & 0x7E) << std::dec << std::endl;
-        high_ram[(std::size_t)(addr & 0x7E)] = val;
+        if (addr == 0xFFFa || addr == 0xFFFb) {
+        // std::cout << "high ram trying to write addr: " << std::hex << addr << " with val: " << (uint16_t)val << std::dec << std::endl;
+        // std::cout << "address: " << std::dec << (std::size_t)(addr & 0x7E) << std::endl;
+        // std::cout << "address - thing: " << std::dec << addr - 0xFF80 << std::endl;
+        }
+        high_ram[addr - 0xFF80] = val;
         break;
     case 0xFFFF:
         interrupt = val;
@@ -170,8 +179,24 @@ void MemoryMap::write_u16(uint16_t addr, uint16_t val)
 }
 
 void MemoryMap::set_ppu_mode(uint8_t mode) {
-    io_registers[(std::size_t)(0xFF41 & 0x7F)] ^= ((-mode)) ^ io_registers[(std::size_t)(0xFF41 & 0x7F)] & (1U << 0);
-    io_registers[(std::size_t)(0xFF41 & 0x7F)] ^= ((-mode)) ^ io_registers[(std::size_t)(0xFF41 & 0x7F)] & (1U << 1);
+    switch (mode) {
+        case 0:
+            io_registers[0xFF41 -0xFF00] &= ~(1 << 0);
+            io_registers[0xFF41 -0xFF00] &= ~(1 << 1);
+        break;
+        case 1:
+            io_registers[0xFF41 -0xFF00] |= 1 << 0;
+            io_registers[0xFF41 -0xFF00] &= ~(1 << 1);
+        break;
+        case 2:
+            io_registers[0xFF41 -0xFF00] &= ~(1 << 0);
+            io_registers[0xFF41 -0xFF00] |= 1 << 1;
+        break;
+        case 3:
+            io_registers[0xFF41 -0xFF00] |= 1 << 0;
+            io_registers[0xFF41 -0xFF00] |= 1 << 1;
+        break;
+    }
 }
 
 Sprite MemoryMap::get_sprite(size_t index) {
@@ -179,5 +204,5 @@ Sprite MemoryMap::get_sprite(size_t index) {
     uint8_t x_pos = oam[index * 4 + 1];
     uint8_t tile_index = oam[index * 4 + 2];
     uint8_t attr_flags = oam[index * 4 + 3];
-    return Sprite(y_pos, x_pos, tile_index, attr_flags);
+    return {y_pos, x_pos, tile_index, attr_flags};
 }

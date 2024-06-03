@@ -126,6 +126,9 @@ public:
     void write_u8(uint16_t addr, uint8_t val);
     void write_u16(uint16_t addr, uint16_t val);
 
+    inline uint8_t get_tile_index(uint8_t vbank, uint8_t x, uint8_t y, uint8_t tile_map) {return vram[vbank][0x1800 + (x + y * 32 + 32 * tile_map)];} //TODO check this
+    inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][tile_index];} //TODO check this
+
 
     inline bool is_boot_rom_enabled() {return io_registers[(std::size_t)(0xFF50 & 0x7F)];}
     inline uint8_t vram_bank_select() {return io_registers[(std::size_t)(0xFF4F & 0x7F)];} //only bit 0 matters

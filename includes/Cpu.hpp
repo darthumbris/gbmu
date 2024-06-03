@@ -7,6 +7,7 @@
 #include "MemoryMap.hpp"
 #include <iostream>
 #include "PixelProcessingUnit.hpp"
+#include <bitset>
 
 using namespace Dict;
 

@@ -57,7 +57,12 @@ void Cpu::jr_imm8()
 {
     uint8_t val = mmap.read_u8(pc);
     pc += 1;
-    pc -= (uint16_t)(255 - val + 1);
+    if (val > 127) {
+        pc -= (uint16_t)(255 - val + 1);
+    }
+    else {
+        pc += (uint16_t)val;
+    }
 }
 
 void Cpu::jr_cond_imm8(Condition c)
@@ -82,13 +87,23 @@ void Cpu::jr_cond_imm8(Condition c)
     default:
         break;
     }
+    if ((debug_count > 24576 && debug_count < 24580) || (debug_count > 24627 && debug_count < 24631)) {
+        // std::cout << "0x20 offset: " << offset << ", val: " << (uint16_t)val << std::endl;
+        // std::bitset<8> x(get_register(Registers::F));
+        // std::cout << "0x20 flag: 0b" << x << std::endl;
+    }
     if (offset)
     {
-        pc -= (uint16_t)(255 - val + 1);
+        if (val > 127) {
+            pc -= (uint16_t)(255 - val + 1);
+        }
+        else {
+            pc += (uint16_t)val;
+        }
     }
     else
     {
-        pc += (uint16_t)val;
+        // pc += (uint16_t)val;
     }
 }
 

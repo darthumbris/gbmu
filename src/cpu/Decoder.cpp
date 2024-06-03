@@ -34,7 +34,7 @@ namespace Dict
                 std::stringstream ss;
                 ss << std::hex << it.key();
                 ss >> x;
-                std::cout << "adding instruction for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << x << std::dec << std::endl;
+                // std::cout << "adding instruction for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << x << std::dec << std::endl;
                 instructions.emplace(std::make_pair(x, Instruction(*it)));
             }
             json pref = j.at("cbprefixed");
@@ -44,7 +44,7 @@ namespace Dict
                 std::stringstream ss;
                 ss << std::hex << it.key();
                 ss >> x;
-                std::cout << "adding prefixed_instructions for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << x << std::dec << std::endl;
+                // std::cout << "adding prefixed_instructions for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << x << std::dec << std::endl;
                 prefixed_instructions.emplace(std::make_pair(x, Instruction(*it)));
             }
         }
@@ -52,8 +52,8 @@ namespace Dict
         {
             std::cout << e.what() << std::endl;
         }
-        std::cout << "instructions: " << instructions.size() << std::endl;
-        std::cout << "prefixed_instructions: " << prefixed_instructions.size() << std::endl;
+        // std::cout << "instructions: " << instructions.size() << std::endl;
+        // std::cout << "prefixed_instructions: " << prefixed_instructions.size() << std::endl;
     }
 
     Decoder::~Decoder()

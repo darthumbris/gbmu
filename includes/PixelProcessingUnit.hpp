@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <SDL2/SDL.h>
 #include "MemoryMap.hpp"
+#include <deque>
+#include <array>
+#include <iostream>
 
 const int SCREEN_WIDTH = 160;
 const int SCREEN_HEIGHT = 144;
@@ -41,6 +44,8 @@ private:
     void handle_interrupt(bool val, MemoryMap &mmap);
 
     void render_scanline(MemoryMap &mmap);
+    uint8_t get_pixel(uint8_t tile_index, uint8_t x, uint8_t y, MemoryMap &mmap);
+    void fill_pixels(std::deque<std::array<uint8_t, 2>> &pixels, uint16_t x, uint8_t n, uint8_t y, MemoryMap &mmap);
 
 public:
     PixelProcessingUnit(/* args */);

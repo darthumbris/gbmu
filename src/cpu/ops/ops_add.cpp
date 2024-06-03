@@ -112,10 +112,11 @@ void Cpu::adc_a_r8(Operand op_s)
         val = get_register(op_s.reg);
     }
     set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::z, 0);
     set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
     set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
     set_register(Registers::A, a_val + val + get_flag(FlagRegisters::c));
-    set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
+    // set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
 }
 
 void Cpu::adc_a_imm8()
@@ -124,8 +125,9 @@ void Cpu::adc_a_imm8()
     pc += 1;
     uint8_t a_val = get_register(Registers::A);
     set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::z, 0);
     set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
     set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
     set_register(Registers::A, a_val + val + get_flag(FlagRegisters::c));
-    set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
+    // set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
 }
