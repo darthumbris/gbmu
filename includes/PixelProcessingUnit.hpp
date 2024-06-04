@@ -39,6 +39,7 @@ private:
     uint8_t get_pixel(uint8_t tile_index, uint8_t x, uint8_t y, MemoryMap &mmap);
     void fill_pixels(std::deque<std::array<uint8_t, 2>> &pixels, uint16_t x, uint8_t n, uint8_t y, MemoryMap &mmap);
     void set_pixel(uint32_t x, uint32_t y, uint8_t pixel, MemoryMap &mmap);
+    void handle_sprites(std::vector<Sprite> sprites, std::deque<std::array<uint8_t, 2>> &pixels, uint32_t x, MemoryMap &mmap);
 
 public:
     PixelProcessingUnit();

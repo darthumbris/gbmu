@@ -172,15 +172,54 @@ void PixelProcessingUnit::set_pixel(uint32_t x, uint32_t y, uint8_t pixel, Memor
     data.framebuffer[x + y * 160] = color;
 }
 
+void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, std::deque<std::array<uint8_t, 2>> &pixels, uint32_t x, MemoryMap &mmap) {
+    uint8_t ly = mmap.get_lcd_line_y();
+    uint8_t spr_num = 0;
+    for (auto spr : sprites) {
+            std::cout << "sprites" << std::endl;
+                if ((spr.x_pos < 8 && x == 0) || spr.x_pos == x + 8) {
+                    uint8_t size = 8;
+                    if (spr.x_pos < 8) {
+                        size = spr.x_pos;
+                    }
+                    else if (spr.x_pos >= 160 - 8) {
+                        size = 160 - spr.x_pos;
+                    }
+                    std::cout << "size: " << size << std::endl;
+                    std::deque<std::array<uint8_t, 2>> replacement;
+                    for (uint8_t y = 0; y < size; y++) {
+                        //TODO handle flipx/flipy
+                        replacement.push_front(pixels[0]);
+                        pixels.pop_front();
+                    }
+                    for (uint8_t y = 0; y < size; y++) {
+
+                        std::array<uint8_t, 2> item = replacement[0];
+                        replacement.pop_front();
+                        if (item[1] != 0 || (item[0] != 0 && (spr.att_flags & 0b10000000) == 0)) {
+                            pixels.push_front(item);
+                        } else {
+                            std::cout << "sx: " << spr.x_pos << " sy: " << spr.y_pos << " | x:" << x << " line:" << ly << std::endl;
+                            std::array<uint8_t, 2> sprite_pixel;
+                            sprite_pixel[0] = get_pixel(spr.tile_index, x - spr.x_pos + y - 8, (ly + 8) - spr.y_pos, mmap);
+                            sprite_pixel[1] = spr_num + 1;
+                            pixels.push_front(sprite_pixel);
+                        }
+                    }
+                }
+            spr_num++;
+        }
+}
+
 void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
     std::deque<std::array<uint8_t, 2>> pixels;
     std::vector<Sprite> sprites;
 
-    uint8_t start_y = (mmap.get_lcd_line_y() + mmap.get_lcd_scrolling_y()) % 255;
+    uint8_t ly = mmap.get_lcd_line_y();
+    uint8_t start_y = (ly + mmap.get_lcd_scrolling_y()) % 255;
     uint32_t start_x = mmap.get_lcd_scrolling_x();
     fill_pixels(pixels, start_x, 16, start_y, mmap);
     if (mmap.get_obj_enable()) {
-        uint8_t ly = mmap.get_lcd_line_y();
         for (int i = 0; i < 40; i++) {
             //Sprite stuff
             Sprite spr = mmap.get_sprite(i);
@@ -197,47 +236,10 @@ void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
             start_x = (x + mmap.get_lcd_scrolling_x() + 8);
             fill_pixels(pixels, start_x, 8, start_y, mmap);
         }
-        uint8_t spr_num = 0;
-
-        for (auto spr : sprites) {
-            std::cout << "sprites" << std::endl;
-                if ((spr.x_pos < 8 && x == 0) || spr.x_pos == x + 8) {
-                    uint8_t size = 8;
-                    if (spr.x_pos < 8) {
-                        size = spr.x_pos;
-                    }
-                    else if (spr.x_pos >= 160 - 8) {
-                        size = 160 - spr.x_pos;
-                    }
-                    std::cout << "size: " << size << std::endl;
-                    std::deque<std::array<uint8_t, 2>> replacement;
-                    for (uint8_t y = 0; y < size; y++) {
-            //           Not handling flipx or flipy
-                        replacement.push_front(pixels[0]);
-                        pixels.pop_front();
-                    }
-                    for (uint8_t y = 0; y < size; y++) {
-
-                        std::array<uint8_t, 2> item = replacement[0];
-                        replacement.pop_front();
-                        if (item[1] != 0 || (item[0] != 0 && (spr.att_flags & 0b10000000) == 0)) {
-                            pixels.push_front(item);
-                        } else {
-                            std::cout << "sx: " << spr.x_pos << " sy: " << spr.y_pos << " | x:" << x << " line:" << mmap.get_lcd_line_y() << std::endl;
-                            std::array<uint8_t, 2> sprite_pixel;
-                            sprite_pixel[0] = get_pixel(spr.tile_index, x - spr.x_pos + y - 8, (mmap.get_lcd_line_y() + 8) - spr.y_pos, mmap);
-                            sprite_pixel[1] = spr_num + 1;
-                            pixels.push_front(sprite_pixel);
-                        }
-                    }
-                }
-            spr_num++;
-        }
-        set_pixel(x, static_cast<uint32_t>(mmap.get_lcd_line_y()), pixels[0][0], mmap);
+        handle_sprites(sprites, pixels, x, mmap);        
+        set_pixel(x, ly, pixels[0][0], mmap);
         pixels.pop_front();
     }
-    pixels.clear();
-    sprites.clear();
 }
 
 void PixelProcessingUnit::render_screen() {
