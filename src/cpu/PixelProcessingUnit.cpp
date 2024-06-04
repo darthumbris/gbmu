@@ -1,8 +1,7 @@
 #include "PixelProcessingUnit.hpp"
 
-PixelProcessingUnit::PixelProcessingUnit(/* args */)
+PixelProcessingUnit::PixelProcessingUnit()
 {
-    // mode = PPU_Modes::Horizontal_Blank;
     lcd_clock = 0;
     init_window();
     data.status = false;
@@ -11,25 +10,17 @@ PixelProcessingUnit::PixelProcessingUnit(/* args */)
 
 PixelProcessingUnit::~PixelProcessingUnit()
 {
-    // close();
 }
 
 void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
 {
-    // std::cout << "lcd status: " << (uint16_t)mmap.get_lcd_status() << std::endl;
     if (mmap.get_lcd_enable()) {
         //TODO have a check for the dma (CGB only?) ?
-        // std::cout << "ppu mode: " << (uint16_t)mmap.get_ppu_mode() << ", lcd_clock: " << lcd_clock << ", ly: "<< (uint16_t)mmap.get_lcd_line_y() << std::endl;
-        // std::cout << "ly: " << (uint16_t)mmap.get_lcd_line_y() << std::endl;
-        // std::cout << "cycle: " << (uint16_t)cycle / 4 << std::endl;
         lcd_clock += (uint16_t)cycle;
-        // std::cout << "clock: " << lcd_clock / 4 << std::endl;
-
         //TODO get this working with the switch case stuff 
 
         if (lcd_clock >= 456) {
             lcd_clock -= 456;
-            // mmap.
             mmap.increase_lcd_line_y_mod();
             uint8_t ly = mmap.get_lcd_line_y();
             if (mmap.get_ppu_mode() != PPU_Modes::Vertical_Blank && ly >= 144) {
@@ -41,19 +32,16 @@ void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
             if (lcd_clock <= 80) {
                 if (mmap.get_ppu_mode() != PPU_Modes::OAM_Scan) {
                     mmap.set_ppu_mode(PPU_Modes::OAM_Scan);
-                    // println!("Mode Change: 2");
                 }
             }
             else if (lcd_clock <= 252) {
                 if (mmap.get_ppu_mode() != PPU_Modes::Pixel_Drawing) {
                     mmap.set_ppu_mode(PPU_Modes::Pixel_Drawing);
-                    // println!("Mode Change: 3");
                 }
             }
             else {
                 if (mmap.get_ppu_mode() != PPU_Modes::Horizontal_Blank) {
                     mmap.set_ppu_mode(PPU_Modes::Horizontal_Blank);
-                    // println!("Mode Change: 0");
                     render_scanline(mmap);
                 }
             }
@@ -119,9 +107,6 @@ void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
         //     break;
         // }
     }
-    else {
-        // std::cout << "lcd off" << std::endl;
-    }
 }
 
 void PixelProcessingUnit::handle_interrupt(bool val, MemoryMap &mmap) {
@@ -149,8 +134,6 @@ uint8_t PixelProcessingUnit::get_pixel(uint8_t tile_index, uint8_t x, uint8_t y,
 void PixelProcessingUnit::fill_pixels(std::deque<std::array<uint8_t, 2>> &pixels, uint16_t x, uint8_t n, uint8_t y, MemoryMap &mmap) {
     uint8_t vbank = mmap.vram_bank_select() ? 1 : 0; //TODO if this is correct
     uint16_t tile_map = mmap.get_background_tilemap() ? 0x1c00 : 0x1800;
-    // std::cout << "map number: " << map_number << std::endl;
-    // tile_map += (((mmap.get_lcd_line_y() + mmap.get_lcd_scrolling_y()) & 255) >> 3) << 5;
     for (uint16_t p_x = x; p_x < (x + (uint16_t)n); p_x++) {
         if (mmap.get_window_enable() && mmap.get_lcd_window_x() == 0 + 7) {
             tile_map = (mmap.get_window_tilemap() ? 0x1C00 : 0x1800) + ((mmap.get_lcd_window_y() >> 3) << 5);
@@ -167,7 +150,7 @@ void PixelProcessingUnit::fill_pixels(std::deque<std::array<uint8_t, 2>> &pixels
     }
 }
 
-void PixelProcessingUnit::set_pixel(uint32_t x, uint32_t y, uint32_t pixel, MemoryMap &mmap) {
+void PixelProcessingUnit::set_pixel(uint32_t x, uint32_t y, uint8_t pixel, MemoryMap &mmap) {
     uint32_t color = 0x000000;
     switch (pixel) {
         case 0b00:
@@ -194,10 +177,6 @@ void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
     std::vector<Sprite> sprites;
 
     uint8_t start_y = (mmap.get_lcd_line_y() + mmap.get_lcd_scrolling_y()) % 255;
-    // std::cout << "start_y: " << (uint16_t)start_y / 8 << std::endl;
-    // std::cout << "ly: " << (uint16_t)mmap.get_lcd_line_y() << " scy: " << (uint16_t)mmap.get_lcd_scrolling_y() << std::endl;
-    // std::cout << "window x: " << (uint16_t)mmap.get_lcd_window_x() << std::endl;
-    // std::cout << "0x1c00 - 0x1800: " << 0x1c00 - 0x1800 << std::endl;
     uint32_t start_x = mmap.get_lcd_scrolling_x();
     fill_pixels(pixels, start_x, 16, start_y, mmap);
     if (mmap.get_obj_enable()) {
@@ -221,6 +200,7 @@ void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
         uint8_t spr_num = 0;
 
         for (auto spr : sprites) {
+            std::cout << "sprites" << std::endl;
                 if ((spr.x_pos < 8 && x == 0) || spr.x_pos == x + 8) {
                     uint8_t size = 8;
                     if (spr.x_pos < 8) {
@@ -244,8 +224,6 @@ void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
                             pixels.push_front(item);
                         } else {
                             std::cout << "sx: " << spr.x_pos << " sy: " << spr.y_pos << " | x:" << x << " line:" << mmap.get_lcd_line_y() << std::endl;
-                            // std::println("sx: {} sy: {} | x:{} line:{}", spr.x_pos, spr.y_pos, x, mmap.get_lcd_line_y());
-                            // println!("sx: {} sy: {} | x:{} line:{}", sprite[1], sprite[0], x, line);
                             std::array<uint8_t, 2> sprite_pixel;
                             sprite_pixel[0] = get_pixel(spr.tile_index, x - spr.x_pos + y - 8, (mmap.get_lcd_line_y() + 8) - spr.y_pos, mmap);
                             sprite_pixel[1] = spr_num + 1;

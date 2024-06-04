@@ -154,22 +154,22 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
     case 0xFF00 ... 0xFF7F:
         // std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
         // std::cout << "io trying to write addr: 0x" << std::hex << (std::size_t)(addr) << std::dec << std::endl;
-        if (addr == 0xFF42 && val < 100) {
-            std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
-        }
-        if (addr == 0xFF44) {
-            std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
-        }
+        // if (addr == 0xFF42 && val < 100) {
+        //     std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
+        // }
+        // if (addr == 0xFF44) {
+        //     std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
+        // }
         io_registers[addr - 0xFF00] = val;
         break;
     case 0xFF80 ... 0xFFFE:
         // std::cout << "reading from highram: " << std::hex << addr << ", val: "<< (uint16_t)high_ram[(std::size_t)(addr & 0x7E)] << std::dec << std::endl;
         // printf("trying to write to high_ram at addr: %d\n", (std::size_t)(addr & 0x7E));
-        if (addr == 0xFFFa || addr == 0xFFFb) {
+        // if (addr == 0xFFFa || addr == 0xFFFb) {
         // std::cout << "high ram trying to write addr: " << std::hex << addr << " with val: " << (uint16_t)val << std::dec << std::endl;
         // std::cout << "address: " << std::dec << (std::size_t)(addr & 0x7E) << std::endl;
         // std::cout << "address - thing: " << std::dec << addr - 0xFF80 << std::endl;
-        }
+        // }
         high_ram[addr - 0xFF80] = val;
         break;
     case 0xFFFF:
