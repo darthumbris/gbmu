@@ -128,15 +128,15 @@ inline constexpr auto operator"" _(const char *str, size_t len)
 void Cpu::tick()
 {
     auto dec = get_instruction();
-    if (debug_count >= DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
+    // if (debug_count >= DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
         // std::cout << "debug count: "  << debug_count << "  ";
         // if (debug_count > 28812 - 2 && debug_count < 28812 + 2)
         // debug_print(std::get<1>(dec), std::get<0>(dec));
         // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
-    }
-    else {
+    // }
+    // else {
         // std::cout << "debug count: " << debug_count << std::endl;
-    }
+    // }
     // if (debug_count > 24578 && debug_count < 24630) {
         // std::bitset<8> x(get_register(Registers::F));
         // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
@@ -189,6 +189,7 @@ std::tuple<uint8_t, Instruction, bool> Cpu::get_instruction()
 
 void Cpu::execute_instruction(Instruction in, uint8_t opcode, bool is_prefix_ins)
 {
+    //TODO MAKE THIS A JUMPTABLE!!!!
     if (is_prefix_ins)
     {
         prefix(in, opcode);
@@ -336,6 +337,7 @@ void Cpu::execute_instruction(Instruction in, uint8_t opcode, bool is_prefix_ins
 
 void Cpu::prefix(Instruction in, uint8_t opcode)
 {
+     //TODO MAKE THIS A JUMPTABLE!!!!
     switch (string_hash(in.mnemonic))
     {
     case "RLC"_:
