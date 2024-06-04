@@ -54,10 +54,12 @@ void Cpu::add_a_r8(Operand op_s)
     if (op_s.reg == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
+        set_cycle(1);
     }
     else
     {
         val = get_register(op_s.reg);
+        set_cycle(1);
     }
     set_register(Registers::A, a_val + val);
     set_flag(FlagRegisters::z, (val + a_val) == 0);
@@ -75,6 +77,7 @@ void Cpu::add_a_imm8()
     set_flag(FlagRegisters::n, 0);
     set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
     set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
+    set_cycle(1);
 }
 
 void Cpu::add_hl_r16(Operand op_s)
@@ -85,6 +88,7 @@ void Cpu::add_hl_r16(Operand op_s)
     set_flag(FlagRegisters::n, 0);
     set_flag(FlagRegisters::h, half_carry_flag_set(val, hl_val));
     set_flag(FlagRegisters::c, carry_flag_set(val, hl_val));
+    set_cycle(2);
 }
 
 void Cpu::add_sp_imm8()
@@ -97,6 +101,7 @@ void Cpu::add_sp_imm8()
     set_flag(FlagRegisters::n, 0);
     set_flag(FlagRegisters::h, half_carry_flag_set(e8, sp_val));
     set_flag(FlagRegisters::c, carry_flag_set(e8, sp_val));
+    set_cycle(4);
 }
 
 void Cpu::adc_a_r8(Operand op_s)
@@ -106,10 +111,12 @@ void Cpu::adc_a_r8(Operand op_s)
     if (op_s.reg == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
+        set_cycle(2);
     }
     else
     {
         val = get_register(op_s.reg);
+        set_cycle(1);
     }
     set_flag(FlagRegisters::n, 0);
     set_flag(FlagRegisters::z, 0);
@@ -129,5 +136,6 @@ void Cpu::adc_a_imm8()
     set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
     set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
     set_register(Registers::A, a_val + val + get_flag(FlagRegisters::c));
+    set_cycle(2);
     // set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
 }

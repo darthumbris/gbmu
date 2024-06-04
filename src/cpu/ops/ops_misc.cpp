@@ -9,12 +9,14 @@ void Cpu::swap_r8(uint8_t opcode, Operand op_r)
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         mmap.write_u8(get_16bitregister(Registers::HL), (val & 0xF) << 4);
         mmap.write_u8(get_16bitregister(Registers::HL), mmap.read_u8(get_16bitregister(Registers::HL)) | ((val & 0xF0) >> 4));
+        set_cycle(4);
     }
     else
     {
         val = get_register(op_r.reg);
         set_register(op_r.reg, (val & 0xF) << 4);
         set_register(op_r.reg, get_register(op_r.reg) | ((val & 0xF0) >> 4));
+        set_cycle(2);
     }
     set_flag(FlagRegisters::z, val == 0);
     set_flag(FlagRegisters::n, 0);
@@ -25,6 +27,7 @@ void Cpu::swap_r8(uint8_t opcode, Operand op_r)
 void Cpu::nop()
 {
     std::cout << "nop" << std::endl;
+    set_cycle(1);
 }
 
 // Decimal Adjust a
@@ -52,6 +55,7 @@ void Cpu::daa()
     set_flag(FlagRegisters::z, a_val == 0);
     set_flag(FlagRegisters::h, 1);
     set_register(Registers::A, a_val);
+    set_cycle(1);
 }
 
 void Cpu::cpl()
@@ -59,6 +63,7 @@ void Cpu::cpl()
     set_register(Registers::A, ~get_register(Registers::A));
     set_flag(FlagRegisters::n, 1);
     set_flag(FlagRegisters::h, 1);
+    set_cycle(1);
 }
 
 void Cpu::scf()
@@ -66,6 +71,7 @@ void Cpu::scf()
     set_flag(FlagRegisters::n, 0);
     set_flag(FlagRegisters::h, 0);
     set_flag(FlagRegisters::c, 1);
+    set_cycle(1);
 }
 
 void Cpu::ccf()
@@ -73,12 +79,13 @@ void Cpu::ccf()
     set_flag(FlagRegisters::n, 0);
     set_flag(FlagRegisters::h, 0);
     set_flag(FlagRegisters::c, !get_flag(FlagRegisters::c));
+    set_cycle(1);
 }
 
-void Cpu::stop() { pc += 1; }
+void Cpu::stop() { pc += 1; set_cycle(1); }
 
-void Cpu::halt() { halted = true; }
+void Cpu::halt() { halted = true; set_cycle(1); }
 
-void Cpu::di() { interrupts = false; }
+void Cpu::di() { interrupts = false; set_cycle(1);}
 
-void Cpu::ei() { interrupts = true; }
+void Cpu::ei() { interrupts = true; set_cycle(1); }

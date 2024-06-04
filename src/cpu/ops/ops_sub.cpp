@@ -39,10 +39,12 @@ void Cpu::sub_a_r8(Operand op_s)
     if (op_s.reg == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
+        set_cycle(2);
     }
     else
     {
         val = get_register(op_s.reg);
+        set_cycle(1);
     }
     set_register(Registers::A, a_val - val);
     set_flag(FlagRegisters::z, (a_val - val) == 0);
@@ -62,6 +64,7 @@ void Cpu::sub_a_imm8()
     set_flag(FlagRegisters::c, val > a_val);
 
     set_register(Registers::A, a_val - val);
+    set_cycle(2);
 }
 
 void Cpu::sbc_a_r8(Operand op_s)
@@ -71,10 +74,12 @@ void Cpu::sbc_a_r8(Operand op_s)
     if (op_s.reg == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
+        set_cycle(2);
     }
     else
     {
         val = get_register(op_s.reg);
+        set_cycle(1);
     }
     set_flag(FlagRegisters::n, 1);
     set_flag(FlagRegisters::c, val > a_val);
@@ -94,4 +99,5 @@ void Cpu::sbc_a_imm8()
     set_flag(FlagRegisters::c, val > a_val);
     set_register(Registers::A, a_val - val);
     set_flag(FlagRegisters::h, ((get_register(Registers::A) ^ (a_val + 1) ^ val) & 0x10) != 0);
+    set_cycle(2);
 }

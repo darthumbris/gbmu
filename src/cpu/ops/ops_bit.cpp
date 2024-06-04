@@ -6,10 +6,12 @@ void Cpu::bit_b3_r8(uint8_t opcode, Operand op_s)
     if (op_s.reg == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
+        set_cycle(3);
     }
     else
     {
         val = get_register(op_s.reg);
+        set_cycle(2);
     }
     uint8_t bit_loc = (opcode >> 3) & 0x7;
     set_flag(FlagRegisters::h, 1);
@@ -30,10 +32,12 @@ void Cpu::res_b3_r8(uint8_t opcode, Operand op_s)
     if (op_s.reg == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
+        set_cycle(4);
     }
     else
     {
         val = get_register(op_s.reg);
+        set_cycle(2);
     }
     uint8_t bit_loc = (opcode >> 3) & 0x7;
     val |= 0b11111111 ^ (0b1 << bit_loc);
@@ -53,10 +57,12 @@ void Cpu::set_b3_r8(uint8_t opcode, Operand op_s)
     if (op_s.reg == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
+        set_cycle(4);
     }
     else
     {
         val = get_register(op_s.reg);
+        set_cycle(2);
     }
     uint8_t bit_loc = (opcode >> 3) & 0x7;
     val |= (1 << bit_loc);

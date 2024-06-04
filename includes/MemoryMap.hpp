@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <iostream>
 
 constexpr std::uint8_t mask0{ 0b0000'0001 }; // represents bit 0
 constexpr std::uint8_t mask1{ 0b0000'0010 }; // represents bit 1
@@ -86,7 +87,6 @@ private:
     // TODO add a check for if the bios has been loaded in
     Mem16k rom{0};                            // 0x0000 - 0x3FFF
     std::vector<Mem16k> rom_banks{};          // 0x4000 - 0x7FFF   // From cartridge, switchable bank if any //2M max
-    std::array<Mem8k, 2> vram{0};             // 0x8000 - 0x9FFF   // 0 for GB and 0-1 for Cgb (switchable banks)
     std::vector<Mem8k> ext_ram{};             // 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
     std::array<Mem4k, 8> work_ram{0};         // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
     std::array<Mem4k, 8> echo_ram{0};         // 0xE000 - 0xFDFF   //(mirror of C000–DDFF) use of this area is prohibited.
@@ -116,6 +116,7 @@ private:
 
 
 public:
+    std::array<Mem8k, 2> vram{0};             // 0x8000 - 0x9FFF   // 0 for GB and 0-1 for Cgb (switchable banks)
     MemoryMap();
     MemoryMap(const std::string path);
 
@@ -126,7 +127,11 @@ public:
     void write_u8(uint16_t addr, uint8_t val);
     void write_u16(uint16_t addr, uint16_t val);
 
-    inline uint8_t get_tile_index(uint8_t vbank, uint8_t x, uint8_t y, uint8_t tile_map) {return vram[vbank][0x1800 + (x + y * 32 + 32 * tile_map)];} //TODO check this
+    inline uint8_t get_tile_index(uint8_t vbank, uint16_t x, uint16_t y, uint16_t tile_map) {
+        // std::cout << "xy : " << x << ", " << y << std::endl;
+        // std::cout << "vram index: " << std::hex << 0x8000 + 0x1800 + (x + (y + tile_map * 32) * 32) << std::dec << std::endl;
+        return vram[vbank][tile_map + (x + y * 32)];
+        } //TODO check this
     inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][tile_index];} //TODO check this
 
 
@@ -180,7 +185,12 @@ public:
     inline bool get_bg_window_enable_priority() { return get_lcd_control() & mask0;}
 
     void set_ppu_mode(uint8_t mode);
-    inline void increase_lcd_line_y() {io_registers[(std::size_t)(0xFF44 & 0x7F)] += 1;}
+    inline void increase_lcd_line_y() {
+        // std::cout << "writing to 0xFF44" << std::endl;
+        io_registers[(std::size_t)(0xFF44 & 0x7F)] += 1;}
+    inline void increase_lcd_line_y_mod() {
+        // std::cout << "writing to 0xFF44" << std::endl;
+        io_registers[(std::size_t)(0xFF44 & 0x7F)] = (io_registers[(std::size_t)(0xFF44 & 0x7F)] + 1) % 154;}
     inline void reset_lcd_line_y() {io_registers[(std::size_t)(0xFF44 & 0x7F)] = 0;}
     inline void reset_lcd_window_y() {io_registers[(std::size_t)(0xFF4A & 0x7F)] = 0;}
     inline void set_bg_window_enable_priority(bool val) { io_registers[(std::size_t)(0xFF40 & 0x7F)] = ((-val)) ^ io_registers[(std::size_t)(0xFF40 & 0x7F)] & (1U << 0) ;}

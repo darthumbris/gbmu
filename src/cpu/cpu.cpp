@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 uint32_t const DEBUG_START = 0;
-uint32_t const DEBUG_COUNT = 25000;
+uint32_t const DEBUG_COUNT = 48187;
 
 Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
 {
@@ -14,6 +14,8 @@ Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
     pc = 0;
     sp = 0;
     debug_count = 0;
+    m_cycle = 0;
+    t_cycle = 0;
     // pc = 0x100;
     mmap = MemoryMap(path);
     // ppu = PixelProcessingUnit();
@@ -126,10 +128,11 @@ inline constexpr auto operator"" _(const char *str, size_t len)
 void Cpu::tick()
 {
     auto dec = get_instruction();
-    if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
+    if (debug_count >= DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
         // std::cout << "debug count: "  << debug_count << "  ";
+        // if (debug_count > 28812 - 2 && debug_count < 28812 + 2)
         // debug_print(std::get<1>(dec), std::get<0>(dec));
-        printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
+        // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
     }
     else {
         // std::cout << "debug count: " << debug_count << std::endl;
@@ -147,7 +150,7 @@ void Cpu::tick()
         // mmap.bios_loaded = true;
         exit(1);
     }
-    ppu.tick(m_cycle, mmap);
+    ppu.tick(t_cycle, mmap);
     event_handler();
     if (debug_count < 2147483647) {
         debug_count += 1;

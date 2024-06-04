@@ -207,6 +207,8 @@ private:
 
 	void debug_print(Instruction in, uint8_t opcode);
 
+	inline void set_cycle(uint8_t c) {m_cycle = c; t_cycle = c * 4;} 
+
 public:
 	Cpu(Decoder dec, const std::string path);
 	~Cpu();

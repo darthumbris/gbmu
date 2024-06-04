@@ -27,41 +27,48 @@ void Cpu::ret(uint8_t opcode)
 
 void Cpu::ret_cond(Condition c)
 {
+    bool cond = false;
     switch (c)
     {
     case Condition::NotZeroFlag:
         if (get_flag(FlagRegisters::z))
         {
-            return;
+            cond = true;
         }
         break;
     case Condition::ZeroFlag:
         if (!get_flag(FlagRegisters::z))
         {
-            return;
+            cond = true;
         }
         break;
     case Condition::NotCarryFlag:
         if (get_flag(FlagRegisters::c))
         {
-            return;
+            cond = true;
         }
         break;
     case Condition::CarryFlag:
         if (!get_flag(FlagRegisters::c))
         {
-            return;
+            cond = true;
         }
         break;
     default:
         break;
     }
+    if (cond) {
+        set_cycle(2);
+        return;
+    }
+    set_cycle(1);
     ret();
 }
 void Cpu::ret()
 {
     pc = mmap.read_u16(sp);
     sp += 2;
+    set_cycle(4);
 }
 void Cpu::reti()
 {

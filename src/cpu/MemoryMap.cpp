@@ -109,13 +109,13 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
     case 0x0000 ... 0x00FE:
         if (!is_boot_rom_enabled())
         {
-            printf("trying to write to bios at addr: %lu bios is size: %lu\n", (std::size_t)(addr), boot_rom.size());
+            // printf("trying to write to bios at addr: %lu bios is size: %lu\n", (std::size_t)(addr), boot_rom.size());
             // std::cout << "bios trying to write addr: " << st::dec << (std::size_t)(addr) << std::dec << std::endl;
             // std::cout << "writing to bios" << std::endl;
             boot_rom[addr] = val;
             break;
         }
-        std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
+        // std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
         rom[addr] = val;
         break;
     case 0x00FF ... 0x3FFF:
@@ -127,7 +127,8 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         rom_banks[0][addr - 0x4000] = val; // TODO check how to get what rom_bank
         break;
     case 0x8000 ... 0x9FFF:
-        // std::cout << "vram: trying to write addr: " << std::dec << (std::size_t)(addr & 0x1FFF) << std::dec << std::endl;
+        // if (addr > 0x9800 && val)
+        // std::cout << "vram["<< (uint16_t)vram_bank_select() <<"]: trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
         vram[vram_bank_select()][addr - 0x8000] = val; // TODO check how to get what vram_bank
         break;
     case 0xA000 ... 0xBFFF:
@@ -151,7 +152,14 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         not_usable[addr - 0xFEA0] = val;
         break;
     case 0xFF00 ... 0xFF7F:
+        // std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
         // std::cout << "io trying to write addr: 0x" << std::hex << (std::size_t)(addr) << std::dec << std::endl;
+        if (addr == 0xFF42 && val < 100) {
+            std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
+        }
+        if (addr == 0xFF44) {
+            std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
+        }
         io_registers[addr - 0xFF00] = val;
         break;
     case 0xFF80 ... 0xFFFE:
@@ -204,5 +212,6 @@ Sprite MemoryMap::get_sprite(size_t index) {
     uint8_t x_pos = oam[index * 4 + 1];
     uint8_t tile_index = oam[index * 4 + 2];
     uint8_t attr_flags = oam[index * 4 + 3];
+    std::cout << "getting sprite" << std::endl;
     return {y_pos, x_pos, tile_index, attr_flags};
 }

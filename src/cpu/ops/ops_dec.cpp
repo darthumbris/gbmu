@@ -49,6 +49,7 @@ void Cpu::dec(uint8_t opcode, Operand op_r)
 void Cpu::dec_r16(Operand op_r)
 {
     set_16bitregister(op_r.reg, get_16bitregister(op_r.reg) - 1);
+    set_cycle(2);
 }
 
 void Cpu::dec_r8(Operand op_r)
@@ -60,6 +61,7 @@ void Cpu::dec_r8(Operand op_r)
         mmap.write_u8(get_16bitregister(Registers::HL), val - 1);
         set_flag(FlagRegisters::z, val == 0x01);
         set_flag(FlagRegisters::h, ((val & 0b00011111) == 0b00010000));
+        set_cycle(3);
     }
     else
     {
@@ -67,6 +69,7 @@ void Cpu::dec_r8(Operand op_r)
         set_register(op_r.reg, val - 1);
         set_flag(FlagRegisters::z, (val - 1) == 0x00);
         set_flag(FlagRegisters::h, (val & 0xF) == 0);
+        set_cycle(1);
     }
     set_flag(FlagRegisters::n, 1);
 }

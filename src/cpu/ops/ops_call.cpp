@@ -28,38 +28,44 @@ void Cpu::call(uint8_t opcode)
 void Cpu::call_cond_imm16(Condition c)
 {
     pc += 2;
+    bool cond = false;
     switch (c)
     {
     case Condition::NotZeroFlag:
         if (get_flag(FlagRegisters::z))
         {
-            return;
+            cond = true;
         }
         break;
     case Condition::ZeroFlag:
         if (!get_flag(FlagRegisters::z))
         {
-            return;
+            cond = true;
         }
         break;
     case Condition::NotCarryFlag:
         if (get_flag(FlagRegisters::c))
         {
-            return;
+            cond = true;
         }
         break;
     case Condition::CarryFlag:
         if (!get_flag(FlagRegisters::c))
         {
-            return;
+            cond = true;
         }
         break;
     default:
         break;
     }
+    if (cond) {
+        set_cycle(3);
+        return;
+    }
     sp -= 2;
     mmap.write_u16(sp, pc);
     pc = mmap.read_u16(pc - 2);
+    set_cycle(6);
 }
 void Cpu::call_imm16()
 {
@@ -67,4 +73,5 @@ void Cpu::call_imm16()
     sp -= 2;
     mmap.write_u16(sp, pc);
     pc = mmap.read_u16(pc - 2);
+    set_cycle(6);
 }

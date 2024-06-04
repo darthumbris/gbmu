@@ -50,6 +50,7 @@ void Cpu::inc(uint8_t opcode, Operand op_r)
 void Cpu::inc_r16(Operand op_r)
 {
     set_16bitregister(op_r.reg, get_16bitregister(op_r.reg) + 1);
+    set_cycle(2);
 }
 
 void Cpu::inc_r8(Operand op_r)
@@ -59,11 +60,13 @@ void Cpu::inc_r8(Operand op_r)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         mmap.write_u8(get_16bitregister(Registers::HL), val + 1);
+        set_cycle(3);
     }
     else
     {
         val = get_register(op_r.reg);
         set_register(op_r.reg, val + 1);
+        set_cycle(1);
     }
     set_flag(FlagRegisters::z, (val + 1) == 0);
     set_flag(FlagRegisters::n, 0);
