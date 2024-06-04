@@ -127,11 +127,7 @@ public:
     void write_u8(uint16_t addr, uint8_t val);
     void write_u16(uint16_t addr, uint16_t val);
 
-    inline uint8_t get_tile_index(uint8_t vbank, uint16_t x, uint16_t y, uint16_t tile_map) {
-        // std::cout << "xy : " << x << ", " << y << std::endl;
-        // std::cout << "vram index: " << std::hex << 0x8000 + 0x1800 + (x + (y + tile_map * 32) * 32) << std::dec << std::endl;
-        return vram[vbank][tile_map + (x + y * 32)];
-        } //TODO check this
+    inline uint8_t get_tile_index(uint8_t vbank, uint16_t x, uint16_t y, uint16_t tile_map) {return vram[vbank][tile_map + (x + y * 32)];}
     inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][tile_index];} //TODO check this
 
 
