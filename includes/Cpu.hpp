@@ -101,9 +101,10 @@ private:
 		return (((val1 & 0xFF) + (val2 & 0xFF)) > 0xFF);
 	}
 
-	std::tuple<uint8_t, Instruction, bool> get_instruction();
+	std::tuple<uint8_t, bool> get_instruction();
+	void execute_instruction(uint8_t opcode, bool is_prefix_ins);
 
-	void debug_print(Instruction in, uint8_t opcode);
+	void debug_print(uint8_t opcode, bool prefix);
 
 	inline void set_cycle(uint8_t c) {m_cycle = c; t_cycle = c * 4;} 
 
@@ -119,7 +120,7 @@ public:
 	void set_register(Registers reg, uint8_t val);
 	void set_flag(uint8_t flag, uint8_t val);
 
-	void execute_instruction(Instruction in, uint8_t opcode, bool is_prefix_ins);
+	
 	void tick();
 	void event_handler();
 	void handle_input(SDL_Event &e);
