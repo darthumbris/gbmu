@@ -1,49 +1,16 @@
-#include "Cpu.hpp"
-
-void Cpu::sub(uint8_t opcode, Operand op_s)
-{
-    switch (opcode)
-    {
-    case 0x90 ... 0x97:
-        sub_a_r8(op_s);
-        break;
-    case 0xD6:
-        sub_a_imm8();
-        break;
-    default:
-        unimplemented(opcode);
-        break;
-    }
-}
-
-void Cpu::sbc(uint8_t opcode, Operand op_s)
-{
-    switch (opcode)
-    {
-    case 0x98 ... 0x9F:
-        sbc_a_r8(op_s);
-        break;
-    case 0xDE:
-        sbc_a_imm8();
-        break;
-    default:
-        unimplemented(opcode);
-        break;
-    }
-}
-
-void Cpu::sub_a_r8(Operand op_s)
+template<Registers src>
+void sub_a_r8()
 {
     uint8_t val;
     uint8_t a_val = get_register(Registers::A);
-    if (op_s.reg == Registers::HL)
+    if (src == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         set_cycle(2);
     }
     else
     {
-        val = get_register(op_s.reg);
+        val = get_register(src);
         set_cycle(1);
     }
     set_register(Registers::A, a_val - val);
@@ -52,7 +19,8 @@ void Cpu::sub_a_r8(Operand op_s)
     set_flag(FlagRegisters::h, ((get_register(Registers::A) ^ val ^ a_val) & 0x10) != 0);
     set_flag(FlagRegisters::c, val > a_val);
 }
-void Cpu::sub_a_imm8()
+
+void sub_a_imm8()
 {
     uint8_t val = mmap.read_u8(pc);
     pc += 1;
@@ -67,18 +35,19 @@ void Cpu::sub_a_imm8()
     set_cycle(2);
 }
 
-void Cpu::sbc_a_r8(Operand op_s)
+template<Registers src>
+void sbc_a_r8()
 {
     uint8_t val;
     uint8_t a_val = get_register(Registers::A);
-    if (op_s.reg == Registers::HL)
+    if (src == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         set_cycle(2);
     }
     else
     {
-        val = get_register(op_s.reg);
+        val = get_register(src);
         set_cycle(1);
     }
     set_flag(FlagRegisters::n, 1);
@@ -88,7 +57,7 @@ void Cpu::sbc_a_r8(Operand op_s)
     set_flag(FlagRegisters::h, ((get_register(Registers::A) ^ (a_val + 1) ^ val) & 0x10) != 0);
 }
 
-void Cpu::sbc_a_imm8()
+void sbc_a_imm8()
 {
     uint8_t val = mmap.read_u8(pc) + get_flag(FlagRegisters::c);
     pc += 1;

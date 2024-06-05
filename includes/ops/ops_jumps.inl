@@ -1,59 +1,4 @@
-#include "Cpu.hpp"
-
-void Cpu::jr(uint8_t opcode)
-{
-    switch (opcode)
-    {
-    case 0x18:
-        jr_imm8();
-        break;
-    case 0x20:
-        jr_cond_imm8(Condition::NotZeroFlag);
-        break;
-    case 0x28:
-        jr_cond_imm8(Condition::ZeroFlag);
-        break;
-    case 0x30:
-        jr_cond_imm8(Condition::NotCarryFlag);
-        break;
-    case 0x38:
-        jr_cond_imm8(Condition::CarryFlag);
-        break;
-    default:
-        unimplemented(opcode);
-        break;
-    }
-}
-
-void Cpu::jp(uint8_t opcode)
-{
-    switch (opcode)
-    {
-    case 0xC2:
-        jp_cond_imm16(Condition::NotZeroFlag);
-        break;
-    case 0xC3:
-        jp_imm16();
-        break;
-    case 0xCA:
-        jp_cond_imm16(Condition::ZeroFlag);
-        break;
-    case 0xD2:
-        jp_cond_imm16(Condition::NotCarryFlag);
-        break;
-    case 0xDA:
-        jp_cond_imm16(Condition::CarryFlag);
-        break;
-    case 0xE9:
-        jp_hl();
-        break;
-    default:
-        unimplemented(opcode);
-        break;
-    }
-}
-
-void Cpu::jr_imm8()
+void jr_imm8()
 {
     uint8_t val = mmap.read_u8(pc);
     pc += 1;
@@ -66,12 +11,13 @@ void Cpu::jr_imm8()
     set_cycle(3);
 }
 
-void Cpu::jr_cond_imm8(Condition c)
+template<Condition condition>
+void jr_cond_imm8()
 {
     bool offset = false;
     uint8_t val = mmap.read_u8(pc);
     pc += 1;
-    switch (c)
+    switch (condition)
     {
     case Condition::NotZeroFlag:
         offset = get_flag(FlagRegisters::z) == 0;
@@ -109,13 +55,14 @@ void Cpu::jr_cond_imm8(Condition c)
     }
 }
 
-void Cpu::jp_cond_imm16(Condition c)
+template<Condition condition>
+void jp_cond_imm16()
 {
     bool offset = false;
     uint16_t val;
     pc += 2;
     val = mmap.read_u16(pc - 2);
-    switch (c)
+    switch (condition)
     {
     case Condition::NotZeroFlag:
         offset = get_flag(FlagRegisters::z) == 0;
@@ -141,7 +88,8 @@ void Cpu::jp_cond_imm16(Condition c)
         set_cycle(3);
     }
 }
-void Cpu::jp_imm16()
+
+void jp_imm16()
 {
     uint16_t val;
     pc += 2;
@@ -149,7 +97,8 @@ void Cpu::jp_imm16()
     pc = val;
     set_cycle(4);
 }
-void Cpu::jp_hl()
+
+void jp_hl()
 {
     uint16_t val;
     val = mmap.read_u16(get_16bitregister(Registers::HL));

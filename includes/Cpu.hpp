@@ -8,6 +8,7 @@
 #include <iostream>
 #include "PixelProcessingUnit.hpp"
 #include <bitset>
+#include "Operand.hpp"
 
 using namespace Dict;
 
@@ -59,136 +60,33 @@ private:
 
 	PixelProcessingUnit ppu;
 
-	// TODO check all functions are actually used
+	typedef void (Cpu::*OpsFn)(void);
 
-	//  Block 0
-	void nop();
-
-	void ld_r16_imm16(Operand op_r);
-	void ld_r16_a(Operand op_r);
-	void ld_a_r16(Operand op_s);
-	void ld_imm16_sp();
-
-	void inc_r16(Operand op_r);
-	void dec_r16(Operand op_r);
-	void add_hl_r16(Operand op_s);
-
-	void inc_r8(Operand op_r);
-	void dec_r8(Operand op_r);
-
-	void ld_r8_imm8(Operand op_r);
-
-	void rlca();
-	void rrca();
-	void rla();
-	void rra();
-	void daa();
-	void cpl();
-	void scf();
-	void ccf();
-
-	void jr_imm8();
-	void jr_cond_imm8(Condition c);
-
-	void stop();
-
-	// block1 register to register loads
-	void ld_r8_r8(Operand op_r, Operand op_s);
-	void halt();
-
-	// block2 8-bit arithmetic
-	void add_a_r8(Operand op_s);
-	void adc_a_r8(Operand op_s);
-	void sub_a_r8(Operand op_s);
-	void sbc_a_r8(Operand op_s);
-	void and_a_r8(Operand op_s);
-	void xor_a_r8(Operand op_s);
-	void or_a_r8(Operand op_s);
-	void cp_a_r8(Operand op_s);
-
-	// block3
-	void add_a_imm8();
-	void adc_a_imm8();
-	void sub_a_imm8();
-	void sbc_a_imm8();
-	void and_a_imm8();
-	void xor_a_imm8();
-	void or_a_imm8();
-	void cp_a_imm8();
-
-	void ret_cond(Condition c);
-	void ret();
-	void reti();
-	void jp_cond_imm16(Condition c);
-	void jp_imm16();
-	void jp_hl();
-	void call_cond_imm16(Condition c);
-	void call_imm16();
-	void rst_tg3(Instruction in);
-
-	void pop_r16stk(Operand op_r);
-	void push_r16stk(Operand op_s);
-
-	void ldh_imm8_a();
-	void ld_imm16_a();
-	void ldh_a_imm8();
-	void ld_a_imm16();
-
-	void add_sp_imm8();
-	void ld_hl_sp_imm8();
-	void ld_sp_hl();
-
-	void di();
-	void ei();
+	std::array<OpsFn, 256> unprefixed_instructions;
+	std::array<OpsFn, 256> prefixed_instructions;
+	void set_instructions();
 
 	// CB prefix
-	void prefix(Instruction in, uint8_t opcode);
-	void rlc_r8(uint8_t opcode, Operand op_r);
-	void rrc_r8(uint8_t opcode, Operand op_r);
-	void rl_r8(uint8_t opcode, Operand op_r);
-	void rr_r8(uint8_t opcode, Operand op_r);
-	void sla_r8(uint8_t opcode, Operand op_r);
-	void sra_r8(uint8_t opcode, Operand op_r);
-	void swap_r8(uint8_t opcode, Operand op_r);
-	void srl_r8(uint8_t opcode, Operand op_r);
+	void prefix() {}
 
-	uint8_t get_rlc(uint8_t val, bool reset = false);
-	uint8_t get_rrc(uint8_t val, bool reset = false);
-	uint8_t get_rr(uint8_t val, bool reset = false);
-	uint8_t get_rl(uint8_t val, bool reset = false);
+	template<uint8_t opcode>
+	void unimplemented() {std::cout << "unimplemented opcode: 0x" << std::setfill('0') << std::setw(2) << std::hex << opcode << std::dec << std::endl;}
 
-	void bit_b3_r8(uint8_t opcode, Operand op_s);
-	void res_b3_r8(uint8_t opcode, Operand op_s);
-	void set_b3_r8(uint8_t opcode, Operand op_s);
-
-	void unimplemented(uint8_t opcode);
+	#include "ops/ops_add.inl"
+	#include "ops/ops_alu.inl"
+	#include "ops/ops_bit.inl"
+	#include "ops/ops_call.inl"
+	#include "ops/ops_dec.inl"
+	#include "ops/ops_inc.inl"
+	#include "ops/ops_jumps.inl"
+	#include "ops/ops_loads.inl"
+	#include "ops/ops_misc.inl"
+	#include "ops/ops_reset.inl"
+	#include "ops/ops_ret.inl"
+	#include "ops/ops_rotate_shift.inl"
+	#include "ops/ops_sub.inl"
 
 	void lockup(); //$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
-
-	void ld_i_hl_a();
-	void ld_d_hl_a();
-	void ld_i_a_hl();
-	void ld_d_a_hl();
-	void ld_hl_imm8();
-	void ld_c_a();
-	void ld_a_c();
-
-	void ld(uint8_t opcode, std::vector<Operand> operands); // to go to the correct ld function
-	void inc(uint8_t opcode, Operand op_r);				 // to go to the correct inc function
-	void dec(uint8_t opcode, Operand op_r);				 // to go to the correct dec function
-	void add(uint8_t opcode, Operand op_s);
-	void jr(uint8_t opcode);
-	void adc(uint8_t opcode, Operand op_s);
-	void sub(uint8_t opcode, Operand op_s);
-	void sbc(uint8_t opcode, Operand op_s);
-	void and_(uint8_t opcode, Operand op_s);
-	void xor_(uint8_t opcode, Operand op_s);
-	void or_(uint8_t opcode, Operand op_s);
-	void cp_(uint8_t opcode, Operand op_s);
-	void ret(uint8_t opcode);
-	void jp(uint8_t opcode);
-	void call(uint8_t opcode);
-	void ldh(uint8_t opcode);
 
 	// TODO template these
 	template <typename IntegerType1, typename IntegerType2>

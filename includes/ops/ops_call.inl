@@ -1,35 +1,9 @@
-#include "Cpu.hpp"
-
-void Cpu::call(uint8_t opcode)
-{
-    switch (opcode)
-    {
-    case 0xC4:
-        call_cond_imm16(Condition::NotZeroFlag);
-        break;
-    case 0xCC:
-        call_cond_imm16(Condition::ZeroFlag);
-        break;
-    case 0xCD:
-        call_imm16();
-        break;
-    case 0xD4:
-        call_cond_imm16(Condition::NotCarryFlag);
-        break;
-    case 0xDC:
-        call_cond_imm16(Condition::CarryFlag);
-        break;
-    default:
-        unimplemented(opcode);
-        break;
-    }
-}
-
-void Cpu::call_cond_imm16(Condition c)
+template<Condition condition>
+void call_cond_imm16()
 {
     pc += 2;
     bool cond = false;
-    switch (c)
+    switch (condition)
     {
     case Condition::NotZeroFlag:
         if (get_flag(FlagRegisters::z))
@@ -67,7 +41,8 @@ void Cpu::call_cond_imm16(Condition c)
     pc = mmap.read_u16(pc - 2);
     set_cycle(6);
 }
-void Cpu::call_imm16()
+
+void call_imm16()
 {
     pc += 2;
     sp -= 2;

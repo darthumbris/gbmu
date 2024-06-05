@@ -1,10 +1,8 @@
-#include "Cpu.hpp"
-#include <iostream>
-
-void Cpu::swap_r8(uint8_t opcode, Operand op_r)
+template<Registers rec>
+void swap_r8()
 {
     uint8_t val;
-    if (op_r.reg == Registers::HL)
+    if (rec == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         mmap.write_u8(get_16bitregister(Registers::HL), (val & 0xF) << 4);
@@ -13,9 +11,9 @@ void Cpu::swap_r8(uint8_t opcode, Operand op_r)
     }
     else
     {
-        val = get_register(op_r.reg);
-        set_register(op_r.reg, (val & 0xF) << 4);
-        set_register(op_r.reg, get_register(op_r.reg) | ((val & 0xF0) >> 4));
+        val = get_register(rec);
+        set_register(rec, (val & 0xF) << 4);
+        set_register(rec, get_register(rec) | ((val & 0xF0) >> 4));
         set_cycle(2);
     }
     set_flag(FlagRegisters::z, val == 0);
@@ -24,15 +22,14 @@ void Cpu::swap_r8(uint8_t opcode, Operand op_r)
     set_flag(FlagRegisters::h, 0);
 }
 
-void Cpu::nop()
+void nop()
 {
-    std::cout << "nop" << std::endl;
     set_cycle(1);
 }
 
 // Decimal Adjust a
 // Converts A into packed BCD.
-void Cpu::daa()
+void daa()
 {
     uint8_t a_val = get_register(Registers::A);
     if (get_flag(FlagRegisters::n))
@@ -58,7 +55,7 @@ void Cpu::daa()
     set_cycle(1);
 }
 
-void Cpu::cpl()
+void cpl()
 {
     set_register(Registers::A, ~get_register(Registers::A));
     set_flag(FlagRegisters::n, 1);
@@ -66,7 +63,7 @@ void Cpu::cpl()
     set_cycle(1);
 }
 
-void Cpu::scf()
+void scf()
 {
     set_flag(FlagRegisters::n, 0);
     set_flag(FlagRegisters::h, 0);
@@ -74,7 +71,7 @@ void Cpu::scf()
     set_cycle(1);
 }
 
-void Cpu::ccf()
+void ccf()
 {
     set_flag(FlagRegisters::n, 0);
     set_flag(FlagRegisters::h, 0);
@@ -82,10 +79,10 @@ void Cpu::ccf()
     set_cycle(1);
 }
 
-void Cpu::stop() { pc += 1; set_cycle(1); }
+void stop() { pc += 1; set_cycle(1); }
 
-void Cpu::halt() { halted = true; set_cycle(1); }
+void halt() { halted = true; set_cycle(1); }
 
-void Cpu::di() { interrupts = false; set_cycle(1);}
+void di() { interrupts = false; set_cycle(1);}
 
-void Cpu::ei() { interrupts = true; set_cycle(1); }
+void ei() { interrupts = true; set_cycle(1); }

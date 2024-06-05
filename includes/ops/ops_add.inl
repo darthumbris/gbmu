@@ -1,64 +1,16 @@
-#include "Cpu.hpp"
-
-void Cpu::add(uint8_t opcode, Operand op_s)
-{
-    switch (opcode)
-    {
-    case 0x09:
-        add_hl_r16(op_s);
-        break;
-    case 0x19:
-        add_hl_r16(op_s);
-        break;
-    case 0x29:
-        add_hl_r16(op_s);
-        break;
-    case 0x39:
-        add_hl_r16(op_s);
-        break;
-    case 0x80 ... 0x87:
-        add_a_r8(op_s);
-        break;
-    case 0xC6:
-        add_a_imm8();
-        break;
-    case 0xE8:
-        add_sp_imm8();
-        break;
-    default:
-        unimplemented(opcode);
-        break;
-    }
-}
-
-void Cpu::adc(uint8_t opcode, Operand op_s)
-{
-    switch (opcode)
-    {
-    case 0x88 ... 0x8F:
-        adc_a_r8(op_s);
-        break;
-    case 0xCE:
-        adc_a_imm8();
-        break;
-    default:
-        unimplemented(opcode);
-        break;
-    }
-}
-
-void Cpu::add_a_r8(Operand op_s)
+template<Registers src>
+void add_a_r8()
 {
     uint8_t val;
     uint8_t a_val = get_register(Registers::A);
-    if (op_s.reg == Registers::HL)
+    if (src == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         set_cycle(1);
     }
     else
     {
-        val = get_register(op_s.reg);
+        val = get_register(src);
         set_cycle(1);
     }
     set_register(Registers::A, a_val + val);
@@ -68,7 +20,7 @@ void Cpu::add_a_r8(Operand op_s)
     set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
 }
 
-void Cpu::add_a_imm8()
+void add_a_imm8()
 {
     uint8_t val = mmap.read_u8(pc);
     pc += 1;
@@ -80,9 +32,10 @@ void Cpu::add_a_imm8()
     set_cycle(1);
 }
 
-void Cpu::add_hl_r16(Operand op_s)
+template<Registers src>
+void add_hl_r16()
 {
-    uint16_t val = get_16bitregister(op_s.reg);
+    uint16_t val = get_16bitregister(src);
     uint16_t hl_val = get_16bitregister(Registers::HL);
     set_16bitregister(Registers::HL, val + hl_val);
     set_flag(FlagRegisters::n, 0);
@@ -91,7 +44,7 @@ void Cpu::add_hl_r16(Operand op_s)
     set_cycle(2);
 }
 
-void Cpu::add_sp_imm8()
+void add_sp_imm8()
 {
     uint8_t e8 = mmap.read_u8(pc);
     pc += 1;
@@ -104,18 +57,19 @@ void Cpu::add_sp_imm8()
     set_cycle(4);
 }
 
-void Cpu::adc_a_r8(Operand op_s)
+template<Registers src>
+void adc_a_r8()
 {
     uint8_t val;
     uint8_t a_val = get_register(Registers::A);
-    if (op_s.reg == Registers::HL)
+    if (src == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         set_cycle(2);
     }
     else
     {
-        val = get_register(op_s.reg);
+        val = get_register(src);
         set_cycle(1);
     }
     set_flag(FlagRegisters::n, 0);
@@ -126,7 +80,7 @@ void Cpu::adc_a_r8(Operand op_s)
     // set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
 }
 
-void Cpu::adc_a_imm8()
+void adc_a_imm8()
 {
     uint8_t val = mmap.read_u8(pc);
     pc += 1;

@@ -19,21 +19,9 @@ SRC =	main.cpp \
         cpu/Instruction.cpp \
         cpu/Flags.cpp \
         cpu/cpu.cpp \
-        cpu/ops/ops_add.cpp \
-        cpu/ops/ops_alu.cpp \
-        cpu/ops/ops_bit.cpp \
-        cpu/ops/ops_call.cpp \
-        cpu/ops/ops_dec.cpp \
-        cpu/ops/ops_inc.cpp \
-        cpu/ops/ops_jumps.cpp \
-        cpu/ops/ops_loads.cpp \
-        cpu/ops/ops_misc.cpp \
-        cpu/ops/ops_reset.cpp \
-        cpu/ops/ops_ret.cpp \
-        cpu/ops/ops_rotate_shift.cpp \
-        cpu/ops/ops_sub.cpp \
         cpu/MemoryMap.cpp \
         cpu/PixelProcessingUnit.cpp \
+        cpu/instruction_table.cpp \
 
 
 SRC_EXT = cpp

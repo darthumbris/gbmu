@@ -1,16 +1,15 @@
-#include "Cpu.hpp"
-
-void Cpu::bit_b3_r8(uint8_t opcode, Operand op_s)
+template<uint8_t opcode, Registers src>
+void bit_b3_r8()
 {
     uint8_t val;
-    if (op_s.reg == Registers::HL)
+    if (src == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         set_cycle(3);
     }
     else
     {
-        val = get_register(op_s.reg);
+        val = get_register(src);
         set_cycle(2);
     }
     uint8_t bit_loc = (opcode >> 3) & 0x7;
@@ -26,52 +25,54 @@ void Cpu::bit_b3_r8(uint8_t opcode, Operand op_s)
     }
 }
 
-void Cpu::res_b3_r8(uint8_t opcode, Operand op_s)
+template<uint8_t opcode, Registers src>
+void res_b3_r8()
 {
     uint8_t val;
-    if (op_s.reg == Registers::HL)
+    if (src == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         set_cycle(4);
     }
     else
     {
-        val = get_register(op_s.reg);
+        val = get_register(src);
         set_cycle(2);
     }
     uint8_t bit_loc = (opcode >> 3) & 0x7;
     val |= 0b11111111 ^ (0b1 << bit_loc);
-    if (op_s.reg == Registers::HL)
+    if (src == Registers::HL)
     {
         mmap.write_u8(get_16bitregister(Registers::HL), val);
     }
     else
     {
-        set_register(op_s.reg, val);
+        set_register(src, val);
     }
 }
 
-void Cpu::set_b3_r8(uint8_t opcode, Operand op_s)
+template<uint8_t opcode, Registers src>
+void set_b3_r8()
 {
     uint8_t val;
-    if (op_s.reg == Registers::HL)
+    if (src == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
         set_cycle(4);
     }
     else
     {
-        val = get_register(op_s.reg);
+        val = get_register(src);
         set_cycle(2);
     }
     uint8_t bit_loc = (opcode >> 3) & 0x7;
     val |= (1 << bit_loc);
-    if (op_s.reg == Registers::HL)
+    if (src == Registers::HL)
     {
         mmap.write_u8(get_16bitregister(Registers::HL), val);
     }
     else
     {
-        set_register(op_s.reg, val);
+        set_register(src, val);
     }
 }
