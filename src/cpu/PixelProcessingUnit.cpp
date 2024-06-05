@@ -5,7 +5,7 @@ PixelProcessingUnit::PixelProcessingUnit()
     lcd_clock = 0;
     init_window();
     data.status = false;
-    std::cout << "made ppu" << std::endl;
+    // std::cout << "made ppu" << std::endl;
 }
 
 PixelProcessingUnit::~PixelProcessingUnit()
@@ -15,6 +15,7 @@ PixelProcessingUnit::~PixelProcessingUnit()
 void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
 {
     if (mmap.get_lcd_enable()) {
+        // std::cout << "lcd on" << std::endl;
         //TODO have a check for the dma (CGB only?) ?
         lcd_clock += (uint16_t)cycle;
         //TODO get this working with the switch case stuff 
@@ -47,7 +48,7 @@ void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
             }
         }
         if (mmap.get_lcd_line_y() == 144) {
-            render_screen();
+            render_screen(mmap);
         }
 
         // switch (mmap.get_ppu_mode())
@@ -107,6 +108,9 @@ void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap &mmap)
         //     break;
         // }
     }
+    else {
+        // std::cout << "lcd off" << std::endl;
+    }
 }
 
 void PixelProcessingUnit::handle_interrupt(bool val, MemoryMap &mmap) {
@@ -150,26 +154,34 @@ void PixelProcessingUnit::fill_pixels(std::deque<std::array<uint8_t, 2>> &pixels
     }
 }
 
-void PixelProcessingUnit::set_pixel(uint32_t x, uint32_t y, uint8_t pixel, MemoryMap &mmap) {
-    uint32_t color = 0x000000;
-    switch (pixel) {
+uint32_t get_color(uint8_t bg_palette, uint8_t palette_id) {
+    uint8_t val = 0;
+    switch (palette_id) {
         case 0b00:
-            color = 0xff0000ff;
+            val = bg_palette & 0b11;
         break;
         case 0b01:
-        color = 0x00FF00ff;
+            val = (bg_palette & 0b1100) >> 2;
         break;
         case 0b10:
-        color = 0x0000FFff;
+            val = (bg_palette & 0b110000) >> 4;
         break;
         case 0b11:
-        color = 0xFFFFFFff;
-        break;
-        default:
-        color = 0x000000;
+            val = (bg_palette & 0b11000000) >> 6;
         break;
     }
-    data.framebuffer[x + y * 160] = color;
+    switch (val) {
+        case 0b00:    
+            return 0xFFFFFFFF;
+        case 0b01:
+            return 0xAAAAAAFF;
+        case 0b10:    
+            return 0x555555FF;
+        case 0b11:    
+            return 0x00000000;
+        default:       
+            return 0x00000000;
+    }
 }
 
 void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, std::deque<std::array<uint8_t, 2>> &pixels, uint32_t x, MemoryMap &mmap) {
@@ -214,6 +226,7 @@ void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, std::deque
 void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
     std::deque<std::array<uint8_t, 2>> pixels;
     std::vector<Sprite> sprites;
+    uint8_t bg_palette = mmap.get_background_palette_data();
 
     uint8_t ly = mmap.get_lcd_line_y();
     uint8_t start_y = (ly + mmap.get_lcd_scrolling_y()) % 255;
@@ -232,19 +245,19 @@ void PixelProcessingUnit::render_scanline(MemoryMap &mmap) {
         }
     }
     for (uint32_t x = 0; x < 160; x++) {
-        while (pixels.size() < 8) {
+        while (pixels.size() <= 8) {
             start_x = (x + mmap.get_lcd_scrolling_x() + 8);
             fill_pixels(pixels, start_x, 8, start_y, mmap);
         }
-        handle_sprites(sprites, pixels, x, mmap);        
-        set_pixel(x, ly, pixels[0][0], mmap);
+        handle_sprites(sprites, pixels, x, mmap);
+        mmap.framebuffer[x + ly * 160] = get_color(bg_palette, pixels[0][0]);
         pixels.pop_front();
     }
 }
 
-void PixelProcessingUnit::render_screen() {
+void PixelProcessingUnit::render_screen(MemoryMap &mmap) {
     SDL_RenderPresent(data.renderer);
-    SDL_UpdateTexture(data.texture, NULL, data.framebuffer, 160 * sizeof(uint32_t));
+    SDL_UpdateTexture(data.texture, NULL, mmap.framebuffer, 160 * sizeof(uint32_t));
     SDL_RenderClear(data.renderer);
     SDL_RenderCopy(data.renderer, data.texture, NULL, NULL);
     SDL_RenderPresent(data.renderer);
@@ -252,7 +265,6 @@ void PixelProcessingUnit::render_screen() {
 
 bool PixelProcessingUnit::init_window()
 {   
-    std::cout << "init window" << std::endl;
     bool success = true;
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -283,10 +295,6 @@ bool PixelProcessingUnit::init_window()
             }
         }
     }
-    for (int i = 0; i < 144*160; i++) {
-        data.framebuffer[i] = 0;
-    }
-    std::cout << "success: " << success << std::endl;
     return success;
 }
 

@@ -13,11 +13,16 @@ void add_a_r8()
         val = get_register(src);
         set_cycle(1);
     }
-    set_register(Registers::A, a_val + val);
-    set_flag(FlagRegisters::z, (val + a_val) == 0);
-    set_flag(FlagRegisters::n, 0);
+    uint8_t sum = a_val + val;
+    set_register(Registers::F, 0);
+    set_register(Registers::A, sum);
+    if (sum == 0) {
+        set_flag(FlagRegisters::z, 1);
+    }
+    else if (sum < a_val) {
+        set_flag(FlagRegisters::c, 1);
+    }
     set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
-    set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
 }
 
 void add_a_imm8()
@@ -25,10 +30,16 @@ void add_a_imm8()
     uint8_t val = mmap.read_u8(pc);
     pc += 1;
     uint8_t a_val = get_register(Registers::A);
-    set_flag(FlagRegisters::z, (val + a_val) == 0);
-    set_flag(FlagRegisters::n, 0);
+    uint8_t sum = a_val + val;
+    set_register(Registers::F, 0);
+    set_register(Registers::A, sum);
+    if (sum == 0) {
+        set_flag(FlagRegisters::z, 1);
+    }
+    else if (sum < a_val) {
+        set_flag(FlagRegisters::c, 1);
+    }
     set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
-    set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
     set_cycle(1);
 }
 
@@ -72,12 +83,11 @@ void adc_a_r8()
         val = get_register(src);
         set_cycle(1);
     }
-    set_flag(FlagRegisters::n, 0);
-    set_flag(FlagRegisters::z, 0);
+    uint8_t sum = a_val + val + get_flag(FlagRegisters::c);
+    set_register(Registers::F, 0);
     set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
     set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
-    set_register(Registers::A, a_val + val + get_flag(FlagRegisters::c));
-    // set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
+    set_register(Registers::A, sum);
 }
 
 void adc_a_imm8()
@@ -85,11 +95,11 @@ void adc_a_imm8()
     uint8_t val = mmap.read_u8(pc);
     pc += 1;
     uint8_t a_val = get_register(Registers::A);
-    set_flag(FlagRegisters::n, 0);
-    set_flag(FlagRegisters::z, 0);
+    uint8_t sum = a_val + val + get_flag(FlagRegisters::c);
+    set_register(Registers::F, 0);
     set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
     set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
-    set_register(Registers::A, a_val + val + get_flag(FlagRegisters::c));
+    set_register(Registers::A, sum);
     set_cycle(2);
     // set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
 }

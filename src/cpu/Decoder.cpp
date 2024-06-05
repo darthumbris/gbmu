@@ -22,7 +22,7 @@ namespace Dict
 
     Decoder::Decoder(std::string &path)
     {
-        std::cout << "\n==================opened stream==================" << std::endl;
+        // std::cout << "\n==================opened stream==================" << std::endl;
         std::ifstream f(path);
         try
         {
@@ -62,7 +62,7 @@ namespace Dict
 
     void Decoder::set_data(std::string path)
     {
-        std::cout << "decoder path: " << path << std::endl;
+        // std::cout << "decoder path: " << path << std::endl;
         std::ifstream ifs;
         ifs.open(path.c_str(), std::ifstream::binary);
         auto size = ifs.tellg();
@@ -72,12 +72,12 @@ namespace Dict
             data.push_back(static_cast<std::byte>(c));
         }
         ifs.close();
-        std::cout << "rom size: " << data.size() << std::endl;
+        // std::cout << "rom size: " << data.size() << std::endl;
     }
 
     std::vector<std::byte> Decoder::get_data() const
     {
-        std::cout << "rom size: " << data.size() << std::endl;
+        // std::cout << "rom size: " << data.size() << std::endl;
         return data;
     }
 

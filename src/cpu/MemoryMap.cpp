@@ -19,8 +19,8 @@ MemoryMap::MemoryMap(const std::string path)
         data.push_back(static_cast<std::byte>(c));
     }
     ifs.close();
-    std::cout << "memory map rom size: " << data.size() << std::endl;
-    std::cout << "mmap path: " << path << std::endl;
+    // std::cout << "memory map rom size: " << data.size() << std::endl;
+    // std::cout << "mmap path: " << path << std::endl;
     size_t i;
     for (i = 0; i < 16384; i++)
     {
@@ -44,6 +44,9 @@ MemoryMap::MemoryMap(const std::string path)
         i += 1;
     }
     ext_ram.push_back(Mem8k());
+    for (int i = 0; i < 144*160; i++) {
+        framebuffer[i] = 0;
+    }
 }
 
 MemoryMap::~MemoryMap()
@@ -56,15 +59,15 @@ uint8_t MemoryMap::read_u8(uint16_t addr)
     // std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
     {
-    case 0x0000 ... 0x00FE:
+    case 0x0000 ... 0x00FF:
         if (!is_boot_rom_enabled())
         {
             // std::cout << "reading from bios" << std::endl;
             return boot_rom[addr];
         }
-        std::cout << "reading from rom" << std::endl;
+        // std::cout << "reading from rom" << std::endl;
         return rom[addr];
-    case 0x00FF ... 0x3FFF:
+    case 0x0100 ... 0x3FFF:
         return rom[addr];
     case 0x4000 ... 0x7FFF:
         return rom_banks[0][addr - 0x4000]; // TODO check how to get what rom_bank
@@ -100,13 +103,14 @@ uint16_t MemoryMap::read_u16(uint16_t addr)
 void MemoryMap::write_u8(uint16_t addr, uint8_t val)
 {
     if (addr == 0xFF50) {
-        std::cout << "this is for disabling boot rom?" << std::endl;
+        // std::cout << "this is for disabling boot rom?" << std::endl;
+        exit(1);
     }
     // TODO check if the bitwise operators for the addresses are correct
     // std::cout << "trying to write addr: 0x" << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
     {
-    case 0x0000 ... 0x00FE:
+    case 0x0000 ... 0x00FF:
         if (!is_boot_rom_enabled())
         {
             // printf("trying to write to bios at addr: %lu bios is size: %lu\n", (std::size_t)(addr), boot_rom.size());
@@ -118,9 +122,9 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         // std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
         rom[addr] = val;
         break;
-    case 0x00FF ... 0x3FFF:
+    case 0x0100 ... 0x3FFF:
         // std::cout << "rom trying to write addr: " << std::dec << (std::size_t)(addr) << std::dec << std::endl;
-        rom[addr - 0x00FF] = val;
+        rom[addr] = val;
         break;
     case 0x4000 ... 0x7FFF:
         // std::cout << "rom[0] trying to write addr: " << std::dec << (std::size_t)(addr & 0x3FFF) << std::dec << std::endl;
@@ -154,12 +158,6 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
     case 0xFF00 ... 0xFF7F:
         // std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
         // std::cout << "io trying to write addr: 0x" << std::hex << (std::size_t)(addr) << std::dec << std::endl;
-        // if (addr == 0xFF42 && val < 100) {
-        //     std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
-        // }
-        // if (addr == 0xFF44) {
-        //     std::cout << "io_registers trying to write addr: " << std::hex << addr << std::dec << " val: " << (uint16_t)val << std::endl;
-        // }
         io_registers[addr - 0xFF00] = val;
         break;
     case 0xFF80 ... 0xFFFE:

@@ -17,7 +17,6 @@ struct Sdl_Data
     SDL_Texture  *texture;
     SDL_Renderer *renderer;
     bool status;
-    uint32_t framebuffer[144*160];
 };
 
 enum PPU_Modes {
@@ -48,7 +47,7 @@ public:
     void tick(uint8_t interrupt, MemoryMap &mmap);
     bool init_window();
     void close();
-    void render_screen();
+    void render_screen(MemoryMap &mmap);
     inline bool status() {return data.status;}
     inline void set_status(bool val) {data.status = val;}
 };

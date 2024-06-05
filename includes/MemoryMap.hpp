@@ -117,6 +117,7 @@ private:
 
 public:
     std::array<Mem8k, 2> vram{0};             // 0x8000 - 0x9FFF   // 0 for GB and 0-1 for Cgb (switchable banks)
+    uint32_t framebuffer[144*160];
     MemoryMap();
     MemoryMap(const std::string path);
 
@@ -128,7 +129,7 @@ public:
     void write_u16(uint16_t addr, uint16_t val);
 
     inline uint8_t get_tile_index(uint8_t vbank, uint16_t x, uint16_t y, uint16_t tile_map) {return vram[vbank][tile_map + (x + y * 32)];}
-    inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][tile_index];} //TODO check this
+    inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][(uint32_t)tile_index * 16];} //TODO check this
 
 
     inline bool is_boot_rom_enabled() {return io_registers[(std::size_t)(0xFF50 & 0x7F)];}

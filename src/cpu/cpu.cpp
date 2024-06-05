@@ -21,7 +21,7 @@ Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
     mmap = MemoryMap(path);
     // ppu = PixelProcessingUnit();
     // ppu.init_window();
-    std::cout << "made cpu" << std::endl;
+    // std::cout << "made cpu" << std::endl;
 }
 
 Cpu::~Cpu()
@@ -130,13 +130,13 @@ void Cpu::tick()
 {
     auto dec = get_instruction();
     // if (debug_count >= DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
-        // std::cout << "debug count: "  << debug_count << "  ";
-        // if (debug_count > 28812 - 2 && debug_count < 28812 + 2)
-        // debug_print(std::get<1>(dec), std::get<0>(dec));
+        // std::cout << debug_count << "  ";
+        // std::cout << "debug count: " << debug_count << std::endl;
+        // if (debug_count > 2218245 - 2 && debug_count < 2218245 + 2)
+        //     debug_print(std::get<1>(dec), std::get<0>(dec));
         // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
     // }
     // else {
-        // std::cout << "debug count: " << debug_count << std::endl;
     // }
     // if (debug_count > 24578 && debug_count < 24630) {
         // std::bitset<8> x(get_register(Registers::F));
@@ -145,27 +145,30 @@ void Cpu::tick()
     // }
     execute_instruction(std::get<1>(dec), std::get<0>(dec), std::get<2>(dec));
     pc &= 0xFFFF;
-    if (pc == 0x0100)
-    {
-        std::cout << "Start of ROM" << std::endl;
+    // if (pc == 0x0100)
+    // {
+        // std::cout << "Start of ROM" << std::endl;
         // mmap.bios_loaded = true;
-        exit(1);
-    }
+        // exit(1);
+    // }
     ppu.tick(t_cycle, mmap);
     event_handler();
     if (debug_count < 2147483647) {
         debug_count += 1;
     }
+    if (debug_count > 2218245 + 127)
+        exit(1);
 }
 
 void Cpu::debug_print(Instruction in, uint8_t opcode)
 {
     std::cout << "[0x" << std::setfill('0') << std::setw(4) << std::hex << pc;
-    std::cout << "]  0x" << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << "\t";
-    in.print_instruction();
+    std::cout << "] 0x" << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << "\t";
+    std::cout << std::endl;
+    // in.print_instruction();
 
-    if (interrupts)
-        std::cout << "interrupts: 0x" << std::setfill('0') << std::setw(4) << std::hex << interrupts << std::dec << std::endl;
+    // if (interrupts)
+    //     std::cout << "interrupts: 0x" << std::setfill('0') << std::setw(4) << std::hex << interrupts << std::dec << std::endl;
 }
 
 std::tuple<uint8_t, Instruction, bool> Cpu::get_instruction()
