@@ -26,30 +26,15 @@ Cpu::~Cpu()
 
 uint16_t Cpu::get_16bitregister(Registers reg) const
 {
-    if (reg < 8) // 8bit register
-    {
-        std::cout << "what" << std::endl;
-        return (u8_registers[reg]);
+    if (reg == Registers::SP) {
+        return sp;
     }
-    else // 16-bit register
-    {
-        if (reg == Registers::SP) {
-            return sp;
-        }
-        return ((uint16_t)(u8_registers[reg - Registers::BC] << 8) + (uint16_t)u8_registers[reg - Registers::BC + 1]);
-    }
+    return ((uint16_t)(u8_registers[reg - Registers::BC] << 8) + (uint16_t)u8_registers[reg - Registers::BC + 1]);
 }
 
 uint8_t Cpu::get_register(Registers reg) const
 {
-    if (reg < 8) // 8bit register
-    {
-        return (u8_registers[reg]);
-    }
-    else // 16-bit register
-    {
-        throw std::runtime_error("getting register");
-    }
+    return (u8_registers[reg]);
 }
 
 uint8_t Cpu::get_flag(uint8_t flag) const
@@ -59,40 +44,18 @@ uint8_t Cpu::get_flag(uint8_t flag) const
 
 void Cpu::set_16bitregister(Registers reg, uint16_t val)
 {
-    if (reg < 8) //8bit register
-    {
-        std::cout << "what" << std::endl;
-        u8_registers[reg] = (uint8_t)val; //TODO check bit shifting here
+    if (reg == Registers::SP) {
+        sp = val;
     }
-    else // 16-bit register
-    {
-        if (reg == Registers::SP) {
-            sp = val;
-        }
-        else {
-            u8_registers[reg - Registers::BC] = (uint8_t)(val >> 8);
-            u8_registers[reg - Registers::BC + 1] = (uint8_t)(val & 0xff);
-        }
+    else {
+        u8_registers[reg - Registers::BC] = (uint8_t)(val >> 8);
+        u8_registers[reg - Registers::BC + 1] = (uint8_t)(val & 0xff);
     }
 }
 
 void Cpu::set_register(Registers reg, uint8_t val)
 {
-    if (reg < 8) //8bit register
-    {
-        u8_registers[reg] = val;
-    }
-    else // 16-bit register
-    {
-        throw std::runtime_error("setting register");
-        if (reg == Registers::SP) {
-            sp = val;
-        }
-        else {
-            u8_registers[reg - Registers::BC] = (uint8_t)(val >> 8);
-            u8_registers[reg - Registers::BC + 1] = (uint8_t)(val & 0xff);
-        }
-    }
+    u8_registers[reg] = val;
 }
 
 void Cpu::set_flag(uint8_t flag, uint8_t val)
