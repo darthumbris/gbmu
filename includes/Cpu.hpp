@@ -72,19 +72,19 @@ private:
 	template<uint8_t opcode>
 	void unimplemented() {std::cout << "unimplemented opcode: 0x" << std::setfill('0') << std::setw(2) << std::hex << opcode << std::dec << std::endl;}
 
-	#include "ops/ops_add.inl"
-	#include "ops/ops_alu.inl"
-	#include "ops/ops_bit.inl"
-	#include "ops/ops_call.inl"
-	#include "ops/ops_dec.inl"
-	#include "ops/ops_inc.inl"
-	#include "ops/ops_jumps.inl"
-	#include "ops/ops_loads.inl"
-	#include "ops/ops_misc.inl"
-	#include "ops/ops_reset.inl"
-	#include "ops/ops_ret.inl"
-	#include "ops/ops_rotate_shift.inl"
-	#include "ops/ops_sub.inl"
+	#include "ops/ops_add.tcc"
+	#include "ops/ops_alu.tcc"
+	#include "ops/ops_bit.tcc"
+	#include "ops/ops_call.tcc"
+	#include "ops/ops_dec.tcc"
+	#include "ops/ops_inc.tcc"
+	#include "ops/ops_jumps.tcc"
+	#include "ops/ops_loads.tcc"
+	#include "ops/ops_misc.tcc"
+	#include "ops/ops_reset.tcc"
+	#include "ops/ops_ret.tcc"
+	#include "ops/ops_rotate_shift.tcc"
+	#include "ops/ops_sub.tcc"
 
 	void lockup(); //$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
 

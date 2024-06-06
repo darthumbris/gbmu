@@ -96,7 +96,7 @@ uint16_t MemoryMap::read_u16(uint16_t addr)
 void MemoryMap::write_u8(uint16_t addr, uint8_t val)
 {
     if (addr == 0xFF50) {
-        exit(1);
+        // exit(1);
     }
     // std::cout << "trying to write addr: 0x" << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
