@@ -154,6 +154,7 @@ uint8_t PixelProcessingUnit::get_pixel(uint8_t tile_index, uint8_t x, uint8_t y)
     uint8_t top = t[(y * 2)];
     uint8_t pixel = ((top & (0x80 >> x)) == 0) ? 0x00 : 0b10;
     pixel |= ((bottom & (0x80 >> x)) == 0) ? 0x00 : 0b01;
+    // std::cout << "pixel: " << (uint16_t)pixel << std::endl;
     return pixel;
 }
 
@@ -295,21 +296,36 @@ void PixelProcessingUnit::render_scanline() {
         std::cout << "drawing sprites: " << sprites.size() << std::endl;
     }
 
+    uint8_t y = (ly + scy) & 7;
+    uint8_t x = scx & 7;
+
+    if (window_x == 7 ) //&& should_display_window
+    {
+        y = window_y & 7; //TODO should be something else (window_line?)
+        x = 0;
+    }
+
     uint32_t *framebuffer_ptr = framebuffer + ly * 160;
 
-    for (uint32_t x = 0; x < 160; x++) {
+    for (uint32_t i = 0; i < 160; i++) {
 
         // *framebuffer_ptr = bg_colors[get_pixel(map_number, x, y)];
+        // std::cout << "bg_color: " << (uint16_t)bg_colors[get_pixel(map_number, x, y)] << std::endl;
 
         while (pixels.size() <= 8) {
-            start_x = (x + scx + 8);
+            start_x = (i + scx + 8);
             fill_pixels(pixels, start_x, 8, start_y, map_number);
         }
-        handle_sprites(sprites, pixels, x);
+        handle_sprites(sprites, pixels, i);
         *framebuffer_ptr = get_color(bg_palette, pixels[0][0]);
         // framebuffer[x + ly * 160] = get_color(bg_palette, pixels[0][0]);
         pixels.pop_front();
         framebuffer_ptr++;
+        x++;
+        if (x==8) {
+            x = 0;
+            // map_number +=1;
+        }
     }
 }
 
