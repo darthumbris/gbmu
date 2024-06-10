@@ -15,7 +15,6 @@ PixelProcessingUnit::~PixelProcessingUnit()
 void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap *mmap)
 {
     if (mmap->get_lcd_enable()) {
-        // std::cout << "lcd on" << std::endl;
         //TODO have a check for the dma (CGB only?) ?
         lcd_clock += (uint16_t)cycle;
         //TODO get this working with the switch case stuff 
@@ -40,12 +39,11 @@ void PixelProcessingUnit::tick(uint8_t cycle, MemoryMap *mmap)
                     mmap->set_ppu_mode(PPU_Modes::Pixel_Drawing);
                 }
             }
-            else {
-                if (mmap->get_ppu_mode() != PPU_Modes::Horizontal_Blank) {
+            else if (mmap->get_ppu_mode() != PPU_Modes::Horizontal_Blank)
+                {
                     mmap->set_ppu_mode(PPU_Modes::Horizontal_Blank);
                     render_scanline(mmap);
                 }
-            }
         }
         if (mmap->get_lcd_line_y() == 144) {
             render_screen(mmap);

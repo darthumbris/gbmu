@@ -109,13 +109,13 @@ public:
 	Cpu(Decoder dec, const std::string path);
 	~Cpu();
 
-	uint8_t get_register(Registers reg) const;
-	uint16_t get_16bitregister(Registers reg) const;
-	uint8_t get_flag(uint8_t flag) const;
+	INLINE_FN uint8_t get_register(Registers reg) const;
+	INLINE_FN uint16_t get_16bitregister(Registers reg) const;
+	INLINE_FN uint8_t get_flag(uint8_t flag) const;
 
-	void set_16bitregister(Registers reg, uint16_t val);
-	void set_register(Registers reg, uint8_t val);
-	void set_flag(uint8_t flag, uint8_t val);
+	INLINE_FN void set_16bitregister(Registers reg, uint16_t val);
+	INLINE_FN void set_register(Registers reg, uint8_t val);
+	INLINE_FN void set_flag(uint8_t flag, uint8_t val);
 
 	
 	void tick();

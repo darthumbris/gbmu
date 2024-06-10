@@ -34,11 +34,11 @@ void jr_cond_imm8()
     default:
         break;
     }
-    if ((debug_count > 2218245 - 2 && debug_count < 2218245 + 2)) {
-        std::cout << "0x20 offset: " << offset << ", val: " << (uint16_t)val << " flag: " << (uint16_t)get_register(Registers::F) << std::endl;
+    // if ((debug_count > 2218245 - 2 && debug_count < 2218245 + 2)) {
+        // std::cout << "0x20 offset: " << offset << ", val: " << (uint16_t)val << " flag: " << (uint16_t)get_register(Registers::F) << std::endl;
         // std::bitset<8> x(get_register(Registers::F));
         // std::cout << "0x20 flag: 0b" << x << std::endl;
-    }
+    // }
     if (offset)
     {
         if (val > 127) {

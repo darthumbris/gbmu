@@ -22,6 +22,8 @@ using Mem16k = std::array<uint8_t, 16384>;
 using Mem8k = std::array<uint8_t, 8192>;
 using Mem4k = std::array<uint8_t, 4096>;
 
+#define INLINE_FN
+
 struct Sprite {
     uint8_t y_pos;
     uint8_t x_pos;
@@ -123,10 +125,10 @@ public:
 
     ~MemoryMap();
 
-    uint8_t read_u8(uint16_t addr);
-    uint16_t read_u16(uint16_t addr);
-    void write_u8(uint16_t addr, uint8_t val);
-    void write_u16(uint16_t addr, uint16_t val);
+    INLINE_FN uint8_t read_u8(uint16_t addr);
+    INLINE_FN uint16_t read_u16(uint16_t addr);
+    INLINE_FN void write_u8(uint16_t addr, uint8_t val);
+    INLINE_FN void write_u16(uint16_t addr, uint16_t val);
 
     inline uint8_t get_tile_index(uint8_t vbank, uint16_t x, uint16_t y, uint16_t tile_map) {return vram[vbank][tile_map + (x + y * 32)];}
     inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][(uint32_t)tile_index * 16];} //TODO check this

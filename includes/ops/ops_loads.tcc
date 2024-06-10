@@ -170,7 +170,7 @@ void ld_d_a_hl()
 }
 
 template<Registers rec>
-void pop_r16stk()
+INLINE_FN void pop_r16stk()
 {
     uint16_t val = sp;
     set_16bitregister(rec, mmap.read_u16(sp));
@@ -179,7 +179,7 @@ void pop_r16stk()
 }
 
 template<Registers src>
-void push_r16stk()
+INLINE_FN void push_r16stk()
 {
     // Push ss
     uint16_t val = get_16bitregister(src);

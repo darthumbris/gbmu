@@ -51,7 +51,7 @@ MemoryMap::~MemoryMap()
 {
 }
 
-uint8_t MemoryMap::read_u8(uint16_t addr)
+INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
 {
     // std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
@@ -90,11 +90,13 @@ uint8_t MemoryMap::read_u8(uint16_t addr)
         return 0;
     }
 }
-uint16_t MemoryMap::read_u16(uint16_t addr)
+
+INLINE_FN uint16_t MemoryMap::read_u16(uint16_t addr)
 {
     return ((uint16_t)read_u8(addr) + ((uint16_t)read_u8(addr + 1) << 8));
 }
-void MemoryMap::write_u8(uint16_t addr, uint8_t val)
+
+INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
 {
     // std::cout << "trying to write addr: 0x" << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
@@ -145,13 +147,14 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val)
     default:
         break;
     }
-    // if (addr == 0xFF50) {
-        // std::cout << "reached end of bios ops at count: " << debug_count << " val: " << (uint16_t)val << std::endl;
-        // std::cout << "is boot_rom_enabled: " << is_boot_rom_enabled() << std::endl;
-        // exit(1);
-    // }
+    if (addr == 0xFF50) {
+        std::cout << "reached end of bios ops at val: " << (uint16_t)val << std::endl;
+        std::cout << "is boot_rom_enabled: " << is_boot_rom_enabled() << std::endl;
+        exit(1);
+    }
 }
-void MemoryMap::write_u16(uint16_t addr, uint16_t val)
+
+INLINE_FN void MemoryMap::write_u16(uint16_t addr, uint16_t val)
 {
     write_u8(addr, (uint8_t)(val & 0xFF));
     write_u8(addr + 1, (uint8_t)((val & 0xFF00) >> 8));

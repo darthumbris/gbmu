@@ -24,7 +24,7 @@ Cpu::~Cpu()
 {
 }
 
-uint16_t Cpu::get_16bitregister(Registers reg) const
+INLINE_FN uint16_t Cpu::get_16bitregister(Registers reg) const
 {
     if (reg == Registers::SP) {
         return sp;
@@ -32,17 +32,17 @@ uint16_t Cpu::get_16bitregister(Registers reg) const
     return ((uint16_t)(u8_registers[reg - Registers::BC] << 8) + (uint16_t)u8_registers[reg - Registers::BC + 1]);
 }
 
-uint8_t Cpu::get_register(Registers reg) const
+INLINE_FN uint8_t Cpu::get_register(Registers reg) const
 {
     return (u8_registers[reg]);
 }
 
-uint8_t Cpu::get_flag(uint8_t flag) const
+INLINE_FN uint8_t Cpu::get_flag(uint8_t flag) const
 {
-    return ((u8_registers[Registers::F] >> flag) & 1); //TODO check if this bit shift is correct
+    return ((u8_registers[Registers::F] >> flag) & 1);
 }
 
-void Cpu::set_16bitregister(Registers reg, uint16_t val)
+INLINE_FN void Cpu::set_16bitregister(Registers reg, uint16_t val)
 {
     if (reg == Registers::SP) {
         sp = val;
@@ -53,12 +53,12 @@ void Cpu::set_16bitregister(Registers reg, uint16_t val)
     }
 }
 
-void Cpu::set_register(Registers reg, uint8_t val)
+INLINE_FN void Cpu::set_register(Registers reg, uint8_t val)
 {
     u8_registers[reg] = val;
 }
 
-void Cpu::set_flag(uint8_t flag, uint8_t val)
+INLINE_FN void Cpu::set_flag(uint8_t flag, uint8_t val)
 {
     u8_registers[Registers::F] ^= ((-val) ^ u8_registers[Registers::F]) & (1U << flag);
 }
