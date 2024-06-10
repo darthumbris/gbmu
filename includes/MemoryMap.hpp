@@ -132,30 +132,30 @@ public:
     inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][(uint32_t)tile_index * 16];} //TODO check this
 
 
-    inline bool is_boot_rom_enabled() {return io_registers[(std::size_t)(0xFF50 & 0x7F)];}
-    inline uint8_t vram_bank_select() {return io_registers[(std::size_t)(0xFF4F & 0x7F)];} //only bit 0 matters
-    inline uint8_t wram_bank_select() {return io_registers[(std::size_t)(0xFF70 & 0x7F)];} //TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
+    inline bool is_boot_rom_enabled() {return io_registers[(std::size_t)(0xFF50 - 0xFF00)];}
+    inline uint8_t vram_bank_select() {return io_registers[(std::size_t)(0xFF4F - 0xFF00)];} //only bit 0 matters
+    inline uint8_t wram_bank_select() {return io_registers[(std::size_t)(0xFF70 - 0xFF00)];} //TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
     
 
     Sprite get_sprite(size_t index);
 
     //PPU IO Registers
-    inline uint8_t get_lcd_control() {return io_registers[(std::size_t)(0xFF40 & 0x7F)];}
-    inline uint8_t get_lcd_status() {return io_registers[(std::size_t)(0xFF41 & 0x7F)];}
-    inline uint8_t get_lcd_scrolling_y() {return io_registers[(std::size_t)(0xFF42 & 0x7F)];}
-    inline uint8_t get_lcd_scrolling_x() {return io_registers[(std::size_t)(0xFF43 & 0x7F)];}
-    inline uint8_t get_lcd_line_y() {return io_registers[(std::size_t)(0xFF44 & 0x7F)];}
-    inline uint8_t get_lcd_line_y_compare() {return io_registers[(std::size_t)(0xFF45 & 0x7F)];}
+    inline uint8_t get_lcd_control() {return io_registers[(std::size_t)(0xFF40 - 0xFF00)];}
+    inline uint8_t get_lcd_status() {return io_registers[(std::size_t)(0xFF41 - 0xFF00)];}
+    inline uint8_t get_lcd_scrolling_y() {return io_registers[(std::size_t)(0xFF42 - 0xFF00)];}
+    inline uint8_t get_lcd_scrolling_x() {return io_registers[(std::size_t)(0xFF43 - 0xFF00)];}
+    inline uint8_t get_lcd_line_y() {return io_registers[(std::size_t)(0xFF44 - 0xFF00)];}
+    inline uint8_t get_lcd_line_y_compare() {return io_registers[(std::size_t)(0xFF45 - 0xFF00)];}
 
-    inline uint8_t get_dma_transfer_start_address() {return io_registers[(std::size_t)(0xFF46 & 0x7F)];}
+    inline uint8_t get_dma_transfer_start_address() {return io_registers[(std::size_t)(0xFF46 - 0xFF00)];}
 
     //Palettes
-    inline uint8_t get_background_palette_data() {return io_registers[(std::size_t)(0xFF47 & 0x7F)];}
-    inline uint8_t get_obj_0_palette_data() {return io_registers[(std::size_t)(0xFF48 & 0x7F)];}
-    inline uint8_t get_obj_1_palette_data() {return io_registers[(std::size_t)(0xFF49 & 0x7F)];}
+    inline uint8_t get_background_palette_data() {return io_registers[(std::size_t)(0xFF47 - 0xFF00)];}
+    inline uint8_t get_obj_0_palette_data() {return io_registers[(std::size_t)(0xFF48 - 0xFF00)];}
+    inline uint8_t get_obj_1_palette_data() {return io_registers[(std::size_t)(0xFF49 - 0xFF00)];}
     
-    inline uint8_t get_lcd_window_y() {return io_registers[(std::size_t)(0xFF4A & 0x7F)];}
-    inline uint8_t get_lcd_window_x() {return io_registers[(std::size_t)(0xFF4B & 0x7F)];} //TODO x + 7 ? see https://gbdev.io/pandocs/Scrolling.html#lcd-position-and-scrolling
+    inline uint8_t get_lcd_window_y() {return io_registers[(std::size_t)(0xFF4A - 0xFF00)];}
+    inline uint8_t get_lcd_window_x() {return io_registers[(std::size_t)(0xFF4B - 0xFF00)];} //TODO x + 7 ? see https://gbdev.io/pandocs/Scrolling.html#lcd-position-and-scrolling
 
     //0xFF4C unkown register
     //0xFF4D KEY1 - CGB Mode Only - Prepare Speed Switch
@@ -166,10 +166,10 @@ public:
     //0xFF71-0xFF7F unkown register
 
     //CGB Palettes
-    inline uint8_t get_background_color_palette_index() {return io_registers[(std::size_t)(0xFF68 & 0x7F)];}
-    inline uint8_t get_background_color_palette_data() {return io_registers[(std::size_t)(0xFF69 & 0x7F)];}
-    inline uint8_t get_obj_color_palette_index() {return io_registers[(std::size_t)(0xFF6A & 0x7F)];}
-    inline uint8_t get_obj_color_palette_data() {return io_registers[(std::size_t)(0xFF6B & 0x7F)];}
+    inline uint8_t get_background_color_palette_index() {return io_registers[(std::size_t)(0xFF68 - 0xFF00)];}
+    inline uint8_t get_background_color_palette_data() {return io_registers[(std::size_t)(0xFF69 - 0xFF00)];}
+    inline uint8_t get_obj_color_palette_index() {return io_registers[(std::size_t)(0xFF6A - 0xFF00)];}
+    inline uint8_t get_obj_color_palette_data() {return io_registers[(std::size_t)(0xFF6B - 0xFF00)];}
 
     inline uint8_t get_ppu_mode() {return ((get_lcd_status() & mask0) + (get_lcd_status() & mask1));}
     inline bool get_lcd_enable() { return get_lcd_control() & mask7; }
@@ -184,13 +184,13 @@ public:
     void set_ppu_mode(uint8_t mode);
     inline void increase_lcd_line_y() {
         // std::cout << "writing to 0xFF44" << std::endl;
-        io_registers[(std::size_t)(0xFF44 & 0x7F)] += 1;}
+        io_registers[(std::size_t)(0xFF44 - 0xFF00)] += 1;}
     inline void increase_lcd_line_y_mod() {
         // std::cout << "writing to 0xFF44" << std::endl;
-        io_registers[(std::size_t)(0xFF44 & 0x7F)] = (io_registers[(std::size_t)(0xFF44 & 0x7F)] + 1) % 154;}
-    inline void reset_lcd_line_y() {io_registers[(std::size_t)(0xFF44 & 0x7F)] = 0;}
-    inline void reset_lcd_window_y() {io_registers[(std::size_t)(0xFF4A & 0x7F)] = 0;}
-    inline void set_bg_window_enable_priority(bool val) { io_registers[(std::size_t)(0xFF40 & 0x7F)] = ((-val)) ^ io_registers[(std::size_t)(0xFF40 & 0x7F)] & (1U << 0) ;}
+        io_registers[(std::size_t)(0xFF44 - 0xFF00)] = (io_registers[(std::size_t)(0xFF44 - 0xFF00)] + 1) % 154;}
+    inline void reset_lcd_line_y() {io_registers[(std::size_t)(0xFF44 - 0xFF00)] = 0;}
+    inline void reset_lcd_window_y() {io_registers[(std::size_t)(0xFF4A - 0xFF00)] = 0;}
+    inline void set_bg_window_enable_priority(bool val) { io_registers[(std::size_t)(0xFF40 - 0xFF00)] = ((-val)) ^ io_registers[(std::size_t)(0xFF40 - 0xFF00)] & (1U << 0) ;}
 };
 
 #endif

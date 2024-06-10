@@ -67,7 +67,7 @@ private:
 	void set_instructions();
 
 	// CB prefix
-	void prefix() {}
+	void prefix();
 
 	template<uint8_t opcode>
 	void unimplemented() {std::cout << "unimplemented opcode: 0x" << std::setfill('0') << std::setw(2) << std::hex << opcode << std::dec << std::endl;}
@@ -88,7 +88,6 @@ private:
 
 	void lockup(); //$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
 
-	// TODO template these
 	template <typename IntegerType1, typename IntegerType2>
 	bool half_carry_flag_set(IntegerType1 val1, IntegerType2 val2)
 	{
@@ -100,9 +99,7 @@ private:
 	{
 		return (((val1 & 0xFF) + (val2 & 0xFF)) > 0xFF);
 	}
-
-	std::tuple<uint8_t, bool> get_instruction();
-	void execute_instruction(uint8_t opcode, bool is_prefix_ins);
+	void execute_instruction();
 
 	void debug_print(uint8_t opcode, bool prefix);
 

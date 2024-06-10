@@ -65,7 +65,6 @@ void Cpu::set_flag(uint8_t flag, uint8_t val)
 
 void Cpu::tick()
 {
-    auto dec = get_instruction();
     // if (debug_count >= DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
         // std::cout << debug_count << "  ";
         // std::cout << "debug count: " << debug_count << std::endl;
@@ -73,14 +72,12 @@ void Cpu::tick()
         //     debug_print(std::get<0>(dec), std::get<1>(dec));
         // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
     // }
-    // else {
-    // }
     // if (debug_count > 24578 && debug_count < 24630) {
         // std::bitset<8> x(get_register(Registers::F));
         // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
         // std::cout << "debug count: "  << debug_count << ", register: " << x << std::endl;
     // }
-    execute_instruction(std::get<0>(dec), std::get<1>(dec));
+    execute_instruction();
     pc &= 0xFFFF;
     // if (pc == 0x0100)
     // {
@@ -88,7 +85,7 @@ void Cpu::tick()
         // mmap.bios_loaded = true;
         // exit(1);
     // }
-    ppu.tick(t_cycle, mmap);
+    ppu.tick(t_cycle, &mmap);
     event_handler();
     if (debug_count < 2147483647) {
         debug_count += 1;
@@ -99,7 +96,6 @@ void Cpu::debug_print(uint8_t opcode, bool prefix)
 {
     std::cout << "[0x" << std::setfill('0') << std::setw(4) << std::hex << pc;
     std::cout << "] 0x" << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << "\t";
-    std::cout << std::endl;
 
     if (prefix) {
         decoder.prefixed_instructions[opcode].print_instruction();
@@ -112,31 +108,27 @@ void Cpu::debug_print(uint8_t opcode, bool prefix)
     //     std::cout << "interrupts: 0x" << std::setfill('0') << std::setw(4) << std::hex << interrupts << std::dec << std::endl;
 }
 
-std::tuple<uint8_t, bool> Cpu::get_instruction()
-{
-    bool prefix = false;
+void Cpu::prefix() {
     uint8_t opcode = mmap.read_u8(pc);
     pc += 1;
-    if (opcode == 0xCB)
-    {
-        opcode = mmap.read_u8(pc);
-        pc += 1;
-        prefix = true;
-    }
-    return {opcode, prefix};
+    auto op = prefixed_instructions[opcode];
+    (this->*op)();
+
+    #ifdef DEBUG_MODE
+        debug_print(opcode, true);
+    #endif
 }
 
-void Cpu::execute_instruction(uint8_t opcode, bool is_prefix_ins)
+void Cpu::execute_instruction()
 {
-    if (is_prefix_ins)
-    {
-        auto op = prefixed_instructions[opcode];
-        (this->*op)();
-    }
-    else {
-        auto op = unprefixed_instructions[opcode];
-        (this->*op)();
-    }
+    uint8_t opcode = mmap.read_u8(pc);
+    pc += 1;
+    auto op = unprefixed_instructions[opcode];
+    (this->*op)();
+    #ifdef DEBUG_MODE
+        if (opcode != 0xCB)
+            debug_print(opcode, false);
+    #endif
 }
 
 void Cpu::lockup() {}
