@@ -201,36 +201,6 @@ void PixelProcessingUnit::fill_pixels(std::deque<std::array<uint8_t, 2>> &pixels
     }
 }
 
-uint32_t get_color(uint8_t bg_palette, uint8_t palette_id) {
-    uint8_t val = 0;
-    switch (palette_id) {
-        case 0b00:
-            val = bg_palette & 0b11;
-        break;
-        case 0b01:
-            val = (bg_palette & 0b1100) >> 2;
-        break;
-        case 0b10:
-            val = (bg_palette & 0b110000) >> 4;
-        break;
-        case 0b11:
-            val = (bg_palette & 0b11000000) >> 6;
-        break;
-    }
-    switch (val) {
-        case 0b00:    
-            return 0xFFFFFFFF;
-        case 0b01:
-            return 0xAAAAAAFF;
-        case 0b10:    
-            return 0x555555FF;
-        case 0b11:    
-            return 0x00000000;
-        default:       
-            return 0x00000000;
-    }
-}
-
 void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, std::deque<std::array<uint8_t, 2>> &pixels, uint32_t x) {
     uint8_t spr_num = 0;
     for (auto spr : sprites) {
@@ -307,6 +277,8 @@ void PixelProcessingUnit::render_scanline() {
 
     uint32_t *framebuffer_ptr = framebuffer + ly * 160;
 
+    // if (!bg_palette)
+    //     std::cout << "drawing scanline" << std::endl;
     for (uint32_t i = 0; i < 160; i++) {
 
         // *framebuffer_ptr = bg_colors[get_pixel(map_number, x, y)];
@@ -317,7 +289,8 @@ void PixelProcessingUnit::render_scanline() {
             fill_pixels(pixels, start_x, 8, start_y, map_number);
         }
         handle_sprites(sprites, pixels, i);
-        *framebuffer_ptr = get_color(bg_palette, pixels[0][0]);
+        *framebuffer_ptr = bg_colors[pixels[0][0]];
+        // *framebuffer_ptr = get_color(bg_palette, pixels[0][0]);
         // framebuffer[x + ly * 160] = get_color(bg_palette, pixels[0][0]);
         pixels.pop_front();
         framebuffer_ptr++;
@@ -460,16 +433,16 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
                 switch ((val >> (i * 2)) & 3)
                 {
                     case 0:
-                        bg_colors[i] = 0xffe7cdff;
+                        bg_colors[i] = 0xFFFFFFFF;
                         break;
                     case 1:
-                        bg_colors[i] = 0xe4a39fff;
+                        bg_colors[i] = 0xAAAAAAFF;
                         break;
                     case 2:
-                        bg_colors[i] = 0x629098ff;
+                        bg_colors[i] = 0x555555FF;
                         break;
                     case 3:
-                        bg_colors[i] = 0x4c3457ff;
+                        bg_colors[i] = 0x00000000;
                         break;
                 }
             }

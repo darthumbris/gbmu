@@ -96,7 +96,7 @@ private:
     uint8_t tile_data_1[384][16];
     uint8_t tile_map_1[64][32];
 
-    uint8_t bg_colors[4];
+    uint32_t bg_colors[4];
 
     void handle_interrupt(bool val);
 
