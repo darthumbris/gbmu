@@ -6,7 +6,6 @@
 #include "Decoder.hpp"
 #include "MemoryMap.hpp"
 #include <iostream>
-#include "PixelProcessingUnit.hpp"
 #include <bitset>
 #include "Operand.hpp"
 
@@ -57,8 +56,6 @@ private:
 	bool interrupts = false; // TODO check if can be done with interrupt in the memorymap?
 	uint16_t m_cycle;
 	uint16_t t_cycle;
-
-	PixelProcessingUnit ppu;
 
 	typedef void (Cpu::*OpsFn)(void);
 
@@ -121,8 +118,9 @@ public:
 	void tick();
 	void event_handler();
 	void handle_input(SDL_Event &e);
-	inline bool status() {return ppu.status();}
-	inline void close() {ppu.close();}
+	inline bool status() {return mmap.status();}
+	inline void set_status(bool val) {mmap.set_status(val);}
+	inline void close() {mmap.close();}
 };
 
 #endif

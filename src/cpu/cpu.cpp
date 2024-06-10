@@ -4,6 +4,8 @@
 #include <typeinfo>
 #include <fstream>
 #include <stdexcept>
+#include <chrono>
+#include <ctime>
 
 uint32_t const DEBUG_START = 0;
 uint32_t const DEBUG_COUNT = 48187;
@@ -65,6 +67,8 @@ INLINE_FN void Cpu::set_flag(uint8_t flag, uint8_t val)
 
 void Cpu::tick()
 {
+    // const std::chrono::time_point<std::chrono::steady_clock> start =
+    //     std::chrono::steady_clock::now();
     // if (debug_count >= DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
         // std::cout << debug_count << "  ";
         // std::cout << "debug count: " << debug_count << std::endl;
@@ -85,11 +89,13 @@ void Cpu::tick()
         // mmap.bios_loaded = true;
         // exit(1);
     // }
-    ppu.tick(t_cycle, &mmap);
+    mmap.tick(t_cycle);
     event_handler();
-    if (debug_count < 2147483647) {
-        debug_count += 1;
-    }
+    debug_count += 1;
+    // const auto end = std::chrono::steady_clock::now();
+    //  std::cout
+    //     << "delta time: "
+    //     << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start) << "\n";  // using milliseconds and seconds accordingly
 }
 
 void Cpu::debug_print(uint8_t opcode, bool prefix)

@@ -42,9 +42,6 @@ MemoryMap::MemoryMap(const std::string path)
         i += 1;
     }
     ext_ram.push_back(Mem8k());
-    for (int i = 0; i < 144*160; i++) {
-        framebuffer[i] = 0;
-    }
 }
 
 MemoryMap::~MemoryMap()
@@ -57,7 +54,7 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
     switch (addr)
     {
     case 0x0000 ... 0x00FF:
-        if (!is_boot_rom_enabled())
+        if (!boot_rom_loaded)
         {
             return boot_rom[addr];
         }
@@ -68,19 +65,25 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
     case 0x4000 ... 0x7FFF:
         return rom_banks[0][addr - 0x4000]; // TODO check how to get what rom_bank
     case 0x8000 ... 0x9FFF:
-        return vram[vram_bank_select()][addr - 0x8000]; // TODO check how to get what vram_bank
+        return ppu.read_u8_ppu(addr & 0x1FFF);
     case 0xA000 ... 0xBFFF:
         return ext_ram[0][addr - 0xA000]; // TODO check how to get what extram_bank
     case 0xC000 ... 0xDFFF:
-        return work_ram[wram_bank_select()][addr - 0xC000]; // TODO check how to get what workram_bank
+        return work_ram[wram_bank_select()][addr - 0xC000];
     case 0xE000 ... 0xFDFF:
-        return echo_ram[wram_bank_select()][addr - 0xE000]; // TODO check how to get what echo_ram_bank
+        return echo_ram[wram_bank_select()][addr - 0xE000];
     case 0xFE00 ... 0xFE9F:
-        return oam[addr - 0xFE00];
+        return ppu.read_oam(addr & 0xFF);
     case 0xFEA0 ... 0xFEFF:
         return not_usable[addr - 0xFEA0];
-    case 0xFF00 ... 0xFF7F:
+    case 0xFF00 ... 0xFF3F:
         return io_registers[addr - 0xFF00];
+    case 0xFF40 ... 0xFF4F:
+        return ppu.read_u8_ppu(addr);
+    case 0xFF51 ... 0xFF7F:
+        return ppu.read_u8_ppu(addr);
+    case 0xFF50:
+        return io_registers[(std::size_t)(0xFF50 - 0xFF00)];
     case 0xFF80 ... 0xFFFE:
         return high_ram[addr - 0xFF80];
     case 0xFFFF:
@@ -102,7 +105,7 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
     switch (addr)
     {
     case 0x0000 ... 0x00FF:
-        if (!is_boot_rom_enabled())
+        if (!boot_rom_loaded)
         {
             boot_rom[addr] = val;
             break;
@@ -117,10 +120,11 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         rom_banks[0][addr - 0x4000] = val; // TODO check how to get what rom_bank
         break;
     case 0x8000 ... 0x9FFF:
-        vram[vram_bank_select()][addr - 0x8000] = val; // TODO check how to get what vram_bank
+        ppu.write_u8_ppu(addr & 0x1FFF, val);
+        // vram[vram_bank_select()][addr - 0x8000] = val;
         break;
     case 0xA000 ... 0xBFFF:
-        ext_ram[0][addr - 0xA000] = val; // TODO check how to get what extram_bank
+        ext_ram[wram_bank_select()][addr - 0xA000] = val;
         break;
     case 0xC000 ... 0xDFFF:
         work_ram[wram_bank_select()][addr - 0xC000] = val;
@@ -129,13 +133,23 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         echo_ram[wram_bank_select()][addr - 0xE000] = val;
         break;
     case 0xFE00 ... 0xFE9F:
-        oam[addr - 0xFE00] = val;
+        ppu.write_oam(addr & 0xFF, val);
+        // oam[addr - 0xFE00] = val;
         break;
     case 0xFEA0 ... 0xFEFF:
         not_usable[addr - 0xFEA0] = val;
         break;
-    case 0xFF00 ... 0xFF7F:
+    case 0xFF00 ... 0xFF3F:
         io_registers[addr - 0xFF00] = val;
+        break;
+    case 0xFF40 ... 0xFF4F:
+        ppu.write_u8_ppu(addr, val);
+        break;
+    case 0xFF51 ... 0xFF7F:
+        ppu.write_u8_ppu(addr, val);
+        break;
+    case 0xFF50:
+        io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
         break;
     case 0xFF80 ... 0xFFFE:
         high_ram[addr - 0xFF80] = val;
@@ -148,9 +162,10 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         break;
     }
     if (addr == 0xFF50) {
+        boot_rom_loaded = true;
         std::cout << "reached end of bios ops at val: " << (uint16_t)val << std::endl;
         std::cout << "is boot_rom_enabled: " << is_boot_rom_enabled() << std::endl;
-        exit(1);
+        // exit(1);
     }
 }
 
@@ -160,31 +175,23 @@ INLINE_FN void MemoryMap::write_u16(uint16_t addr, uint16_t val)
     write_u8(addr + 1, (uint8_t)((val & 0xFF00) >> 8));
 }
 
-void MemoryMap::set_ppu_mode(uint8_t mode) {
-    switch (mode) {
-        case 0:
-            io_registers[0xFF41 -0xFF00] &= ~(1 << 0);
-            io_registers[0xFF41 -0xFF00] &= ~(1 << 1);
-        break;
-        case 1:
-            io_registers[0xFF41 -0xFF00] |= 1 << 0;
-            io_registers[0xFF41 -0xFF00] &= ~(1 << 1);
-        break;
-        case 2:
-            io_registers[0xFF41 -0xFF00] &= ~(1 << 0);
-            io_registers[0xFF41 -0xFF00] |= 1 << 1;
-        break;
-        case 3:
-            io_registers[0xFF41 -0xFF00] |= 1 << 0;
-            io_registers[0xFF41 -0xFF00] |= 1 << 1;
-        break;
-    }
-}
-
-Sprite MemoryMap::get_sprite(size_t index) {
-    uint8_t y_pos = oam[index * 4];
-    uint8_t x_pos = oam[index * 4 + 1];
-    uint8_t tile_index = oam[index * 4 + 2];
-    uint8_t attr_flags = oam[index * 4 + 3];
-    return {y_pos, x_pos, tile_index, attr_flags};
-}
+// void MemoryMap::set_ppu_mode(uint8_t mode) {
+//     switch (mode) {
+//         case 0:
+//             io_registers[0xFF41 -0xFF00] &= ~(1 << 0);
+//             io_registers[0xFF41 -0xFF00] &= ~(1 << 1);
+//         break;
+//         case 1:
+//             io_registers[0xFF41 -0xFF00] |= 1 << 0;
+//             io_registers[0xFF41 -0xFF00] &= ~(1 << 1);
+//         break;
+//         case 2:
+//             io_registers[0xFF41 -0xFF00] &= ~(1 << 0);
+//             io_registers[0xFF41 -0xFF00] |= 1 << 1;
+//         break;
+//         case 3:
+//             io_registers[0xFF41 -0xFF00] |= 1 << 0;
+//             io_registers[0xFF41 -0xFF00] |= 1 << 1;
+//         break;
+//     }
+// }

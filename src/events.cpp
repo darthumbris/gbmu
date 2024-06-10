@@ -6,7 +6,7 @@ void Cpu::event_handler()
     while (SDL_PollEvent(&e))
     {
         if (e.type == SDL_QUIT)
-            ppu.set_status(true);
+            set_status(true);
         else if (e.type == SDL_KEYDOWN)
         {
             handle_input(e);

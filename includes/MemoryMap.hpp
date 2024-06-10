@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <string>
 #include <iostream>
+#include "PixelProcessingUnit.hpp"
 
 constexpr std::uint8_t mask0{ 0b0000'0001 }; // represents bit 0
 constexpr std::uint8_t mask1{ 0b0000'0010 }; // represents bit 1
@@ -23,13 +24,6 @@ using Mem8k = std::array<uint8_t, 8192>;
 using Mem4k = std::array<uint8_t, 4096>;
 
 #define INLINE_FN
-
-struct Sprite {
-    uint8_t y_pos;
-    uint8_t x_pos;
-    uint8_t tile_index;
-    uint8_t att_flags;
-};
 
 
 /*IO_Registers
@@ -92,11 +86,13 @@ private:
     std::vector<Mem8k> ext_ram{};             // 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
     std::array<Mem4k, 8> work_ram{0};         // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
     std::array<Mem4k, 8> echo_ram{0};         // 0xE000 - 0xFDFF   //(mirror of C000–DDFF) use of this area is prohibited.
-    std::array<uint8_t, 160> oam{0};          // 0xFE00 - 0xFE9F   // 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3: Attributes/flags)
+    
     std::array<uint8_t, 96> not_usable{0};    // 0xFEA0 - 0xFEFF
     std::array<uint8_t, 128> io_registers{0}; // 0xFF00 - 0xFF7F
     std::array<uint8_t, 127> high_ram{0};     // 0xFF80 - 0xFFFE
     uint8_t interrupt = 0;                    // 0xFFFF - 0xFFFF
+
+    bool boot_rom_loaded = false;
 
     std::array<uint8_t, 256> boot_rom = {0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
                                      0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
@@ -115,11 +111,11 @@ private:
                                      0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
                                      0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50};
 
+    PixelProcessingUnit ppu;
 
 
 public:
-    std::array<Mem8k, 2> vram{0};             // 0x8000 - 0x9FFF   // 0 for GB and 0-1 for Cgb (switchable banks)
-    uint32_t framebuffer[144*160];
+    // std::array<Mem8k, 2> vram{0};             // 0x8000 - 0x9FFF   // 0 for GB and 0-1 for Cgb (switchable banks)
     MemoryMap();
     MemoryMap(const std::string path);
 
@@ -130,34 +126,31 @@ public:
     INLINE_FN void write_u8(uint16_t addr, uint8_t val);
     INLINE_FN void write_u16(uint16_t addr, uint16_t val);
 
-    inline uint8_t get_tile_index(uint8_t vbank, uint16_t x, uint16_t y, uint16_t tile_map) {return vram[vbank][tile_map + (x + y * 32)];}
-    inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][(uint32_t)tile_index * 16];} //TODO check this
+    // inline uint8_t get_tile_index(uint8_t vbank, uint16_t x, uint16_t y, uint16_t tile_map) {return vram[vbank][tile_map + (x + y * 32)];}
+    // inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][(uint32_t)tile_index * 16];} //TODO check this
 
 
     inline bool is_boot_rom_enabled() {return io_registers[(std::size_t)(0xFF50 - 0xFF00)];}
-    inline uint8_t vram_bank_select() {return io_registers[(std::size_t)(0xFF4F - 0xFF00)];} //only bit 0 matters
+    // inline uint8_t vram_bank_select() {return io_registers[(std::size_t)(0xFF4F - 0xFF00)];} //only bit 0 matters
     inline uint8_t wram_bank_select() {return io_registers[(std::size_t)(0xFF70 - 0xFF00)];} //TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
-    
-
-    Sprite get_sprite(size_t index);
 
     //PPU IO Registers
-    inline uint8_t get_lcd_control() {return io_registers[(std::size_t)(0xFF40 - 0xFF00)];}
-    inline uint8_t get_lcd_status() {return io_registers[(std::size_t)(0xFF41 - 0xFF00)];}
-    inline uint8_t get_lcd_scrolling_y() {return io_registers[(std::size_t)(0xFF42 - 0xFF00)];}
-    inline uint8_t get_lcd_scrolling_x() {return io_registers[(std::size_t)(0xFF43 - 0xFF00)];}
-    inline uint8_t get_lcd_line_y() {return io_registers[(std::size_t)(0xFF44 - 0xFF00)];}
-    inline uint8_t get_lcd_line_y_compare() {return io_registers[(std::size_t)(0xFF45 - 0xFF00)];}
+    // inline uint8_t get_lcd_control() {return io_registers[(std::size_t)(0xFF40 - 0xFF00)];}
+    // inline uint8_t get_lcd_status() {return io_registers[(std::size_t)(0xFF41 - 0xFF00)];}
+    // inline uint8_t get_lcd_scrolling_y() {return io_registers[(std::size_t)(0xFF42 - 0xFF00)];}
+    // inline uint8_t get_lcd_scrolling_x() {return io_registers[(std::size_t)(0xFF43 - 0xFF00)];}
+    // inline uint8_t get_lcd_line_y() {return io_registers[(std::size_t)(0xFF44 - 0xFF00)];}
+    // inline uint8_t get_lcd_line_y_compare() {return io_registers[(std::size_t)(0xFF45 - 0xFF00)];}
 
-    inline uint8_t get_dma_transfer_start_address() {return io_registers[(std::size_t)(0xFF46 - 0xFF00)];}
+    // inline uint8_t get_dma_transfer_start_address() {return io_registers[(std::size_t)(0xFF46 - 0xFF00)];}
 
     //Palettes
-    inline uint8_t get_background_palette_data() {return io_registers[(std::size_t)(0xFF47 - 0xFF00)];}
-    inline uint8_t get_obj_0_palette_data() {return io_registers[(std::size_t)(0xFF48 - 0xFF00)];}
-    inline uint8_t get_obj_1_palette_data() {return io_registers[(std::size_t)(0xFF49 - 0xFF00)];}
+    // inline uint8_t get_background_palette_data() {return io_registers[(std::size_t)(0xFF47 - 0xFF00)];}
+    // inline uint8_t get_obj_0_palette_data() {return io_registers[(std::size_t)(0xFF48 - 0xFF00)];}
+    // inline uint8_t get_obj_1_palette_data() {return io_registers[(std::size_t)(0xFF49 - 0xFF00)];}
     
-    inline uint8_t get_lcd_window_y() {return io_registers[(std::size_t)(0xFF4A - 0xFF00)];}
-    inline uint8_t get_lcd_window_x() {return io_registers[(std::size_t)(0xFF4B - 0xFF00)];} //TODO x + 7 ? see https://gbdev.io/pandocs/Scrolling.html#lcd-position-and-scrolling
+    // inline uint8_t get_lcd_window_y() {return io_registers[(std::size_t)(0xFF4A - 0xFF00)];}
+    // inline uint8_t get_lcd_window_x() {return io_registers[(std::size_t)(0xFF4B - 0xFF00)];} //TODO x + 7 ? see https://gbdev.io/pandocs/Scrolling.html#lcd-position-and-scrolling
 
     //0xFF4C unkown register
     //0xFF4D KEY1 - CGB Mode Only - Prepare Speed Switch
@@ -168,31 +161,36 @@ public:
     //0xFF71-0xFF7F unkown register
 
     //CGB Palettes
-    inline uint8_t get_background_color_palette_index() {return io_registers[(std::size_t)(0xFF68 - 0xFF00)];}
-    inline uint8_t get_background_color_palette_data() {return io_registers[(std::size_t)(0xFF69 - 0xFF00)];}
-    inline uint8_t get_obj_color_palette_index() {return io_registers[(std::size_t)(0xFF6A - 0xFF00)];}
-    inline uint8_t get_obj_color_palette_data() {return io_registers[(std::size_t)(0xFF6B - 0xFF00)];}
+    // inline uint8_t get_background_color_palette_index() {return io_registers[(std::size_t)(0xFF68 - 0xFF00)];}
+    // inline uint8_t get_background_color_palette_data() {return io_registers[(std::size_t)(0xFF69 - 0xFF00)];}
+    // inline uint8_t get_obj_color_palette_index() {return io_registers[(std::size_t)(0xFF6A - 0xFF00)];}
+    // inline uint8_t get_obj_color_palette_data() {return io_registers[(std::size_t)(0xFF6B - 0xFF00)];}
 
-    inline uint8_t get_ppu_mode() {return ((get_lcd_status() & mask0) + (get_lcd_status() & mask1));}
-    inline bool get_lcd_enable() { return get_lcd_control() & mask7; }
-    inline bool get_window_tilemap() { return get_lcd_control() & mask6;}
-    inline bool get_window_enable() { return get_lcd_control() & mask5; }
-    inline bool get_bg_window_tiles() { return get_lcd_control() & mask4;}
-    inline bool get_background_tilemap() { return get_lcd_control() & mask3;}
-    inline bool get_obj_size() { return get_lcd_control() & mask2;}
-    inline bool get_obj_enable() { return get_lcd_control() & mask1;}
-    inline bool get_bg_window_enable_priority() { return get_lcd_control() & mask0;}
+    // inline uint8_t get_ppu_mode() {return ((get_lcd_status() & mask0) + (get_lcd_status() & mask1));}
+    // inline bool get_lcd_enable() { return get_lcd_control() & mask7; }
+    // inline bool get_window_tilemap() { return get_lcd_control() & mask6;}
+    // inline bool get_window_enable() { return get_lcd_control() & mask5; }
+    // inline bool get_bg_window_tiles() { return get_lcd_control() & mask4;}
+    // inline bool get_background_tilemap() { return get_lcd_control() & mask3;}
+    // inline bool get_obj_size() { return get_lcd_control() & mask2;}
+    // inline bool get_obj_enable() { return get_lcd_control() & mask1;}
+    // inline bool get_bg_window_enable_priority() { return get_lcd_control() & mask0;}
 
-    void set_ppu_mode(uint8_t mode);
-    inline void increase_lcd_line_y() {
+    // void set_ppu_mode(uint8_t mode);
+    // inline void increase_lcd_line_y() {
         // std::cout << "writing to 0xFF44" << std::endl;
-        io_registers[(std::size_t)(0xFF44 - 0xFF00)] += 1;}
-    inline void increase_lcd_line_y_mod() {
-        // std::cout << "writing to 0xFF44" << std::endl;
-        io_registers[(std::size_t)(0xFF44 - 0xFF00)] = (io_registers[(std::size_t)(0xFF44 - 0xFF00)] + 1) % 154;}
-    inline void reset_lcd_line_y() {io_registers[(std::size_t)(0xFF44 - 0xFF00)] = 0;}
-    inline void reset_lcd_window_y() {io_registers[(std::size_t)(0xFF4A - 0xFF00)] = 0;}
-    inline void set_bg_window_enable_priority(bool val) { io_registers[(std::size_t)(0xFF40 - 0xFF00)] = ((-val)) ^ io_registers[(std::size_t)(0xFF40 - 0xFF00)] & (1U << 0) ;}
+        // io_registers[(std::size_t)(0xFF44 - 0xFF00)] += 1;}
+    // inline void increase_lcd_line_y_mod() {
+    //     // std::cout << "writing to 0xFF44" << std::endl;
+    //     io_registers[(std::size_t)(0xFF44 - 0xFF00)] = (io_registers[(std::size_t)(0xFF44 - 0xFF00)] + 1) % 154;}
+    // inline void reset_lcd_line_y() {io_registers[(std::size_t)(0xFF44 - 0xFF00)] = 0;}
+    // inline void reset_lcd_window_y() {io_registers[(std::size_t)(0xFF4A - 0xFF00)] = 0;}
+    // inline void set_bg_window_enable_priority(bool val) { io_registers[(std::size_t)(0xFF40 - 0xFF00)] = ((-val)) ^ io_registers[(std::size_t)(0xFF40 - 0xFF00)] & (1U << 0) ;}
+
+    inline bool status() {return ppu.status();}
+    inline void set_status(bool val) {ppu.set_status(val);}
+    inline void close() {ppu.close();}
+    inline void tick(uint8_t cycle) {ppu.tick(cycle);}
 };
 
 #endif
