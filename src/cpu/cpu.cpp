@@ -1,6 +1,4 @@
 #include "Cpu.hpp"
-#include <iostream>
-#include <math.h>
 #include <typeinfo>
 #include <fstream>
 #include <stdexcept>
@@ -10,7 +8,7 @@
 uint32_t const DEBUG_START = 0;
 uint32_t const DEBUG_COUNT = 48187;
 
-Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
+Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec), mmap(path, this), ppu(this)
 {
     u8_registers = {0};
     pc = 0;
@@ -19,7 +17,6 @@ Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec)
     m_cycle = 0;
     t_cycle = 0;
     set_instructions();
-    mmap = MemoryMap(path);
 }
 
 Cpu::~Cpu()
@@ -81,24 +78,82 @@ void Cpu::tick()
         // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
         // std::cout << "debug count: "  << debug_count << ", register: " << x << std::endl;
     // }
+
+    if (opcode != 0xFB && opcode != 0xD9) {
+        handle_interrupt();
+    }
+
+    if (halted) {
+        return;
+    }
+
     execute_instruction();
-    pc &= 0xFFFF;
     // if (pc == 0x0100)
     // {
         // std::cout << "Start of ROM" << std::endl;
         // mmap.bios_loaded = true;
         // exit(1);
     // }
-    mmap.tick(t_cycle);
+    ppu.tick(t_cycle);
     event_handler();
     debug_count += 1;
+    m_cycle = 0;
+    t_cycle = 0;
     // const auto end = std::chrono::steady_clock::now();
     //  std::cout
     //     << "delta time: "
     //     << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start) << "\n";  // using milliseconds and seconds accordingly
 }
 
-void Cpu::debug_print(uint8_t opcode, bool prefix)
+void Cpu::handle_interrupt()
+{
+	uint8_t masked = interrupt_enable_register & interrupt;
+	if (!masked)
+		return ;
+	if (halted)
+		halted = false;
+
+	// Handle the interrupt, while taking the priority into account
+	if (process_interrupts)
+	{
+		// Maybe use for loop
+		if (masked & InterruptType::Vblank)
+			process_interrupt(InterruptType::Vblank);
+		else if (masked & InterruptType::Stat)
+			process_interrupt(InterruptType::Stat);
+		else if (masked & InterruptType::Timer)
+			process_interrupt(InterruptType::Timer);
+		else if (masked & InterruptType::Serial)
+			process_interrupt(InterruptType::Serial);
+		else if (masked & InterruptType::Joypad)
+			process_interrupt(InterruptType::Joypad);
+	}
+}
+
+void Cpu::process_interrupt(InterruptType i)
+{
+	nop();
+	nop();
+
+    sp -= 2;
+    mmap.write_u16(sp, pc);
+
+	process_interrupts = false;
+	interrupt &= ~i;
+	if (i == InterruptType::Vblank)
+		pc = 0x40;
+	else if (i == InterruptType::Stat)
+		pc = 0x48;
+	else if (i == InterruptType::Timer)
+		pc = 0x50;
+	else if (i == InterruptType::Serial)
+		pc = 0x58;
+	else if (i == InterruptType::Joypad)
+		pc = 0x60;
+    set_cycle(1);
+}
+
+void Cpu::debug_print(bool prefix)
 {
     std::cout << "[0x" << std::setfill('0') << std::setw(4) << std::hex << pc;
     std::cout << "] 0x" << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << "\t";
@@ -115,26 +170,26 @@ void Cpu::debug_print(uint8_t opcode, bool prefix)
 }
 
 void Cpu::prefix() {
-    uint8_t opcode = mmap.read_u8(pc);
+    opcode = mmap.read_u8(pc);
     pc += 1;
     auto op = prefixed_instructions[opcode];
     (this->*op)();
 
-    #ifdef DEBUG_MODE
-        debug_print(opcode, true);
-    #endif
+    // #ifdef DEBUG_MODE
+        // debug_print(opcode, true);
+    // #endif
 }
 
 void Cpu::execute_instruction()
 {
-    uint8_t opcode = mmap.read_u8(pc);
+    opcode = mmap.read_u8(pc);
     pc += 1;
     auto op = unprefixed_instructions[opcode];
     (this->*op)();
-    #ifdef DEBUG_MODE
-        if (opcode != 0xCB)
-            debug_print(opcode, false);
-    #endif
+    // #ifdef DEBUG_MODE
+    //     if (opcode != 0xCB)
+    //         debug_print(opcode, false);
+    // #endif
 }
 
 void Cpu::lockup() {}

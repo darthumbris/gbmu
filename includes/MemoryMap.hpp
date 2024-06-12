@@ -1,12 +1,13 @@
 #ifndef MEMORYMAP_HPP
 #define MEMORYMAP_HPP
 
+class Cpu;
+
 #include <vector>
 #include <array>
 #include <cstdint>
 #include <string>
 #include <iostream>
-#include "PixelProcessingUnit.hpp"
 
 constexpr std::uint8_t mask0{ 0b0000'0001 }; // represents bit 0
 constexpr std::uint8_t mask1{ 0b0000'0010 }; // represents bit 1
@@ -111,13 +112,13 @@ private:
                                      0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
                                      0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50};
 
-    PixelProcessingUnit ppu;
+    Cpu *cpu;
 
 
 public:
     // std::array<Mem8k, 2> vram{0};             // 0x8000 - 0x9FFF   // 0 for GB and 0-1 for Cgb (switchable banks)
-    MemoryMap();
-    MemoryMap(const std::string path);
+    // MemoryMap();
+    MemoryMap(const std::string path, Cpu *cpu);
 
     ~MemoryMap();
 
@@ -187,10 +188,12 @@ public:
     // inline void reset_lcd_window_y() {io_registers[(std::size_t)(0xFF4A - 0xFF00)] = 0;}
     // inline void set_bg_window_enable_priority(bool val) { io_registers[(std::size_t)(0xFF40 - 0xFF00)] = ((-val)) ^ io_registers[(std::size_t)(0xFF40 - 0xFF00)] & (1U << 0) ;}
 
-    inline bool status() {return ppu.status();}
-    inline void set_status(bool val) {ppu.set_status(val);}
-    inline void close() {ppu.close();}
-    inline void tick(uint8_t cycle) {ppu.tick(cycle);}
+    // inline bool status() {return ppu.status();}
+    // inline void set_status(bool val) {ppu.set_status(val);}
+    // inline void close() {ppu.close();}
+    // inline void tick(uint8_t cycle) {ppu.tick(cycle);}
+
+    inline void set_interrupt(uint8_t i) {interrupt |= i;}
 };
 
 #endif

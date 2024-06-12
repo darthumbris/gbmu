@@ -1,13 +1,10 @@
 #include "MemoryMap.hpp"
+#include "Cpu.hpp"
 #include <cstddef>
 #include <iostream>
 #include <fstream>
 
-MemoryMap::MemoryMap()
-{
-}
-
-MemoryMap::MemoryMap(const std::string path)
+MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu)
 {
     std::vector<std::byte> data;
     std::ifstream ifs;
@@ -65,7 +62,7 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
     case 0x4000 ... 0x7FFF:
         return rom_banks[0][addr - 0x4000]; // TODO check how to get what rom_bank
     case 0x8000 ... 0x9FFF:
-        return ppu.read_u8_ppu(addr & 0x1FFF);
+        return cpu->get_ppu().read_u8_ppu(addr);
     case 0xA000 ... 0xBFFF:
         return ext_ram[0][addr - 0xA000]; // TODO check how to get what extram_bank
     case 0xC000 ... 0xDFFF:
@@ -73,21 +70,21 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
     case 0xE000 ... 0xFDFF:
         return echo_ram[wram_bank_select()][addr - 0xE000];
     case 0xFE00 ... 0xFE9F:
-        return ppu.read_oam(addr & 0xFF);
+        return cpu->get_ppu().read_oam(addr & 0xFF);
     case 0xFEA0 ... 0xFEFF:
         return not_usable[addr - 0xFEA0];
     case 0xFF00 ... 0xFF3F:
         return io_registers[addr - 0xFF00];
     case 0xFF40 ... 0xFF4F:
-        return ppu.read_u8_ppu(addr);
+        return cpu->get_ppu().read_u8_ppu(addr);
     case 0xFF51 ... 0xFF7F:
-        return ppu.read_u8_ppu(addr);
+        return cpu->get_ppu().read_u8_ppu(addr);
     case 0xFF50:
         return io_registers[(std::size_t)(0xFF50 - 0xFF00)];
     case 0xFF80 ... 0xFFFE:
         return high_ram[addr - 0xFF80];
     case 0xFFFF:
-        return interrupt;
+        return cpu->get_interrupt_enable();
 
     default:
         return 0;
@@ -120,7 +117,7 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         rom_banks[0][addr - 0x4000] = val; // TODO check how to get what rom_bank
         break;
     case 0x8000 ... 0x9FFF:
-        ppu.write_u8_ppu(addr & 0x1FFF, val);
+        cpu->get_ppu().write_u8_ppu(addr, val);
         // vram[vram_bank_select()][addr - 0x8000] = val;
         break;
     case 0xA000 ... 0xBFFF:
@@ -133,7 +130,7 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         echo_ram[wram_bank_select()][addr - 0xE000] = val;
         break;
     case 0xFE00 ... 0xFE9F:
-        ppu.write_oam(addr & 0xFF, val);
+        cpu->get_ppu().write_oam(addr & 0xFF, val);
         // oam[addr - 0xFE00] = val;
         break;
     case 0xFEA0 ... 0xFEFF:
@@ -143,10 +140,10 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         io_registers[addr - 0xFF00] = val;
         break;
     case 0xFF40 ... 0xFF4F:
-        ppu.write_u8_ppu(addr, val);
+        cpu->get_ppu().write_u8_ppu(addr, val);
         break;
     case 0xFF51 ... 0xFF7F:
-        ppu.write_u8_ppu(addr, val);
+        cpu->get_ppu().write_u8_ppu(addr, val);
         break;
     case 0xFF50:
         io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
@@ -155,7 +152,7 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         high_ram[addr - 0xFF80] = val;
         break;
     case 0xFFFF:
-        interrupt = val;
+        cpu->set_interrupt_enable(val);
         break;
 
     default:

@@ -19,41 +19,15 @@ int main(int argc, char *argv[])
     Dict::Decoder decode = Dict::Decoder(p);
 
     decode.set_data(path);
-    // decode.disassemble(0x150, 32);
+    // MemoryMap mmap = MemoryMap(path);
 
     Cpu cpu = Cpu(decode, path);
-
-    // for (int i = 0; i < 32; i++)
-    // {
-    //     cpu.tick();
-    // }
 
     while (!cpu.status())
     {
         cpu.tick();
     }
     cpu.close();
-
-    // if (!init_window(&data))
-    // {
-    //     printf("Failed to initialize window");
-    // }
-    // else
-    // {
-    //     if (!load_rom(&data))
-    //     {
-    //         printf("Failed to load rom");
-    //     }
-    //     else
-    //     {
-    //         SDL_BlitSurface(data.image, NULL, data.surface, NULL);
-    //         SDL_UpdateWindowSurface(data.window);
-
-    //         event_handler(&data);
-    //     }
-    // }
-
-    // close(&data);
 
     return 0;
 }

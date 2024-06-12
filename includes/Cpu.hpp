@@ -3,11 +3,14 @@
 
 #include <cstdint>
 #include <array>
-#include "Decoder.hpp"
-#include "MemoryMap.hpp"
+#include <math.h>
 #include <iostream>
 #include <bitset>
+// #include <SDL2/SDL.h>
+#include "MemoryMap.hpp"
 #include "Operand.hpp"
+#include "Decoder.hpp"
+#include "PixelProcessingUnit.hpp"
 
 using namespace Dict;
 
@@ -26,6 +29,22 @@ enum Condition
 	NotCarryFlag,
 	CarryFlag,
 };
+
+/* Interrupt
+  * 0x40 Vblank interrupt
+  * 0x48 STAT interrupt
+  * 0x50 Timer interrupt
+  * 0x58 Serial interrupt
+  * 0x60 Joypad interrupt
+ */
+
+ enum InterruptType {
+	Vblank = 1 << 0,
+	Stat = 1 << 1,
+	Timer = 1 << 2,
+	Serial = 1 << 3,
+	Joypad  = 1 << 4
+ };
 
 class Cpu
 {
@@ -52,10 +71,14 @@ private:
 	uint16_t pc; // Program counter
 	Decoder decoder;
 	MemoryMap mmap;
+	PixelProcessingUnit ppu;
 	bool halted = false;	 // TODO check if this can be handled by the interrupt in the memorymap
-	bool interrupts = false; // TODO check if can be done with interrupt in the memorymap?
+	uint8_t interrupt_enable_register; //0xFFFF
+	uint8_t interrupt; //0xFF0F
 	uint16_t m_cycle;
 	uint16_t t_cycle;
+	bool process_interrupts = false;
+	uint8_t opcode;
 
 	typedef void (Cpu::*OpsFn)(void);
 
@@ -98,9 +121,12 @@ private:
 	}
 	void execute_instruction();
 
-	void debug_print(uint8_t opcode, bool prefix);
+	void debug_print(bool prefix);
 
-	inline void set_cycle(uint8_t c) {m_cycle = c; t_cycle = c * 4;} 
+	inline void set_cycle(uint8_t c) {m_cycle += c; t_cycle += c * 4;}
+
+	void handle_interrupt();
+	void process_interrupt(InterruptType i);
 
 public:
 	Cpu(Decoder dec, const std::string path);
@@ -114,13 +140,19 @@ public:
 	INLINE_FN void set_register(Registers reg, uint8_t val);
 	INLINE_FN void set_flag(uint8_t flag, uint8_t val);
 
+	inline PixelProcessingUnit& get_ppu() {return ppu;}
+	inline MemoryMap& get_mmap() {return mmap;}
+
 	
 	void tick();
 	void event_handler();
 	void handle_input(SDL_Event &e);
-	inline bool status() {return mmap.status();}
-	inline void set_status(bool val) {mmap.set_status(val);}
-	inline void close() {mmap.close();}
+	inline bool status() {return ppu.status();}
+	inline void set_status(bool val) {ppu.set_status(val);}
+	inline void close() {ppu.close();}
+	inline void set_interrupt(InterruptType i) {interrupt |= static_cast<uint8_t>(i);}
+	inline void set_interrupt_enable(uint8_t i) {interrupt_enable_register = i;}
+	inline uint8_t get_interrupt_enable() {return interrupt_enable_register;}
 };
 
 #endif

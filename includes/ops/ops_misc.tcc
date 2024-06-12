@@ -83,6 +83,6 @@ void stop() { pc += 1; set_cycle(1); }
 
 void halt() { halted = true; set_cycle(1); }
 
-void di() { interrupts = false; set_cycle(1);}
+void di() { process_interrupts = false; set_cycle(1);}
 
-void ei() { interrupts = true; set_cycle(1); }
+void ei() { process_interrupts = true; set_cycle(1); }

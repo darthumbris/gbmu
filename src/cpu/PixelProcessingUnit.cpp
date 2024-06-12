@@ -1,23 +1,20 @@
 #include "PixelProcessingUnit.hpp"
+#include "Cpu.hpp"
 #include <cstring>
 
-PixelProcessingUnit::PixelProcessingUnit()
+PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu)
 {
     lcd_clock = 0;
     init_window();
     data.status = false;
     ctrl = {0};
     l_status = {0};
-    // oam = {0};
-    // std::memset(ctrl, 0, sizeof(ctrl));
-    // std::memset(l_status, 0, sizeof(l_status));
+    l_status.mode = PPU_Modes::Pixel_Drawing;
     std::memset(oam, 0, sizeof(oam));
-    std::memset(tile_data_0, 0, sizeof(tile_data_0));
-    std::memset(tile_data_1, 0, sizeof(tile_data_1));
-    std::memset(tile_map_0, 0, sizeof(tile_map_0));
-    std::memset(tile_map_1, 0, sizeof(tile_map_1));
     std::memset(framebuffer, 0, sizeof(framebuffer));
-    // std::cout << "made ppu" << std::endl;
+    std::memset(vram, 0, sizeof(vram));
+    std::memset(obj_0_colors, 0, sizeof(obj_0_colors));
+    std::memset(obj_1_colors, 0, sizeof(obj_1_colors));
 }
 
 PixelProcessingUnit::~PixelProcessingUnit()
@@ -29,227 +26,117 @@ void PixelProcessingUnit::tick(uint8_t cycle)
     if (ctrl.lcd_enable) {
         //TODO have a check for the dma (CGB only?) ?
         lcd_clock += (uint16_t)cycle;
-        //TODO get this working with the switch case stuff 
-
-        if (lcd_clock >= 456) {
-            lcd_clock -= 456;
-            ly = (ly + 1) % 154;
-            // mmap->increase_lcd_line_y_mod();
-            // uint8_t ly = mmap->get_lcd_line_y();
-            if (l_status.mode != PPU_Modes::Vertical_Blank && ly >= 144) {
-                l_status.mode = PPU_Modes::Vertical_Blank;
-                // mmap->set_ppu_mode(PPU_Modes::Vertical_Blank);
-                return;
-            }
-        }
-        if (ly < 144) {
-            if (lcd_clock <= 80) {
-                if (l_status.mode != PPU_Modes::OAM_Scan) {
+        switch (l_status.mode)
+        {
+        case PPU_Modes::Horizontal_Blank:
+            if (lcd_clock >= 204) {
+                lcd_clock -= 204;
+                ly +=1;
+                if (ly == 144) {
+                    l_status.mode = PPU_Modes::Vertical_Blank;
+                    handle_interrupt(true);
+                    render_screen(); //Renders the full screen when at the end of the 144 lines
+                }
+                else {
                     l_status.mode = PPU_Modes::OAM_Scan;
-                    // mmap->set_ppu_mode(PPU_Modes::OAM_Scan);
+                    handle_interrupt(true);
+                    if (ctrl.window_enable && window_y == ly) {
+                        window_active = true;
+                    }
                 }
             }
-            else if (lcd_clock <= 252) {
-                if (l_status.mode != PPU_Modes::Pixel_Drawing) {
-                    l_status.mode = PPU_Modes::Pixel_Drawing;
-                    // mmap->set_ppu_mode(PPU_Modes::Pixel_Drawing);
+            break;
+        case PPU_Modes::Vertical_Blank:
+            if (lcd_clock >= 456) {
+                lcd_clock -= 456;
+                ly +=1;
+                if (ly > 153) {
+                    window_line_active = 0;
+                    ly = 0;
+                    l_status.mode = PPU_Modes::OAM_Scan;
+                    handle_interrupt(true);
+                    window_active = ctrl.window_enable && window_y == ly;
                 }
             }
-            else if (l_status.mode != PPU_Modes::Horizontal_Blank)
-                {
-                    l_status.mode = PPU_Modes::Horizontal_Blank;
-                    // mmap->set_ppu_mode(PPU_Modes::Horizontal_Blank);
-                    render_scanline();
-                }
-        }
-        if (ly == 144) {
-            render_screen();
-        }
+            break;
+        case PPU_Modes::OAM_Scan:
+            if (lcd_clock >= 80) {
+                l_status.mode = PPU_Modes::Pixel_Drawing;
+                lcd_clock -= 80;
+            }
+            break;
+        case PPU_Modes::Pixel_Drawing:
+            if (lcd_clock >= 172) {
+                l_status.mode = PPU_Modes::Horizontal_Blank;
+                lcd_clock -= 172;
+                render_scanline();
+                handle_interrupt(false);
+            }
+            break;
 
-        // switch (mmap.get_ppu_mode())
-        // {
-        // case PPU_Modes::Horizontal_Blank:
-        //     if (lcd_clock >= 204) {
-        //         lcd_clock -= 204;
-        //         // std::cout << "increasing value in 0xFF44 for hor blank" << std::endl;
-        //         // mmap.increase_lcd_line_y();
-        //         uint8_t ly = mmap.get_lcd_line_y();
-        //         if (ly == 144) {
-        //             mmap.set_ppu_mode(PPU_Modes::Vertical_Blank);
-        //             handle_interrupt(true, mmap);
-        //             render_screen(); //Renders the full screen when at the end of the 144 lines
-        //         }
-        //         else {
-        //             mmap.set_ppu_mode(PPU_Modes::OAM_Scan);
-        //             handle_interrupt(true, mmap);
-        //             if (mmap.get_window_enable() && mmap.get_lcd_window_y() == ly) {
-        //                 mmap.set_bg_window_enable_priority(true);
-        //             }
-        //         }
-        //     }
-        //     break;
-        // case PPU_Modes::Vertical_Blank:
-        //     if (lcd_clock >= 456) {
-        //         lcd_clock -= 456;
-        //         // std::cout << "increasing value in 0xFF44 for vertical blank" << std::endl;
-        //         mmap.increase_lcd_line_y();
-        //         uint8_t ly = mmap.get_lcd_line_y();
-        //         if (ly > 153) {
-        //             mmap.reset_lcd_window_y();
-        //             mmap.reset_lcd_line_y();
-        //             mmap.set_ppu_mode(PPU_Modes::OAM_Scan);
-        //             handle_interrupt(true, mmap);
-        //             mmap.set_bg_window_enable_priority(mmap.get_window_enable() && mmap.get_lcd_window_y() == ly);
-        //         }
-        //     }
-        //     break;
-        // case PPU_Modes::OAM_Scan:
-        //     if (lcd_clock >= 80) {
-        //         mmap.set_ppu_mode(PPU_Modes::Pixel_Drawing);
-        //         lcd_clock -= 80;
-        //     }
-        //     break;
-        // case PPU_Modes::Pixel_Drawing:
-        //     // std::cout << "ppu mode: " << (uint16_t)mmap.get_ppu_mode() << ", lcd_clock: " << lcd_clock << ", ly: "<< (uint16_t)mmap.get_lcd_line_y() << std::endl;
-        //     if (lcd_clock >= 172) {
-        //         mmap.set_ppu_mode(PPU_Modes::Horizontal_Blank);
-        //         lcd_clock -= 172;
-        //         render_scanline(mmap);
-        //         handle_interrupt(false, mmap);
-        //     }
-        //     break;
-
-        // default:
-        //     break;
-        // }
-    }
-    else {
-        // std::cout << "lcd off" << std::endl;
+        default:
+            break;
+        }
     }
 }
 
 void PixelProcessingUnit::handle_interrupt(bool val) {
     if (l_status.mode == PPU_Modes::Vertical_Blank) {
-
+        cpu->set_interrupt(InterruptType::Vblank);
     }
-    // if (mmap.get_ppu_mode() == PPU_Modes::Vertical_Blank) {
-
-    // }
-    // if (mmap.get_ppu_mode() != PPU_Modes::Pixel_Drawing) {
-
-    // }
-}
-
-uint8_t PixelProcessingUnit::get_pixel(uint8_t tile_index, uint8_t x, uint8_t y) {
-    // uint8_t vbank = vbank_select ? 1 : 0;
-    auto t = tile_data_0[tile_index];
-    if (vbank_select) {
-        t = tile_data_1[tile_index];
+    if ((l_status.val & 0x8) && ly == lyc && val) {
+        cpu->set_interrupt(InterruptType::Stat);
     }
-    // else {
-    //     t = tile_data_0[tile_index];
-    // }
-    // uint8_t *t = mmap->get_tile_data(vbank, tile_index);
-    uint8_t bottom = t[(y * 2 + 1)];
-    uint8_t top = t[(y * 2)];
-    uint8_t pixel = ((top & (0x80 >> x)) == 0) ? 0x00 : 0b10;
-    pixel |= ((bottom & (0x80 >> x)) == 0) ? 0x00 : 0b01;
-    // std::cout << "pixel: " << (uint16_t)pixel << std::endl;
-    return pixel;
-}
-
-//TODO remove the wholl fill_pixels stuff
-void PixelProcessingUnit::fill_pixels(std::deque<std::array<uint8_t, 2>> &pixels, uint16_t x, uint8_t n, uint8_t y, uint16_t map_number) {
-    uint8_t vbank = vbank_select ? 1 : 0; //TODO if this is correct
-
-    // auto tile_map;
-
-    // if (vbank_select) {
-    //     tile_map = tile_map_1;
-    // }
-    // else {
-    //     tile_map = tile_map_0;
-    // }
-
-    // uint16_t tile_map = ctrl.bg_tile_map_address ? 0x1c00 : 0x1800;
-    for (uint16_t p_x = x; p_x < (x + (uint16_t)n); p_x++) {
-        // if (ctrl.window_enable && window_x == 0 + 7) {
-        //     tile_map = (ctrl.window_tile_map_address ? 0x1C00 : 0x1800) + ((window_y >> 3) << 5);
-        // }
-        // uint8_t tile_index = mmap->get_tile_index(vbank, (p_x % 255) / 8, y / 8, tile_map);
-        // if (!mmap.get_bg_window_tiles()) {
-            //TODO check if this is needed?
-            // tile_map = (384 - tile_map as u16) as u8;
-        // }
-        auto tile_map = tile_map_0[map_number][(p_x % 255) / 8];
-        if (vbank_select) {
-            tile_map = tile_map_1[map_number][(p_x % 255) / 8];
-        }
-        // else {
-        //     tile_map = tile_map_0[map_number][(p_x % 255) / 8];
-        // }
-        if (!ctrl.bg_window_tile_data) {
-            tile_map = 384 - tile_map;
-        }
-        
-
-        std::array<uint8_t, 2> pixel; 
-        // pixel[0] = get_pixel(tile_index, (p_x % 255) % 8, y % 8, mmap);
-        pixel[0] = get_pixel(tile_map, (p_x % 255) % 8, y % 8);
-        pixel[1] = 0;
-        pixels.push_back(pixel);
+	if (l_status.mode != PPU_Modes::Pixel_Drawing && (static_cast<uint8_t>(1 << l_status.mode) & l_status.val)) {
+        cpu->set_interrupt(InterruptType::Stat);
     }
 }
 
-void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, std::deque<std::array<uint8_t, 2>> &pixels, uint32_t x) {
-    uint8_t spr_num = 0;
-    for (auto spr : sprites) {
-            std::cout << "sprites" << std::endl;
-                if ((spr.x_pos < 8 && x == 0) || spr.x_pos == x + 8) {
-                    uint8_t size = 8;
-                    if (spr.x_pos < 8) {
-                        size = spr.x_pos;
-                    }
-                    else if (spr.x_pos >= 160 - 8) {
-                        size = 160 - spr.x_pos;
-                    }
-                    std::cout << "size: " << size << std::endl;
-                    std::deque<std::array<uint8_t, 2>> replacement;
-                    for (uint8_t y = 0; y < size; y++) {
-                        //TODO handle flipx/flipy
-                        replacement.push_front(pixels[0]);
-                        pixels.pop_front();
-                    }
-                    for (uint8_t y = 0; y < size; y++) {
-
-                        std::array<uint8_t, 2> item = replacement[0];
-                        replacement.pop_front();
-                        if (item[1] != 0 || (item[0] != 0 && (spr.att_flags & 0b10000000) == 0)) {
-                            pixels.push_front(item);
-                        } else {
-                            std::cout << "sx: " << spr.x_pos << " sy: " << spr.y_pos << " | x:" << x << " line:" << ly << std::endl;
-                            std::array<uint8_t, 2> sprite_pixel;
-                            sprite_pixel[0] = get_pixel(spr.tile_index, x - spr.x_pos + y - 8, (ly + 8) - spr.y_pos);
-                            sprite_pixel[1] = spr_num + 1;
-                            pixels.push_front(sprite_pixel);
-                        }
-                    }
-                }
-            spr_num++;
+void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, uint32_t i, uint8_t tile_data_pos, uint32_t *framebuffer_ptr, size_t *spr_index) {
+    bool drawn = false;
+    for (auto spr = sprites.begin() + *spr_index ; !sprites.empty() && spr != sprites.end() ; ++spr) {
+        if (!(spr->x_pos - 8 <= (int)(i) && spr->x_pos > (int)(i))) {
+            break;
         }
+        uint8_t tile_x = i - (spr->x_pos - 8);
+        uint8_t tile_y = ly - (spr->y_pos - 16);
+
+        if ((spr->att_flags >> 5) & 1)
+            tile_x = 7 - tile_x;
+        if ((spr->att_flags >> 6) & 1)
+            tile_y = (ctrl.obj_size ? 15 : 7) - tile_y;
+
+        uint8_t sprite_index = spr->tile_index;
+
+        if (ctrl.obj_size) {
+            sprite_index = (sprite_index & 0xFE) + (tile_y >= 8);
+            tile_y %= 8;
+        }
+
+        uint8_t color_index = tile_data[vbank_select][sprite_index][tile_y * 8 + tile_x];
+
+        bool background = ((spr->att_flags >> 7) & 1);
+        if (color_index && !drawn && (!background || (background && !tile_data_pos))) {
+            if ((spr->att_flags >> 4) & 1) {
+                *framebuffer_ptr = obj_1_colors[color_index];
+            }
+            else {
+                *framebuffer_ptr = obj_0_colors[color_index];
+            }
+            drawn = true;
+            //TODO break here?
+        }
+
+        // Go to next sprite if this x marks the end of it
+        if (i + 1 == spr->x_pos)
+            (*spr_index)++;
+    }
 }
 
 void PixelProcessingUnit::render_scanline() {
-    std::deque<std::array<uint8_t, 2>> pixels;
     std::vector<Sprite> sprites;
 
-    uint8_t start_y = (ly + scy) % 255;
-    uint32_t start_x = scx;
-    uint16_t map_number = start_y / 8;
-    if (ctrl.bg_tile_map_address) {
-        map_number = 64 - start_y / 8;
-    }
-    fill_pixels(pixels, start_x, 16, start_y, map_number);
+    sprites.reserve(10);
     if (ctrl.obj_enable) {
         for (int i = 0; i < 40; i++) {
             //Sprite stuff
@@ -266,40 +153,49 @@ void PixelProcessingUnit::render_scanline() {
         std::cout << "drawing sprites: " << sprites.size() << std::endl;
     }
 
+    uint16_t tile_map_offset = ctrl.bg_tile_map_address ? 0x1c00 : 0x1800;
+    uint16_t line_offset = scx >> 3;
     uint8_t y = (ly + scy) & 7;
     uint8_t x = scx & 7;
 
-    if (window_x == 7 ) //&& should_display_window
-    {
-        y = window_y & 7; //TODO should be something else (window_line?)
+    tile_map_offset += (((ly + scy) & 255) >> 3) << 5;
+
+    if (window_active && window_x == 7) {
+        tile_map_offset = (ctrl.window_tile_map_address ? 0x1c00 : 0x1800) + ((window_line_active << 3) << 5);
+        line_offset = 0;
+        y = window_line_active & 7;
         x = 0;
     }
 
     uint32_t *framebuffer_ptr = framebuffer + ly * 160;
+    uint16_t tile_index = vram[vbank_select][tile_map_offset + line_offset];
 
-    // if (!bg_palette)
-    //     std::cout << "drawing scanline" << std::endl;
+    if (!ctrl.bg_window_tile_data) {
+        tile_index = static_cast<uint16_t>(256 + static_cast<uint8_t>(tile_index & 0xFF));
+    }
+
+    size_t spr_index = 0;
+
     for (uint32_t i = 0; i < 160; i++) {
 
-        // *framebuffer_ptr = bg_colors[get_pixel(map_number, x, y)];
-        // std::cout << "bg_color: " << (uint16_t)bg_colors[get_pixel(map_number, x, y)] << std::endl;
-
-        while (pixels.size() <= 8) {
-            start_x = (i + scx + 8);
-            fill_pixels(pixels, start_x, 8, start_y, map_number);
-        }
-        handle_sprites(sprites, pixels, i);
-        *framebuffer_ptr = bg_colors[pixels[0][0]];
-        // *framebuffer_ptr = get_color(bg_palette, pixels[0][0]);
-        // framebuffer[x + ly * 160] = get_color(bg_palette, pixels[0][0]);
-        pixels.pop_front();
+        uint8_t tile_dat = tile_data[vbank_select][tile_index][y * 8 + x];
+        *framebuffer_ptr = bg_colors[tile_dat];
+        handle_sprites(sprites, i, tile_dat, framebuffer_ptr, &spr_index);
         framebuffer_ptr++;
         x++;
         if (x==8) {
             x = 0;
-            // map_number +=1;
+            line_offset = (line_offset + 1) & 31;
+            tile_index = vram[vbank_select][tile_map_offset + line_offset];
+            if (!ctrl.bg_window_tile_data) {
+                tile_index = static_cast<uint16_t>(256 + static_cast<uint8_t>(tile_index & 0xFF));
+            }
         }
     }
+    if (window_active) {
+        window_line_active++;
+    }
+    sprites.clear();
 }
 
 void PixelProcessingUnit::render_screen() {
@@ -313,6 +209,7 @@ void PixelProcessingUnit::render_screen() {
 bool PixelProcessingUnit::init_window()
 {   
     bool success = true;
+    std::cout << "initting window" << std::endl;
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -321,7 +218,7 @@ bool PixelProcessingUnit::init_window()
     }
     else
     {
-        // Create window
+    //     // Create window
         data.window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
         if (data.window == NULL)
         {
@@ -330,15 +227,17 @@ bool PixelProcessingUnit::init_window()
         }
         else
         {
-            data.renderer = SDL_CreateRenderer(data.window, -1, SDL_RENDERER_ACCELERATED);
+            data.renderer = SDL_CreateRenderer(data.window, -1, 0);
             if (data.renderer == NULL) {
                 printf("renderer could not be created! SDL_Error: %s\n", SDL_GetError());
                 return false;
             }
-            data.texture = SDL_CreateTexture(data.renderer, SDL_PIXELFORMAT_ABGR32, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
-            if (data.texture == NULL) {
-                printf("texture could not be created! SDL_Error: %s\n", SDL_GetError());
-                return false;
+            else {
+                data.texture = SDL_CreateTexture(data.renderer, SDL_PIXELFORMAT_ABGR32, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+                if (data.texture == NULL) {
+                    printf("texture could not be created! SDL_Error: %s\n", SDL_GetError());
+                    return false;
+                }
             }
         }
     }
@@ -347,23 +246,18 @@ bool PixelProcessingUnit::init_window()
 
 void PixelProcessingUnit::close() {
     SDL_DestroyTexture(data.texture);
-
+    data.texture = NULL;
     SDL_DestroyRenderer(data.renderer);
-
-    // Destroy window
+    data.renderer = NULL;
     SDL_DestroyWindow(data.window);
     data.window = NULL;
-
-    // Quit SDL subsystems
     SDL_Quit();
 }
 
 uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
     switch (addr) {
-        case 0x000 ... 0x17FF:
-            return tile_data_0[(addr / 16)][(addr % 16)];
-        case 0x1800 ... 0x2000:
-            return tile_map_0[(addr % 0x1800) / 32][(addr % 0x1800) % 32];
+        case 0x8000 ... 0x9FFF:
+            return vram[vbank_select][addr& 0x1FFF];
         case 0xFF40: 
             return ctrl.val;
         case 0xFF41: 
@@ -399,11 +293,11 @@ uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
 
 void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
     switch (addr) {
-        case 0x000 ... 0x17FF:
-            tile_data_0[(addr / 16)][(addr % 16)] = val;
-            break;
-        case 0x1800 ... 0x2000:
-            tile_map_0[(addr % 0x1800) / 32][(addr % 0x1800) % 32] = val;
+        case 0x8000 ... 0x9FFF:
+            vram[vbank_select][addr& 0x1FFF] = val;
+            if (addr < 0x9800) {
+                set_tile_data(addr);
+            }
             break;
         case 0xFF40:
             ctrl.set(val);
@@ -449,9 +343,45 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
             break;
         case 0xFF48: 
             obj_palette_0 = val;
+            for (int i = 0; i < 4; i++)
+            {
+                switch ((val >> (i * 2)) & 3)
+                {
+                    case 0:
+                        obj_0_colors[i] = 0xFFFFFFFF;
+                        break;
+                    case 1:
+                        obj_0_colors[i] = 0xAAAAAAFF;
+                        break;
+                    case 2:
+                        obj_0_colors[i] = 0x555555FF;
+                        break;
+                    case 3:
+                        obj_0_colors[i] = 0x00000000;
+                        break;
+                }
+            }
             break;
         case 0xFF49: 
             obj_palette_1 = val;
+            for (int i = 0; i < 4; i++)
+            {
+                switch ((val >> (i * 2)) & 3)
+                {
+                    case 0:
+                        obj_1_colors[i] = 0xFFFFFFFF;
+                        break;
+                    case 1:
+                        obj_1_colors[i] = 0xAAAAAAFF;
+                        break;
+                    case 2:
+                        obj_1_colors[i] = 0x555555FF;
+                        break;
+                    case 3:
+                        obj_1_colors[i] = 0x00000000;
+                        break;
+                }
+            }
             break;
         case 0xFF4A: 
             window_x = val;
@@ -484,15 +414,32 @@ Sprite PixelProcessingUnit::get_sprite(size_t index) {
     return {y_pos, x_pos, tile_index, attr_flags};
 }
 
+void PixelProcessingUnit::set_tile_data(uint16_t addr) {
+    addr &= 0x1FFE;
+
+    int	tile_index    = (addr >> 4) & 0x1FF;
+    int		y   = (addr >> 1) & 7;
+
+	if (tile_index == 384)
+		return ;
+
+    for (int x = 0; x < 8; x++)
+    {
+        unsigned char bitmask = 1 << (7 - x);
+        tile_data[vbank_select][tile_index][y * 8 + x] = static_cast<uint8_t>(((vram[vbank_select][addr] & bitmask) ? 1 : 0) +
+                                                ((vram[vbank_select][addr + 1] & bitmask) ? 2 : 0));
+    }
+}
+
 void LCD_CONTROL::set(uint8_t value) {
-        lcd_enable =              (value & 0x80) != 0;
-        window_tile_map_address = (value & 0x40) != 0;
-        window_enable =           (value & 0x20) != 0;
-        bg_window_tile_data =     (value & 0x10) != 0;
-        bg_tile_map_address =     (value & 0x08) != 0;
-        obj_size =                (value & 0x04) != 0;
-        obj_enable =              (value & 0x02) != 0;
-        bg_enable =               (value & 0x01) != 0;
+        lcd_enable =              (value >> 7)	& 1;
+        window_tile_map_address = (value >> 6)	& 1;
+        window_enable =           (value >> 5)	& 1;
+        bg_window_tile_data =     (value >> 4)	& 1;
+        bg_tile_map_address =     (value >> 3)	& 1;
+        obj_size =                (value >> 2)	& 1;
+        obj_enable =              (value >> 1)	& 1;
+        bg_enable =               (value >> 0)	& 1;
         val = value;
 }
 

@@ -49,5 +49,5 @@ void ret()
 void reti()
 {
     ret();
-    interrupts = true;
+    process_interrupts = true;
 }
