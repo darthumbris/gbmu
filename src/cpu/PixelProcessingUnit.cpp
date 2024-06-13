@@ -23,6 +23,7 @@ PixelProcessingUnit::~PixelProcessingUnit()
 
 void PixelProcessingUnit::tick(uint8_t cycle)
 {
+    printf("tick: %u\t", cycle);
     if (ctrl.lcd_enable) {
         //TODO have a check for the dma (CGB only?) ?
         lcd_clock += (uint16_t)cycle;
@@ -35,7 +36,8 @@ void PixelProcessingUnit::tick(uint8_t cycle)
                 if (ly == 144) {
                     l_status.mode = PPU_Modes::Vertical_Blank;
                     handle_interrupt(true);
-                    render_screen(); //Renders the full screen when at the end of the 144 lines
+                    draw_screen = true;
+                    // render_screen(); //Renders the full screen when at the end of the 144 lines
                 }
                 else {
                     l_status.mode = PPU_Modes::OAM_Scan;
@@ -53,6 +55,7 @@ void PixelProcessingUnit::tick(uint8_t cycle)
                 if (ly > 153) {
                     window_line_active = 0;
                     ly = 0;
+                    std::cout << "resetting ly " << std::endl;
                     l_status.mode = PPU_Modes::OAM_Scan;
                     handle_interrupt(true);
                     window_active = ctrl.window_enable && window_y == ly;
@@ -168,7 +171,7 @@ void PixelProcessingUnit::render_scanline() {
     }
 
     uint32_t *framebuffer_ptr = framebuffer + ly * 160;
-    uint16_t tile_index = vram[vbank_select][tile_map_offset + line_offset];
+    uint16_t tile_index = vram[0][tile_map_offset + line_offset];
 
     if (!ctrl.bg_window_tile_data) {
         tile_index = static_cast<uint16_t>(256 + static_cast<uint8_t>(tile_index & 0xFF));
@@ -180,13 +183,15 @@ void PixelProcessingUnit::render_scanline() {
 
         uint8_t tile_dat = tile_data[vbank_select][tile_index][y * 8 + x];
         *framebuffer_ptr = bg_colors[tile_dat];
+        // if (cpu->get_mmap().boot_rom_loaded)
+        //     printf("tile_index: %d, y: %d, x: %d, i: %d, scy: %d, sxy: %d\n", tile_dat, y, x, i, scy, scx);
         handle_sprites(sprites, i, tile_dat, framebuffer_ptr, &spr_index);
         framebuffer_ptr++;
         x++;
-        if (x==8) {
+        if (x == 8) {
             x = 0;
             line_offset = (line_offset + 1) & 31;
-            tile_index = vram[vbank_select][tile_map_offset + line_offset];
+            tile_index = vram[0][tile_map_offset + line_offset];
             if (!ctrl.bg_window_tile_data) {
                 tile_index = static_cast<uint16_t>(256 + static_cast<uint8_t>(tile_index & 0xFF));
             }
@@ -195,7 +200,6 @@ void PixelProcessingUnit::render_scanline() {
     if (window_active) {
         window_line_active++;
     }
-    sprites.clear();
 }
 
 void PixelProcessingUnit::render_screen() {
@@ -209,7 +213,7 @@ void PixelProcessingUnit::render_screen() {
 bool PixelProcessingUnit::init_window()
 {   
     bool success = true;
-    std::cout << "initting window" << std::endl;
+    // std::cout << "initting window" << std::endl;
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -219,7 +223,7 @@ bool PixelProcessingUnit::init_window()
     else
     {
     //     // Create window
-        data.window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+        data.window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 4, SCREEN_HEIGHT * 4, SDL_WINDOW_SHOWN);
         if (data.window == NULL)
         {
             printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -306,12 +310,17 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
             l_status.set(val);
             break;
         case 0xFF42:
+            // if (val == 241 && cpu->get_mmap().boot_rom_loaded) {
+            //     std::cout << "Hello there" << std::endl;
+            //     exit(1);
+            // }
             scy = val;
             break;
         case 0xFF43: 
             scx = val;
             break;
         case 0xFF44:
+            std::cout << "setting ly" << (uint16_t)val << std::endl;
             ly = val;
             break;
         case 0xFF45:

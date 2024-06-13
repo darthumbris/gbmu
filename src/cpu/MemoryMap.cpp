@@ -39,6 +39,9 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu)
         i += 1;
     }
     ext_ram.push_back(Mem8k());
+    for (int i = 0; i < boot_rom.size(); i++) {
+        printf("%#04x\n", boot_rom[i]);
+    }
 }
 
 MemoryMap::~MemoryMap()
@@ -51,11 +54,14 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
     switch (addr)
     {
     case 0x0000 ... 0x00FF:
+        // if (addr == 133) {
+        //     std::cout << "Hello" << boot_rom_loaded << std::endl;
+        // }
         if (!boot_rom_loaded)
         {
             return boot_rom[addr];
         }
-        std::cout << "reading from cartridge rom" << std::endl;
+        // std::cout << "reading from cartridge rom" << std::endl;
         return rom[addr];
     case 0x0100 ... 0x3FFF:
         return rom[addr];
@@ -74,6 +80,21 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
     case 0xFEA0 ... 0xFEFF:
         return not_usable[addr - 0xFEA0];
     case 0xFF00 ... 0xFF3F:
+        // if (addr == 0xFF14) {
+        //     std::cout << "reading from audio" << std::endl;
+        //     exit(1);
+        // }
+        if (addr == 0xFF00) {
+            uint8_t joy;
+            switch (joypad) {
+                case 1: joy =  (0x0F); break;
+                case 2: joy =  (0x0F); break;
+                default: joy = (0xFF); break;
+            }
+            printf("reading joypad: %u\n", joy);
+            // exit(1);
+            return joy;
+        }
         return io_registers[addr - 0xFF00];
     case 0xFF40 ... 0xFF4F:
         return cpu->get_ppu().read_u8_ppu(addr);
@@ -107,7 +128,7 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
             boot_rom[addr] = val;
             break;
         }
-        std::cout << "writing to cartridge rom" << std::endl;
+        // std::cout << "writing to cartridge rom" << std::endl;
         rom[addr] = val;
         break;
     case 0x0100 ... 0x3FFF:
@@ -137,6 +158,11 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         not_usable[addr - 0xFEA0] = val;
         break;
     case 0xFF00 ... 0xFF3F:
+        if (addr == 0xFF00) {
+            printf("writing to the joypad: %u\n", val);
+            joypad = (val >> 4) & 3;
+            break;
+        }
         io_registers[addr - 0xFF00] = val;
         break;
     case 0xFF40 ... 0xFF4F:
@@ -146,6 +172,10 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         cpu->get_ppu().write_u8_ppu(addr, val);
         break;
     case 0xFF50:
+        if (!boot_rom_loaded) {
+            boot_rom_loaded = true;
+            // std::cout << "loaded boot rom" << std::endl;
+        }
         io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
         break;
     case 0xFF80 ... 0xFFFE:
@@ -157,12 +187,6 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
 
     default:
         break;
-    }
-    if (addr == 0xFF50) {
-        boot_rom_loaded = true;
-        std::cout << "reached end of bios ops at val: " << (uint16_t)val << std::endl;
-        std::cout << "is boot_rom_enabled: " << is_boot_rom_enabled() << std::endl;
-        // exit(1);
     }
 }
 

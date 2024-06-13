@@ -112,6 +112,7 @@ public:
     PixelProcessingUnit(Cpu *cpu);
     ~PixelProcessingUnit();
 
+    bool draw_screen = false;
     void tick(uint8_t interrupt);
     bool init_window();
     void close();

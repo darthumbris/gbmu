@@ -65,7 +65,7 @@ private:
 	 */
 	// std::array<uint16_t, 5> registers; //(all low and high register values and the StackPointer (the combined (so 8 uint8_t > 4 uint16_t)))
 	std::array<uint8_t, 8> u8_registers;
-	uint32_t debug_count;
+	uint64_t debug_count;
 
 	uint16_t sp; //stack pointer
 	uint16_t pc; // Program counter

@@ -6,23 +6,19 @@ void add_a_r8()
     if (src == Registers::HL)
     {
         val = mmap.read_u8(get_16bitregister(Registers::HL));
-        set_cycle(1);
+        set_cycle(2);
     }
     else
     {
         val = get_register(src);
         set_cycle(1);
     }
-    uint8_t sum = a_val + val;
-    set_register(Registers::F, 0);
-    set_register(Registers::A, sum);
-    if (sum == 0) {
-        set_flag(FlagRegisters::z, 1);
-    }
-    else if (sum < a_val) {
-        set_flag(FlagRegisters::c, 1);
-    }
-    set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
+    uint16_t sum = a_val + val;
+    set_register(Registers::A, static_cast<uint8_t>(sum));
+    set_flag(FlagRegisters::z, static_cast<uint8_t>(sum) == 0);
+    set_flag(FlagRegisters::n, 0);
+    set_flag(FlagRegisters::h, ((a_val & 0xF) + (val & 0xF)) > 0xF);
+    set_flag(FlagRegisters::c, (sum >> 8) != 0);
 }
 
 void add_a_imm8()
@@ -40,7 +36,7 @@ void add_a_imm8()
         set_flag(FlagRegisters::c, 1);
     }
     set_flag(FlagRegisters::h, half_carry_flag_set(val, a_val));
-    set_cycle(1);
+    set_cycle(2);
 }
 
 template<Registers src>
