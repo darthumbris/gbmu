@@ -16,7 +16,6 @@ enum CGB_FLAGS
 class Rom
 {
 private:
-    /* data */
     uint32_t entry_point;      // 0x100-0x103
     std::vector<uint8_t> logo; // 0x104-0x133
 

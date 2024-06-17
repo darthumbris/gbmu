@@ -96,26 +96,7 @@ namespace Dict
             return Registers::AF;
         case "SP"_:
             return Registers::SP;
-        // case "n16"_:
-        //     return Registers::SP; // TODO
-        // case "n8"_:
-        //     return Registers::SP; // TODO
-        // case "e8"_:
-        //     return Registers::SP; // TODO 8-bit signed 2's complement displacement.
-        // case "a16"_:
-        //     return Registers::SP; // TODO
-        // case "a8"_:
-        //     return Registers::SP; // TODO
-        // case "NZ"_:
-        //     return Registers::SP; // TODO not zero flag
-        // case "Z"_:
-        //     return Registers::SP; // TODO zero flag
-        // case "NC"_:
-        //     return Registers::SP; // TODO not carry flag
-        // case "C"_:
-        //     return Registers::SP; // TODO carry flag
         default:
-            // std::cout << "name operand not implemented: " << name << std::endl;
             break;
         }
         return Registers::SP;
@@ -145,7 +126,6 @@ namespace Dict
         }
         catch (const std::exception &e)
         {
-            // std::cout << e.what() << '\n';
         }
         try
         {
@@ -153,7 +133,6 @@ namespace Dict
         }
         catch (const std::exception &e)
         {
-            // std::cout << e.what() << '\n';
         }
         try
         {
@@ -161,7 +140,6 @@ namespace Dict
         }
         catch (const std::exception &e)
         {
-            // std::cout << e.what() << '\n';
         }
         if (o.name.starts_with("$"))
         {

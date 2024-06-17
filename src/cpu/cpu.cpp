@@ -64,21 +64,6 @@ INLINE_FN void Cpu::set_flag(uint8_t flag, uint8_t val)
 
 void Cpu::tick()
 {
-    // const std::chrono::time_point<std::chrono::steady_clock> start =
-    //     std::chrono::steady_clock::now();
-    // if (debug_count >= DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
-        // std::cout << debug_count << "  ";
-        // std::cout << "debug count: " << debug_count << std::endl;
-        // if (debug_count > 2218245 - 2 && debug_count < 2218245 + 2)
-        //     debug_print(std::get<0>(dec), std::get<1>(dec));
-        // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
-    // }
-    // if (debug_count > 24578 && debug_count < 24630) {
-        // std::bitset<8> x(get_register(Registers::F));
-        // printf("%d, registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n", debug_count, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
-        // std::cout << "debug count: "  << debug_count << ", register: " << x << std::endl;
-    // }
-
     while (ppu.draw_screen)
         ;
 
@@ -90,21 +75,9 @@ void Cpu::tick()
 
     ppu.tick(t_cycle);
     event_handler();
-    printf("%lu pc: %u opcode: %#04x registers b: %u, c: %u, d: %u, e: %u, h: %u, l: %u, a: %u, f: %u\n",debug_count, pc, opcode, get_register(Registers::B), get_register(Registers::C), get_register(Registers::D), get_register(Registers::E), get_register(Registers::H), get_register(Registers::L), get_register(Registers::A), get_register(Registers::F));
-    if (debug_count > 2218232 - 4 && debug_count < 2218232 + 4)
-    {
-        // printf("opcode: %#04x\n", opcode);
-    }
-    if (debug_count > 2395659 + 1) {
-        // exit(1);
-    }
     debug_count += 1;
     m_cycle = 0;
     t_cycle = 0;
-    // const auto end = std::chrono::steady_clock::now();
-    //  std::cout
-    //     << "delta time: "
-    //     << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start) << "\n";  // using milliseconds and seconds accordingly
 }
 
 void Cpu::handle_interrupt()
@@ -118,7 +91,6 @@ void Cpu::handle_interrupt()
 	// Handle the interrupt, while taking the priority into account
 	if (process_interrupts)
 	{
-		// Maybe use for loop
 		if (masked & InterruptType::Vblank)
 			process_interrupt(InterruptType::Vblank);
 		else if (masked & InterruptType::Stat)
@@ -171,9 +143,7 @@ void Cpu::debug_print(bool prefix)
 void Cpu::prefix() {
     opcode = mmap.read_u8(pc);
     #ifdef DEBUG_MODE
-        // if (debug_count == 24589) {
-        //     debug_print(true);
-        // }
+        // debug_print(true);
     #endif
     pc += 1;
     auto op = prefixed_instructions[opcode];
@@ -190,18 +160,13 @@ void Cpu::execute_instruction()
     opcode = mmap.read_u8(pc);
     #ifdef DEBUG_MODE
         if (opcode != 0xCB) {
-            // if (debug_count == 24589) {
-            //     debug_print(false);
-            // }
+            // debug_print(false);
         }
     #endif
 
     pc += 1;
     auto op = unprefixed_instructions[opcode];
     (this->*op)();
-    // if (debug_count == 24589) {
-    //     std::cout << "ticks for 0x77: " << t_cycle << std::endl;
-    // }
 }
 
 void Cpu::lockup() {}

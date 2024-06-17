@@ -6,5 +6,4 @@ void rst_tg3()
 
     pc = value;
     set_cycle(4);
-    // std::cout << "PC set to: 0x" << std::setfill('0') << std::setw(4) << std::hex << pc << " operand.name: " << in.operands[0].name << std::dec << std::endl;
 }

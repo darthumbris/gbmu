@@ -10,7 +10,6 @@
 
 int main(int argc, char *argv[])
 {
-    // std::cout << "trying to open: " << argv[1] << std::endl;
     std::string path = argv[1];
     Rom rom = Rom(path);
     // rom.print_rom();
@@ -19,7 +18,6 @@ int main(int argc, char *argv[])
     Dict::Decoder decode = Dict::Decoder(p);
 
     decode.set_data(path);
-    // MemoryMap mmap = MemoryMap(path);
 
     Cpu cpu = Cpu(decode, path);
 

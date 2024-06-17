@@ -21,7 +21,6 @@ namespace Dict
 
     Decoder::Decoder(std::string &path)
     {
-        // std::cout << "\n==================opened stream==================" << std::endl;
         std::ifstream f(path);
         try
         {
@@ -33,7 +32,6 @@ namespace Dict
                 std::stringstream ss;
                 ss << std::hex << it.key();
                 ss >> x;
-                // std::cout << "adding instruction for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << x << std::dec << std::endl;
                 instructions.emplace(std::make_pair(x, Instruction(*it)));
             }
             json pref = j.at("cbprefixed");
@@ -43,7 +41,6 @@ namespace Dict
                 std::stringstream ss;
                 ss << std::hex << it.key();
                 ss >> x;
-                // std::cout << "adding prefixed_instructions for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << x << std::dec << std::endl;
                 prefixed_instructions.emplace(std::make_pair(x, Instruction(*it)));
             }
         }
@@ -51,8 +48,6 @@ namespace Dict
         {
             std::cout << e.what() << std::endl;
         }
-        // std::cout << "instructions: " << instructions.size() << std::endl;
-        // std::cout << "prefixed_instructions: " << prefixed_instructions.size() << std::endl;
     }
 
     Decoder::~Decoder()
@@ -61,7 +56,6 @@ namespace Dict
 
     void Decoder::set_data(std::string path)
     {
-        // std::cout << "decoder path: " << path << std::endl;
         std::ifstream ifs;
         ifs.open(path.c_str(), std::ifstream::binary);
         auto size = ifs.tellg();
@@ -71,12 +65,10 @@ namespace Dict
             data.push_back(static_cast<std::byte>(c));
         }
         ifs.close();
-        // std::cout << "rom size: " << data.size() << std::endl;
     }
 
     std::vector<std::byte> Decoder::get_data() const
     {
-        // std::cout << "rom size: " << data.size() << std::endl;
         return data;
     }
 
@@ -101,7 +93,7 @@ namespace Dict
         }
         else
         {
-            std::cout << "what the fuck" << std::endl;
+            std::cout << "what the f" << std::endl;
             return 0;
         }
     }
@@ -148,9 +140,6 @@ namespace Dict
             std::cout << "predecoded instruction operands: " << instruction.operands.size() << std::endl;
             std::cout << "decoded instruction operands: " << decoded.operands.size() << std::endl;
         }
-        // std::cout << "trying to get ins for opcode: 0x" << std::setfill('0') << std::setw(4) << std::hex << opcode << std::dec << std::endl;
-        // std::cout << "trying to get ins for address: 0x" << std::setfill('0') << std::setw(4) << std::hex << address << std::dec << std::endl;
-        // TODO check if address or opcode needs te be returned?
         return {opcode, decoded, prefix};
     }
 

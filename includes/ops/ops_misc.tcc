@@ -27,8 +27,7 @@ void nop()
     set_cycle(1);
 }
 
-// Decimal Adjust a
-// Converts A into packed BCD.
+// Decimal Adjust a Converts A into packed BCD.
 void daa()
 {
     uint8_t a_val = get_register(Registers::A);

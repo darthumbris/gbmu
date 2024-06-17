@@ -30,20 +30,12 @@ enum Condition
 	CarryFlag,
 };
 
-/* Interrupt
-  * 0x40 Vblank interrupt
-  * 0x48 STAT interrupt
-  * 0x50 Timer interrupt
-  * 0x58 Serial interrupt
-  * 0x60 Joypad interrupt
- */
-
  enum InterruptType {
-	Vblank = 1 << 0,
-	Stat = 1 << 1,
-	Timer = 1 << 2,
-	Serial = 1 << 3,
-	Joypad  = 1 << 4
+	Vblank = 1 << 0, //0x40 Vblank interrupt
+	Stat = 1 << 1, // 0x48 STAT interrupt
+	Timer = 1 << 2, //0x50 Timer interrupt
+	Serial = 1 << 3, //0x58 Serial interrupt
+	Joypad  = 1 << 4 //0x60 Joypad interrupt
  };
 
 class Cpu
@@ -63,7 +55,6 @@ private:
 	 *
 	 * The registers are made uint16_t because the gameboy uses 16-bit registers
 	 */
-	// std::array<uint16_t, 5> registers; //(all low and high register values and the StackPointer (the combined (so 8 uint8_t > 4 uint16_t)))
 	std::array<uint8_t, 8> u8_registers;
 	uint64_t debug_count;
 
@@ -72,7 +63,7 @@ private:
 	Decoder decoder;
 	MemoryMap mmap;
 	PixelProcessingUnit ppu;
-	bool halted = false;	 // TODO check if this can be handled by the interrupt in the memorymap
+	bool halted = false;
 	uint8_t interrupt_enable_register; //0xFFFF
 	uint8_t interrupt; //0xFF0F
 	uint16_t m_cycle;
@@ -86,7 +77,6 @@ private:
 	std::array<OpsFn, 256> prefixed_instructions;
 	void set_instructions();
 
-	// CB prefix
 	void prefix();
 
 	template<uint8_t opcode>

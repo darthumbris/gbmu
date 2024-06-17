@@ -97,5 +97,4 @@ void adc_a_imm8()
     set_flag(FlagRegisters::c, carry_flag_set(val, a_val));
     set_register(Registers::A, sum);
     set_cycle(2);
-    // set_flag(FlagRegisters::z, get_register(Registers::A) == 0);
 }

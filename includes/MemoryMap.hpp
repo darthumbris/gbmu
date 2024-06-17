@@ -81,7 +81,6 @@ using Mem4k = std::array<uint8_t, 4096>;
 class MemoryMap
 {
 private:
-    // TODO add a check for if the bios has been loaded in
     Mem16k rom{0};                            // 0x0000 - 0x3FFF
     std::vector<Mem16k> rom_banks{};          // 0x4000 - 0x7FFF   // From cartridge, switchable bank if any //2M max
     std::vector<Mem8k> ext_ram{};             // 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
@@ -125,8 +124,6 @@ private:
 
 
 public:
-    // std::array<Mem8k, 2> vram{0};             // 0x8000 - 0x9FFF   // 0 for GB and 0-1 for Cgb (switchable banks)
-    // MemoryMap();
     MemoryMap(const std::string path, Cpu *cpu);
     bool boot_rom_loaded = false;
 
@@ -137,71 +134,8 @@ public:
     INLINE_FN void write_u8(uint16_t addr, uint8_t val);
     INLINE_FN void write_u16(uint16_t addr, uint16_t val);
 
-    // inline uint8_t get_tile_index(uint8_t vbank, uint16_t x, uint16_t y, uint16_t tile_map) {return vram[vbank][tile_map + (x + y * 32)];}
-    // inline uint8_t *get_tile_data(uint8_t vbank, uint8_t tile_index) {return &vram[vbank][(uint32_t)tile_index * 16];} //TODO check this
-
-
     inline bool is_boot_rom_enabled() {return io_registers[(std::size_t)(0xFF50 - 0xFF00)];}
-    // inline uint8_t vram_bank_select() {return io_registers[(std::size_t)(0xFF4F - 0xFF00)];} //only bit 0 matters
     inline uint8_t wram_bank_select() {return io_registers[(std::size_t)(0xFF70 - 0xFF00)];} //TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
-
-    //PPU IO Registers
-    // inline uint8_t get_lcd_control() {return io_registers[(std::size_t)(0xFF40 - 0xFF00)];}
-    // inline uint8_t get_lcd_status() {return io_registers[(std::size_t)(0xFF41 - 0xFF00)];}
-    // inline uint8_t get_lcd_scrolling_y() {return io_registers[(std::size_t)(0xFF42 - 0xFF00)];}
-    // inline uint8_t get_lcd_scrolling_x() {return io_registers[(std::size_t)(0xFF43 - 0xFF00)];}
-    // inline uint8_t get_lcd_line_y() {return io_registers[(std::size_t)(0xFF44 - 0xFF00)];}
-    // inline uint8_t get_lcd_line_y_compare() {return io_registers[(std::size_t)(0xFF45 - 0xFF00)];}
-
-    // inline uint8_t get_dma_transfer_start_address() {return io_registers[(std::size_t)(0xFF46 - 0xFF00)];}
-
-    //Palettes
-    // inline uint8_t get_background_palette_data() {return io_registers[(std::size_t)(0xFF47 - 0xFF00)];}
-    // inline uint8_t get_obj_0_palette_data() {return io_registers[(std::size_t)(0xFF48 - 0xFF00)];}
-    // inline uint8_t get_obj_1_palette_data() {return io_registers[(std::size_t)(0xFF49 - 0xFF00)];}
-    
-    // inline uint8_t get_lcd_window_y() {return io_registers[(std::size_t)(0xFF4A - 0xFF00)];}
-    // inline uint8_t get_lcd_window_x() {return io_registers[(std::size_t)(0xFF4B - 0xFF00)];} //TODO x + 7 ? see https://gbdev.io/pandocs/Scrolling.html#lcd-position-and-scrolling
-
-    //0xFF4C unkown register
-    //0xFF4D KEY1 - CGB Mode Only - Prepare Speed Switch
-    //0xFF4E unkown register
-    //0xFF56 RP - CGB Mode Only - Infrared Communications Port
-    //0xFF57-0xFF67 unkown register
-    //0xFF6C-0xFF6F unkown register
-    //0xFF71-0xFF7F unkown register
-
-    //CGB Palettes
-    // inline uint8_t get_background_color_palette_index() {return io_registers[(std::size_t)(0xFF68 - 0xFF00)];}
-    // inline uint8_t get_background_color_palette_data() {return io_registers[(std::size_t)(0xFF69 - 0xFF00)];}
-    // inline uint8_t get_obj_color_palette_index() {return io_registers[(std::size_t)(0xFF6A - 0xFF00)];}
-    // inline uint8_t get_obj_color_palette_data() {return io_registers[(std::size_t)(0xFF6B - 0xFF00)];}
-
-    // inline uint8_t get_ppu_mode() {return ((get_lcd_status() & mask0) + (get_lcd_status() & mask1));}
-    // inline bool get_lcd_enable() { return get_lcd_control() & mask7; }
-    // inline bool get_window_tilemap() { return get_lcd_control() & mask6;}
-    // inline bool get_window_enable() { return get_lcd_control() & mask5; }
-    // inline bool get_bg_window_tiles() { return get_lcd_control() & mask4;}
-    // inline bool get_background_tilemap() { return get_lcd_control() & mask3;}
-    // inline bool get_obj_size() { return get_lcd_control() & mask2;}
-    // inline bool get_obj_enable() { return get_lcd_control() & mask1;}
-    // inline bool get_bg_window_enable_priority() { return get_lcd_control() & mask0;}
-
-    // void set_ppu_mode(uint8_t mode);
-    // inline void increase_lcd_line_y() {
-        // std::cout << "writing to 0xFF44" << std::endl;
-        // io_registers[(std::size_t)(0xFF44 - 0xFF00)] += 1;}
-    // inline void increase_lcd_line_y_mod() {
-    //     // std::cout << "writing to 0xFF44" << std::endl;
-    //     io_registers[(std::size_t)(0xFF44 - 0xFF00)] = (io_registers[(std::size_t)(0xFF44 - 0xFF00)] + 1) % 154;}
-    // inline void reset_lcd_line_y() {io_registers[(std::size_t)(0xFF44 - 0xFF00)] = 0;}
-    // inline void reset_lcd_window_y() {io_registers[(std::size_t)(0xFF4A - 0xFF00)] = 0;}
-    // inline void set_bg_window_enable_priority(bool val) { io_registers[(std::size_t)(0xFF40 - 0xFF00)] = ((-val)) ^ io_registers[(std::size_t)(0xFF40 - 0xFF00)] & (1U << 0) ;}
-
-    // inline bool status() {return ppu.status();}
-    // inline void set_status(bool val) {ppu.set_status(val);}
-    // inline void close() {ppu.close();}
-    // inline void tick(uint8_t cycle) {ppu.tick(cycle);}
 
     inline void set_interrupt(uint8_t i) {interrupt |= i;}
 };

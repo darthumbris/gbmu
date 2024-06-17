@@ -15,6 +15,7 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu)
     std::memset(vram, 0, sizeof(vram));
     std::memset(obj_0_colors, 0, sizeof(obj_0_colors));
     std::memset(obj_1_colors, 0, sizeof(obj_1_colors));
+    std::memset(tile_data, 0, sizeof(tile_data));
 }
 
 PixelProcessingUnit::~PixelProcessingUnit()
@@ -23,7 +24,6 @@ PixelProcessingUnit::~PixelProcessingUnit()
 
 void PixelProcessingUnit::tick(uint8_t cycle)
 {
-    printf("tick: %u\t", cycle);
     if (ctrl.lcd_enable) {
         //TODO have a check for the dma (CGB only?) ?
         lcd_clock += (uint16_t)cycle;
@@ -37,7 +37,6 @@ void PixelProcessingUnit::tick(uint8_t cycle)
                     l_status.mode = PPU_Modes::Vertical_Blank;
                     handle_interrupt(true);
                     draw_screen = true;
-                    // render_screen(); //Renders the full screen when at the end of the 144 lines
                 }
                 else {
                     l_status.mode = PPU_Modes::OAM_Scan;
@@ -55,7 +54,6 @@ void PixelProcessingUnit::tick(uint8_t cycle)
                 if (ly > 153) {
                     window_line_active = 0;
                     ly = 0;
-                    std::cout << "resetting ly " << std::endl;
                     l_status.mode = PPU_Modes::OAM_Scan;
                     handle_interrupt(true);
                     window_active = ctrl.window_enable && window_y == ly;
@@ -116,7 +114,7 @@ void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, uint32_t i
             tile_y %= 8;
         }
 
-        uint8_t color_index = tile_data[vbank_select][sprite_index][tile_y * 8 + tile_x];
+        uint8_t color_index = tile_data[vbank_select][sprite_index][(uint16_t)tile_y * 8 + tile_x];
 
         bool background = ((spr->att_flags >> 7) & 1);
         if (color_index && !drawn && (!background || (background && !tile_data_pos))) {
@@ -127,7 +125,6 @@ void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, uint32_t i
                 *framebuffer_ptr = obj_0_colors[color_index];
             }
             drawn = true;
-            //TODO break here?
         }
 
         // Go to next sprite if this x marks the end of it
@@ -142,7 +139,6 @@ void PixelProcessingUnit::render_scanline() {
     sprites.reserve(10);
     if (ctrl.obj_enable) {
         for (int i = 0; i < 40; i++) {
-            //Sprite stuff
             Sprite spr = get_sprite(i);
             if (ly < spr.y_pos && ly >= spr.y_pos - 16) { //obj can be 8*8 or 8*16 //TODO maybe do a obj_size check that returns 8 or 16
                 if (ctrl.obj_size || ly < spr.y_pos - 8) {
@@ -156,44 +152,38 @@ void PixelProcessingUnit::render_scanline() {
         std::cout << "drawing sprites: " << sprites.size() << std::endl;
     }
 
-    uint16_t tile_map_offset = ctrl.bg_tile_map_address ? 0x1c00 : 0x1800;
-    uint16_t line_offset = scx >> 3;
+    int tile_map_offset = ctrl.bg_tile_map_address ? 0x1c00 : 0x1800;
+    int line_offset = scx >> 3;
     uint8_t y = (ly + scy) & 7;
     uint8_t x = scx & 7;
 
     tile_map_offset += (((ly + scy) & 255) >> 3) << 5;
-
-    if (window_active && window_x == 7) {
-        tile_map_offset = (ctrl.window_tile_map_address ? 0x1c00 : 0x1800) + ((window_line_active << 3) << 5);
+    if (window_active && window_x == 0 + 7) {
+        tile_map_offset = (ctrl.window_tile_map_address ? 0x1c00 : 0x1800) + ((window_line_active >> 3) << 5);
         line_offset = 0;
         y = window_line_active & 7;
         x = 0;
     }
 
     uint32_t *framebuffer_ptr = framebuffer + ly * 160;
-    uint16_t tile_index = vram[0][tile_map_offset + line_offset];
-
+    uint16_t tile_index = vram[vbank_select][tile_map_offset + line_offset];
     if (!ctrl.bg_window_tile_data) {
-        tile_index = static_cast<uint16_t>(256 + static_cast<uint8_t>(tile_index & 0xFF));
+        tile_index = static_cast<uint16_t>(256 + static_cast<int8_t>(tile_index & 0xFF));
     }
 
     size_t spr_index = 0;
-
     for (uint32_t i = 0; i < 160; i++) {
-
-        uint8_t tile_dat = tile_data[vbank_select][tile_index][y * 8 + x];
+        uint8_t tile_dat = tile_data[vbank_select][tile_index][(uint16_t)(y) * 8 + x];
         *framebuffer_ptr = bg_colors[tile_dat];
-        // if (cpu->get_mmap().boot_rom_loaded)
-        //     printf("tile_index: %d, y: %d, x: %d, i: %d, scy: %d, sxy: %d\n", tile_dat, y, x, i, scy, scx);
         handle_sprites(sprites, i, tile_dat, framebuffer_ptr, &spr_index);
         framebuffer_ptr++;
         x++;
         if (x == 8) {
             x = 0;
             line_offset = (line_offset + 1) & 31;
-            tile_index = vram[0][tile_map_offset + line_offset];
+            tile_index = vram[vbank_select][tile_map_offset + line_offset];
             if (!ctrl.bg_window_tile_data) {
-                tile_index = static_cast<uint16_t>(256 + static_cast<uint8_t>(tile_index & 0xFF));
+                tile_index = static_cast<uint16_t>(256 + static_cast<int8_t>(tile_index & 0xFF));
             }
         }
     }
@@ -213,8 +203,6 @@ void PixelProcessingUnit::render_screen() {
 bool PixelProcessingUnit::init_window()
 {   
     bool success = true;
-    // std::cout << "initting window" << std::endl;
-    // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -222,7 +210,6 @@ bool PixelProcessingUnit::init_window()
     }
     else
     {
-    //     // Create window
         data.window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 4, SCREEN_HEIGHT * 4, SDL_WINDOW_SHOWN);
         if (data.window == NULL)
         {
@@ -283,9 +270,9 @@ uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
         case 0xFF49: 
             return obj_palette_1;
         case 0xFF4A: 
-            return window_x;
-        case 0xFF4B: 
             return window_y;
+        case 0xFF4B: 
+            return window_x;
         case 0xFF4F:
             return vbank_select;
         case 0xFF70:
@@ -310,17 +297,12 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
             l_status.set(val);
             break;
         case 0xFF42:
-            // if (val == 241 && cpu->get_mmap().boot_rom_loaded) {
-            //     std::cout << "Hello there" << std::endl;
-            //     exit(1);
-            // }
             scy = val;
             break;
         case 0xFF43: 
             scx = val;
             break;
         case 0xFF44:
-            std::cout << "setting ly" << (uint16_t)val << std::endl;
             ly = val;
             break;
         case 0xFF45:
@@ -393,10 +375,10 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
             }
             break;
         case 0xFF4A: 
-            window_x = val;
+            window_y = val;
             break;
         case 0xFF4B: 
-            window_y = val;
+            window_x = val;
             break;
         case 0xFF4F:
             vbank_select = val;
@@ -457,7 +439,5 @@ void LCD_STATUS::set(uint8_t value) {
         mode_2_oam_interrupt =     (value & 0x20) != 0;
         mode_1_vblank_interrupt =  (value & 0x10) != 0;
         mode_0_hblank_interrupt =  (value & 0x08) != 0;
-        ly_flag =                  (value & 0x04) != 0;
-        mode =                     value & 0x3;
         val  =                     value;
 }

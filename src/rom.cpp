@@ -19,7 +19,7 @@ Rom::Rom(std::string path)
   std::ifstream ifs;
   ifs.open(path.c_str(), std::ifstream::binary);
 
-  ifs.seekg(0x100); // set it to the header
+  ifs.seekg(0x100);
   char vals[4];
   ifs.get(vals, 5);
   bitsToInt(entry_point, vals, true);
@@ -48,7 +48,6 @@ Rom::Rom(std::string path)
   char val[2];
   ifs.get(val, 3);
   bitsToInt(global_checksum, val, true);
-  // printf("seek: 0x%08x\n", ifs.tellg());
   ifs.close();
 }
 
