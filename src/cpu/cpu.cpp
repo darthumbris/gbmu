@@ -5,8 +5,8 @@
 #include <chrono>
 #include <ctime>
 
-uint32_t const DEBUG_START = 2381375;
-uint32_t const DEBUG_COUNT = 4096;
+uint64_t const DEBUG_START = 17675037;
+uint64_t const DEBUG_COUNT = 4381650;
 
 Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec), mmap(path, this), ppu(this)
 {
@@ -158,15 +158,15 @@ void Cpu::debug_print(bool prefix)
 void Cpu::prefix() {
     opcode = mmap.read_u8(pc);
     #ifdef DEBUG_MODE
-        // if (debug_count > DEBUG_START - DEBUG_COUNT && debug_count < DEBUG_START + DEBUG_COUNT) {
+        if (debug_count > DEBUG_START - DEBUG_COUNT && debug_count < DEBUG_START + DEBUG_COUNT) {
             // debug_print(true);
-            // std::cout << debug_count << " opcode: 0xCB" << std::hex
-            //     << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
-            // std::cout << debug_count << " PC: 0x" << std::hex
-            //     << std::setfill('0') << std::setw(4) << pc << std::dec << std::endl;
-            // printf("register a %u b %u f %u HL %u\n", u8_registers[Registers::A], u8_registers[Registers::B], u8_registers[Registers::F], get_16bitregister(Registers::HL));
+            std::cout << debug_count << " opcode: 0xCB" << std::hex
+                << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
+            std::cout << debug_count << " PC: 0x" << std::hex
+                << std::setfill('0') << std::setw(4) << pc << std::dec << std::endl;
+            printf("register a %u b %u f %u HL %u\n", u8_registers[Registers::A], u8_registers[Registers::B], u8_registers[Registers::F], get_16bitregister(Registers::HL));
 			
-        // }
+        }
     #endif
     pc += 1;
     auto op = prefixed_instructions[opcode];
@@ -183,15 +183,14 @@ void Cpu::execute_instruction()
     opcode = mmap.read_u8(pc);
     #ifdef DEBUG_MODE
         if (opcode != 0xCB) {
-            // if (debug_count > DEBUG_START - DEBUG_COUNT && debug_count < DEBUG_START + DEBUG_COUNT) {
+            if (debug_count > DEBUG_START - DEBUG_COUNT && debug_count < DEBUG_START + DEBUG_COUNT) {
                 // debug_print(false);
-                // printf("%lu opcode: %#04x\n", debug_count, opcode);
-                // std::cout << debug_count << " opcode: 0x" << std::hex
-                // << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
-                // std::cout << debug_count << " PC: 0x" << std::hex
-                // << std::setfill('0') << std::setw(4) << pc << std::dec << std::endl;
-                // printf("register a %u b %u f %u HL %u\n", u8_registers[Registers::A], u8_registers[Registers::B], u8_registers[Registers::F], get_16bitregister(Registers::HL));
-			// } 
+                std::cout << debug_count << " opcode: 0x" << std::hex
+                << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
+                std::cout << debug_count << " PC: 0x" << std::hex
+                << std::setfill('0') << std::setw(4) << pc << std::dec << std::endl;
+                printf("register a %u b %u f %u HL %u\n", u8_registers[Registers::A], u8_registers[Registers::B], u8_registers[Registers::F], get_16bitregister(Registers::HL));
+			} 
         }
     #endif
     pc += 1;

@@ -164,9 +164,9 @@ void PixelProcessingUnit::render_scanline() {
             }
         }
     }
-    if (sprites.size()) {
-        std::cout << "drawing sprites: " << sprites.size() << std::endl;
-    }
+    // if (sprites.size()) {
+    //     std::cout << "drawing sprites: " << sprites.size() << std::endl;
+    // }
 
     int tile_map_offset = ctrl.bg_tile_map_address ? 0x1c00 : 0x1800;
     int line_offset = scx >> 3;
@@ -264,6 +264,7 @@ void PixelProcessingUnit::close() {
 uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
     switch (addr) {
         case 0x8000 ... 0x9FFF:
+            // std::cout << "reading vram: " << uint16_t(addr& 0x1FFF) << "vbank: " << (uint16_t)vbank_select << std::endl;
             return vram[vbank_select][addr& 0x1FFF];
         case 0xFF40: 
             return ctrl.val;
@@ -398,9 +399,13 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
             window_x = val;
             break;
         case 0xFF4F:
-            vbank_select = val;
+            //TODO have a check if CGB mode or not and then do this
+            // vbank_select = val & 1;
+            vbank_select = 0;
+            break;
         case 0xFF70:
             wram_bank_select = val;
+            break;
         default:
             break;
     }

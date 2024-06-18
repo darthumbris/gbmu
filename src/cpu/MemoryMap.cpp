@@ -137,12 +137,7 @@ INLINE_FN uint16_t MemoryMap::read_u16(uint16_t addr)
 }
 
 INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
-{
-    // std::cout << "trying to write addr: 0x" << std::hex << (std::size_t)addr << std::dec << std::endl;
-    if (addr == 0x23F4) {
-        // std::cout << "writing val: " << (uint16_t)val << std::endl;
-    }
-    
+{    
     switch (addr)
     {
     case 0x0000 ... 0x00FF:
@@ -151,10 +146,16 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
             boot_rom[addr] = val;
             break;
         }
-        rom[addr] = val;
+        if (addr <= 0x1FFF)
+        {
+            if (val == 0x0A)
+                ram_enable = true;
+            else if (val == 0x00)
+                ram_enable = false;
+            break;
+        }
         break;
     case 0x0100 ... 0x3FFF:
-        rom[addr] = val;
         if (addr <= 0x1FFF)
         {
             if (val == 0x0A)
@@ -164,19 +165,12 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         }
         else if (addr <= 0x2FFF) {
             rom_bank = (ram_bank & (1 << 8)) | val;
-            // std::cout << "set rom bank: " << (uint16_t)rom_bank << std::endl;
         }
         else if (addr <= 0x3FFF) {
             rom_bank = (ram_bank & 0xFF) | ((val & 1) << 8);
-            // std::cout << "set rom bank: " << (uint16_t)rom_bank << std::endl;
         }
         break;
-    case 0x4000 ... 0x7FFF:
-        // if (addr == 0x5876) {
-        //     std::cout << "writing to 0x5876: " << val << std::endl;
-        // }
-        // rom_banks[0][addr - 0x4000] = val;
-        
+    case 0x4000 ... 0x7FFF:        
         if (addr <= 0x5FFF)
             ram_bank = val & 0x0F;
         break;

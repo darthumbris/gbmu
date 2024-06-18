@@ -6,7 +6,6 @@
 #include <math.h>
 #include <iostream>
 #include <bitset>
-// #include <SDL2/SDL.h>
 #include "MemoryMap.hpp"
 #include "Operand.hpp"
 #include "Decoder.hpp"

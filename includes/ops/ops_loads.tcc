@@ -111,8 +111,8 @@ void ldh_a_imm8()
 {
     uint16_t addr = mmap.read_u8(pc);
     pc += 1;
-    if (debug_count == 2381650 || debug_count == 2381649) {
-        printf("val: %u addr: %#06x\n", mmap.read_u8(0xFF00 + addr), 0xFF00 + addr);
+    if (debug_count == 7351942 || debug_count == 7351943) {
+        // printf("val: %u addr: %#06x\n", mmap.read_u8(0xFF00 + addr), 0xFF00 + addr);
     }
     set_register(Registers::A, mmap.read_u8(0xFF00 + addr));
     set_cycle(3);

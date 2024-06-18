@@ -56,7 +56,7 @@ void res_b3_r8()
 template<uint8_t opcode, Registers src>
 void set_b3_r8()
 {
-    std::cout << "Setting opcode: " << (uint16_t)opcode << std::endl;
+    // std::cout << "Setting opcode: " << (uint16_t)opcode << std::endl;
     uint8_t val;
     if (src == Registers::HL)
     {
