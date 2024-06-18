@@ -54,6 +54,13 @@ struct LCD_CONTROL {
     void set(uint8_t value);
 };
 
+struct LCD_DMA {
+    uint8_t val;
+    uint16_t cycles;
+    uint8_t offset;
+    void set(uint8_t value);
+};
+
 struct Sprite {
     uint8_t y_pos;
     uint8_t x_pos;
@@ -73,7 +80,7 @@ private:
     uint8_t scx = 0;
     uint8_t ly = 1;
     uint8_t lyc = 0;
-    uint8_t dma = 0;
+    LCD_DMA dma;
     uint8_t bg_palette = 0;
     uint8_t obj_palette_0 = 0;
     uint8_t obj_palette_1 = 0;
@@ -104,13 +111,14 @@ private:
     Sprite get_sprite(size_t index);
 
     void set_tile_data(uint16_t addr);
+    void dma_transfer(uint8_t cycle);
 
 public:
     PixelProcessingUnit(Cpu *cpu);
     ~PixelProcessingUnit();
 
     bool draw_screen = false;
-    void tick(uint8_t interrupt);
+    void tick(uint8_t cycle);
     bool init_window();
     void close();
     void render_screen();

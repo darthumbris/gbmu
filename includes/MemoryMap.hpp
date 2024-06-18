@@ -92,6 +92,10 @@ private:
     std::array<uint8_t, 127> high_ram{0};     // 0xFF80 - 0xFFFE
     uint8_t interrupt = 0;                    // 0xFFFF - 0xFFFF
 
+    uint8_t rom_bank = 1;
+    uint8_t ram_bank = 0;
+    bool ram_enable = false;
+
     uint8_t joypad = 0;
 
 

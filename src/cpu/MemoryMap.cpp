@@ -7,9 +7,16 @@
 MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu)
 {
     std::vector<std::byte> data;
-    std::ifstream ifs;
-    ifs.open(path.c_str(), std::ifstream::binary);
-    auto size = ifs.tellg();
+    std::ifstream ifs(path, std::ios::binary | std::ios::ate);
+    // ifs.open(path.c_str(), std::ifstream::binary);
+    if (ifs.fail() || !ifs.good())
+    {
+        std::cerr << "Error opening file '" << path << "'" << std::endl;
+        exit(1);
+    }
+    uint32_t size = ifs.tellg();
+    // std::cout << "rom size: " << size << std::endl;
+    ifs.seekg(0, std::ios::beg);
     while (!ifs.eof())
     {
         char c = ifs.get();
@@ -25,18 +32,28 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu)
         }
         rom[i] = (uint8_t)data[i];
     }
+    std::cout << "rom data at 23f4: " << (uint16_t)rom[0x23f4] << std::endl;
+    std::cout << "rom data at 19562: " << (uint16_t)data[19562] << std::endl;
+    std::cout << "rom data at 0x64c9: " << (uint16_t)data[0x64c9] << std::endl;
     if (i < data.size())
     {
         rom_banks.push_back(Mem16k());
+        rom_banks.push_back(Mem16k());
     }
-    for (size_t j = 0; j < 16384; j++)
-    {
-        if (i >= data.size())
+    for (int k = 1; k < 128; k ++) {
+        for (size_t j = 0; j < 16384; j++)
         {
-            break;
+            if (i >= data.size())
+            {
+                break;
+            }
+            // if (i == 19562) {
+            //     printf("k: %d j: %zu\n", k, j);
+            // }
+            rom_banks[k][j] = (uint8_t)data[i];
+            i += 1;
         }
-        rom_banks[0][j] = (uint8_t)data[i];
-        i += 1;
+        rom_banks.push_back(Mem16k());
     }
     ext_ram.push_back(Mem8k());
 }
@@ -47,6 +64,9 @@ MemoryMap::~MemoryMap()
 
 INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
 {
+    // if (addr == 0x23F4) {
+    //     std::cout << "reading 0x23F4" << std::endl;
+    // }
     // std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
     {
@@ -57,9 +77,18 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
         }
         return rom[addr];
     case 0x0100 ... 0x3FFF:
+        // if (addr == 0x23F4) {
+        //     std::cout << "reading from rom: " << (uint16_t)rom[addr] << std::endl;
+        // }
         return rom[addr];
     case 0x4000 ... 0x7FFF:
-        return rom_banks[0][addr - 0x4000]; // TODO check how to get what rom_bank
+        // std::cout << "selected rom bank: " << (uint16_t)rom_bank << std::endl;
+        if (addr == 0x64c9) {
+            // std::cout << "reading 0x4c6a: " << (uint16_t)rom_banks[rom_bank][addr - 0x3FFF] << std::endl;
+            // std::cout << "reading from 0x64c9: " << (uint16_t)rom_banks[rom_bank][addr - 0x4000] << std::endl;
+            // std::cout << "reading 0x4c6a: " << (uint16_t)rom_banks[rom_bank][addr - 0x4001] << std::endl;
+        }
+        return rom_banks[rom_bank][addr - 0x4000]; // TODO check how to get what rom_bank
     case 0x8000 ... 0x9FFF:
         return cpu->get_ppu().read_u8_ppu(addr);
     case 0xA000 ... 0xBFFF:
@@ -81,6 +110,9 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
                 default: joy = (0xFF); break;
             }
             return joy;
+        }
+        if (addr == 0xFF04) {
+            return cpu->get_timer_divider();
         }
         return io_registers[addr - 0xFF00];
     case 0xFF40 ... 0xFF4F:
@@ -107,6 +139,10 @@ INLINE_FN uint16_t MemoryMap::read_u16(uint16_t addr)
 INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
 {
     // std::cout << "trying to write addr: 0x" << std::hex << (std::size_t)addr << std::dec << std::endl;
+    if (addr == 0x23F4) {
+        // std::cout << "writing val: " << (uint16_t)val << std::endl;
+    }
+    
     switch (addr)
     {
     case 0x0000 ... 0x00FF:
@@ -119,9 +155,30 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         break;
     case 0x0100 ... 0x3FFF:
         rom[addr] = val;
+        if (addr <= 0x1FFF)
+        {
+            if (val == 0x0A)
+                ram_enable = true;
+            else if (val == 0x00)
+                ram_enable = false;
+        }
+        else if (addr <= 0x2FFF) {
+            rom_bank = (ram_bank & (1 << 8)) | val;
+            // std::cout << "set rom bank: " << (uint16_t)rom_bank << std::endl;
+        }
+        else if (addr <= 0x3FFF) {
+            rom_bank = (ram_bank & 0xFF) | ((val & 1) << 8);
+            // std::cout << "set rom bank: " << (uint16_t)rom_bank << std::endl;
+        }
         break;
     case 0x4000 ... 0x7FFF:
-        rom_banks[0][addr - 0x4000] = val; // TODO check how to get what rom_bank
+        // if (addr == 0x5876) {
+        //     std::cout << "writing to 0x5876: " << val << std::endl;
+        // }
+        // rom_banks[0][addr - 0x4000] = val;
+        
+        if (addr <= 0x5FFF)
+            ram_bank = val & 0x0F;
         break;
     case 0x8000 ... 0x9FFF:
         cpu->get_ppu().write_u8_ppu(addr, val);
@@ -144,6 +201,14 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
     case 0xFF00 ... 0xFF3F:
         if (addr == 0xFF00) {
             joypad = (val >> 4) & 3;
+            break;
+        }
+        if (addr == 0xFF0F) {
+            cpu->overwrite_interrupt(val);
+            break;
+        }
+        if (addr == 0xFF04) {
+            cpu->reset_timer_divider();
             break;
         }
         io_registers[addr - 0xFF00] = val;

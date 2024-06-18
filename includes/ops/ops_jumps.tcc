@@ -96,7 +96,7 @@ void jp_imm16()
 void jp_hl()
 {
     uint16_t val;
-    val = mmap.read_u16(get_16bitregister(Registers::HL));
+    val = (get_16bitregister(Registers::HL));
     pc = val;
     set_cycle(1);
 }

@@ -16,6 +16,7 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu)
     std::memset(obj_0_colors, 0, sizeof(obj_0_colors));
     std::memset(obj_1_colors, 0, sizeof(obj_1_colors));
     std::memset(tile_data, 0, sizeof(tile_data));
+    dma = {0};
 }
 
 PixelProcessingUnit::~PixelProcessingUnit()
@@ -24,7 +25,11 @@ PixelProcessingUnit::~PixelProcessingUnit()
 
 void PixelProcessingUnit::tick(uint8_t cycle)
 {
+    // printf("mode: %u clock: %u cycle: %u\n", l_status.mode, lcd_clock, cycle);
     if (ctrl.lcd_enable) {
+        if (dma.cycles) {
+            dma_transfer(cycle);
+        }
         //TODO have a check for the dma (CGB only?) ?
         lcd_clock += (uint16_t)cycle;
         switch (l_status.mode)
@@ -78,6 +83,17 @@ void PixelProcessingUnit::tick(uint8_t cycle)
         default:
             break;
         }
+    }
+}
+
+void PixelProcessingUnit::dma_transfer(uint8_t cycle) {
+    uint16_t    src = (dma.val << 8) + dma.offset;
+    uint8_t     nbytes = (cycle / 4);
+
+    for (uint8_t v = 0; v < nbytes && dma.cycles; v++, dma.cycles -= 4) {
+        uint8_t value = cpu->get_mmap().read_u8(src + v);
+        write_oam(dma.offset++, value);
+        // printf("writing to oam: %u\n", value);
     }
 }
 
@@ -262,7 +278,7 @@ uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
         case 0xFF45: 
             return lyc;
         case 0xFF46: 
-            return dma;
+            return dma.val;
         case 0xFF47: 
             return bg_palette;
         case 0xFF48: 
@@ -309,7 +325,8 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
             lyc = val;
             break;
         case 0xFF46:
-            dma = val;
+            // std::cout << cpu->debug_count << "writing to dma" << std::endl;
+            dma.set(val);
             break;
         case 0xFF47:
             bg_palette = val;
@@ -440,4 +457,10 @@ void LCD_STATUS::set(uint8_t value) {
         mode_1_vblank_interrupt =  (value & 0x10) != 0;
         mode_0_hblank_interrupt =  (value & 0x08) != 0;
         val  =                     value;
+}
+
+void LCD_DMA::set(uint8_t value) {
+    val = value;
+    cycles = 640; //TODO 160 M-cycles: 640 dots (1.4 lines) in normal speed, or 320 dots
+    offset = 0;
 }

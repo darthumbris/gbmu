@@ -4,21 +4,26 @@ void ld_r8_r8()
     uint8_t val;
     if (src == Registers::HL)
     {
-        mmap.read_u8(get_16bitregister(Registers::HL));
+        val = mmap.read_u8(get_16bitregister(Registers::HL));
     }
     else
     {
         val = get_register(src);
     }
-
+    if (debug_count == 2330949) {
+        // std::cout << "val: " << (uint16_t)val << std::endl;
+        // printf("val: %u addr: %#06x\n", val, get_16bitregister(Registers::HL));
+    }
     if (rec == Registers::HL)
     {
         mmap.write_u8(get_16bitregister(Registers::HL), val);
-        set_cycle(2);
     }
     else
     {
         set_register(rec, val);
+    }
+    set_cycle(1);
+    if (src == Registers::HL || rec == Registers::HL) {
         set_cycle(1);
     }
 }
@@ -106,6 +111,9 @@ void ldh_a_imm8()
 {
     uint16_t addr = mmap.read_u8(pc);
     pc += 1;
+    if (debug_count == 2381650 || debug_count == 2381649) {
+        printf("val: %u addr: %#06x\n", mmap.read_u8(0xFF00 + addr), 0xFF00 + addr);
+    }
     set_register(Registers::A, mmap.read_u8(0xFF00 + addr));
     set_cycle(3);
 }

@@ -56,7 +56,6 @@ private:
 	 * The registers are made uint16_t because the gameboy uses 16-bit registers
 	 */
 	std::array<uint8_t, 8> u8_registers;
-	uint64_t debug_count;
 
 	uint16_t sp; //stack pointer
 	uint16_t pc; // Program counter
@@ -64,12 +63,15 @@ private:
 	MemoryMap mmap;
 	PixelProcessingUnit ppu;
 	bool halted = false;
-	uint8_t interrupt_enable_register; //0xFFFF
-	uint8_t interrupt; //0xFF0F
+	uint8_t interrupt_enable_register = 0; //0xFFFF
+	uint8_t interrupt = 0; //0xFF0F
 	uint16_t m_cycle;
 	uint16_t t_cycle;
+	uint16_t d_cycle=0;
 	bool process_interrupts = false;
 	uint8_t opcode;
+
+	uint8_t timer_divider = 0;
 
 	typedef void (Cpu::*OpsFn)(void);
 
@@ -119,6 +121,7 @@ private:
 	void process_interrupt(InterruptType i);
 
 public:
+	uint64_t debug_count;
 	Cpu(Decoder dec, const std::string path);
 	~Cpu();
 
@@ -140,9 +143,18 @@ public:
 	inline bool status() {return ppu.status();}
 	inline void set_status(bool val) {ppu.set_status(val);}
 	inline void close() {ppu.close();}
-	inline void set_interrupt(InterruptType i) {interrupt |= static_cast<uint8_t>(i);}
-	inline void set_interrupt_enable(uint8_t i) {interrupt_enable_register = i;}
+	inline void set_interrupt(InterruptType i) {
+		// std::cout << "requesting interrupt if: " << (uint16_t)i << std::endl;
+		interrupt |= static_cast<uint8_t>(i);}
+	inline void overwrite_interrupt(uint8_t val) {
+		// std::cout << "settting if: " << (uint16_t)val << std::endl;
+		interrupt = val;}
+	inline void set_interrupt_enable(uint8_t val) {
+		// std::cout << "settting ie: " << (uint16_t)val << std::endl;
+		interrupt_enable_register =val;}
 	inline uint8_t get_interrupt_enable() {return interrupt_enable_register;}
+	inline uint8_t get_timer_divider() {return timer_divider;}
+	inline void reset_timer_divider() {timer_divider = 0;}
 };
 
 #endif
