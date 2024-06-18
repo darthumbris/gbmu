@@ -103,13 +103,19 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
         return not_usable[addr - 0xFEA0];
     case 0xFF00 ... 0xFF3F:
         if (addr == 0xFF00) {
-            uint8_t joy;
+            uint8_t val;
+            // switch (joypad) {
+            //     case 1: return joypad_buttons;
+            //     case 2: return joypad_dpad;
+            //     default: return 0xFF;
+            // }
             switch (joypad) {
-                case 1: joy =  (0x0F); break;
-                case 2: joy =  (0x0F); break;
-                default: joy = (0xFF); break;
+                case 1: val = joypad_buttons; break;
+                case 2: val =joypad_dpad; break;
+                default: val = 0xFF;break;
             }
-            return joy;
+            // std::cout << "0xFF00: " << (uint16_t)val << std::endl;
+            return val;
         }
         if (addr == 0xFF04) {
             return cpu->get_timer_divider();

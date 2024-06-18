@@ -5,8 +5,8 @@
 #include <chrono>
 #include <ctime>
 
-uint64_t const DEBUG_START = 17675037;
-uint64_t const DEBUG_COUNT = 4381650;
+uint64_t const DEBUG_START = 26979095;
+uint64_t const DEBUG_COUNT = 6381650;
 
 Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec), mmap(path, this), ppu(this)
 {
@@ -79,7 +79,7 @@ void Cpu::tick()
     execute_instruction();
 
     ppu.tick(t_cycle);
-    // printf("d_cycle: %u timer_divider: %u\n", d_cycle, timer_divider);
+    printf("cycle: %u\n", t_cycle);
     d_cycle += t_cycle;
     if (d_cycle >= 256) {//TODO check for cpu stopped and handle different frequencies
         timer_divider++;

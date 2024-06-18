@@ -8,6 +8,7 @@ class Cpu;
 #include <cstdint>
 #include <string>
 #include <iostream>
+#include <SDL2/SDL_keycode.h>
 
 constexpr std::uint8_t mask0{ 0b0000'0001 }; // represents bit 0
 constexpr std::uint8_t mask1{ 0b0000'0010 }; // represents bit 1
@@ -82,8 +83,8 @@ class MemoryMap
 {
 private:
     Mem16k rom{0};                            // 0x0000 - 0x3FFF
-    std::vector<Mem16k> rom_banks{};          // 0x4000 - 0x7FFF   // From cartridge, switchable bank if any //2M max
-    std::vector<Mem8k> ext_ram{};             // 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
+    std::vector<Mem16k> rom_banks{0};          // 0x4000 - 0x7FFF   // From cartridge, switchable bank if any //2M max
+    std::vector<Mem8k> ext_ram{0};             // 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
     std::array<Mem4k, 8> work_ram{0};         // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
     std::array<Mem4k, 8> echo_ram{0};         // 0xE000 - 0xFDFF   //(mirror of C000–DDFF) use of this area is prohibited.
     
@@ -97,6 +98,8 @@ private:
     bool ram_enable = false;
 
     uint8_t joypad = 0;
+    uint8_t joypad_dpad = 0x0F;
+    uint8_t joypad_buttons = 0x0F;
 
 
     std::array<uint8_t, 256> boot_rom = {
@@ -142,6 +145,9 @@ public:
     inline uint8_t wram_bank_select() {return io_registers[(std::size_t)(0xFF70 - 0xFF00)];} //TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
 
     inline void set_interrupt(uint8_t i) {interrupt |= i;}
+
+    void handle_keydown(SDL_Keycode key);
+    void handle_keyup(SDL_Keycode key);
 };
 
 #endif

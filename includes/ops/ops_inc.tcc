@@ -21,7 +21,7 @@ void inc_r8()
         set_register(rec, val + 1);
         set_cycle(1);
     }
-    set_flag(FlagRegisters::z, (val + 1) == 0);
+    set_flag(FlagRegisters::z, get_register(rec) == 0);
     set_flag(FlagRegisters::n, 0);
-    set_flag(FlagRegisters::h, (val & 0xF) == 0xF);
+    set_flag(FlagRegisters::h, (get_register(rec) & 0xF) == 0x00);
 }

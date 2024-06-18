@@ -7,7 +7,7 @@ void Cpu::event_handler()
     {
         if (e.type == SDL_QUIT)
             set_status(true);
-        else if (e.type == SDL_KEYDOWN)
+        else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
         {
             handle_input(e);
         }

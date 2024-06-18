@@ -68,7 +68,7 @@ private:
 	uint16_t t_cycle;
 	uint16_t d_cycle=0;
 	bool process_interrupts = false;
-	uint8_t opcode;
+	uint8_t opcode = 0;
 
 	uint8_t timer_divider = 0;
 
