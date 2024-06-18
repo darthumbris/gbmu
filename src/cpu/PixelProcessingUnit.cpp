@@ -159,14 +159,16 @@ void PixelProcessingUnit::render_scanline() {
             if (ly < spr.y_pos && ly >= spr.y_pos - 16) { //obj can be 8*8 or 8*16 //TODO maybe do a obj_size check that returns 8 or 16
                 if (ctrl.obj_size || ly < spr.y_pos - 8) {
                     sprites.push_back(spr);
-                    //TODO maybe have a check for sprites.size == 10
+                    if (sprites.size() == 10)
+                        break;
                 }
             }
         }
+
+        //TODO do this in a differnt way
+        std::stable_sort(sprites.begin(), sprites.end(), [](const Sprite a, Sprite b) { return (a.x_pos < b.x_pos); });
+		std::erase_if(sprites, [](const auto &a) { return (a.x_pos <= 0 || a.x_pos >= 168); });
     }
-    // if (sprites.size()) {
-    //     std::cout << "drawing sprites: " << sprites.size() << std::endl;
-    // }
 
     int tile_map_offset = ctrl.bg_tile_map_address ? 0x1c00 : 0x1800;
     int line_offset = scx >> 3;
@@ -404,7 +406,7 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
             vbank_select = 0;
             break;
         case 0xFF70:
-            wram_bank_select = val;
+            wram_bank_select = 0; //TODO fix this
             break;
         default:
             break;
