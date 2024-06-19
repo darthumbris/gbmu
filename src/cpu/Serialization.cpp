@@ -106,7 +106,7 @@ void MemoryMap::serialize(std::ofstream &f) {
     f.write(reinterpret_cast<const char*>(&joypad_dpad), sizeof(joypad_dpad));
     f.write(reinterpret_cast<const char*>(&joypad_buttons), sizeof(joypad_buttons));
     f.write(reinterpret_cast<const char*>(&boot_rom_loaded), sizeof(boot_rom_loaded));
-    f.write(reinterpret_cast<const char*>(&boot_rom), sizeof(boot_rom));
+    f.write(reinterpret_cast<const char*>(&gb_boot_rom), sizeof(gb_boot_rom));
     std::cout << "done serializing mmap" << std::endl;
 }
 
@@ -130,7 +130,7 @@ void MemoryMap::deserialize(std::ifstream &f) {
     f.read(reinterpret_cast<char*>(&joypad_dpad), sizeof(joypad_dpad));
     f.read(reinterpret_cast<char*>(&joypad_buttons), sizeof(joypad_buttons));
     f.read(reinterpret_cast<char*>(&boot_rom_loaded), sizeof(boot_rom_loaded));
-    f.read(reinterpret_cast<char*>(&boot_rom), sizeof(boot_rom));
+    f.read(reinterpret_cast<char*>(&gb_boot_rom), sizeof(gb_boot_rom));
     std::cout << "done deserializing mmap" << std::endl;
 }
 

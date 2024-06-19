@@ -361,7 +361,8 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
             vbank_select = 0;
             break;
         case 0xFF70:
-            wram_bank_select = 0; //TODO fix this
+            // wram_bank_select = ((val & 4) + (val & 2) + (val & 1)); //TODO check this
+            wram_bank_select = 0;
             break;
         default:
             break;

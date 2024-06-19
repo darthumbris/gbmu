@@ -84,12 +84,12 @@ private:
 
 	void prefix();
 
-	template<uint8_t opcode>
-	void unimplemented() {std::cout << "unimplemented opcode: 0x" << std::setfill('0') << std::setw(2) << std::hex << opcode << std::dec << std::endl;}
+	template<uint8_t op>
+	void unimplemented() {printf("Unimplemented opcode: %#04x\n", op);}
 
 	//$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
-	template<uint8_t opcode>
-	void lockup() {locked = true; std::cout << "Illegal instruction. Hard-Locks the CPU. opcode: 0x" << std::setfill('0') << std::setw(2) << std::hex << opcode << std::dec << std::endl;}
+	template<uint8_t op>
+	void lockup() {locked = true; printf("Illegal instruction. Hard-Locks the Cpu. opcode: %#04x\n", op);}
 
 	#include "ops/ops_add.tcc"
 	#include "ops/ops_alu.tcc"

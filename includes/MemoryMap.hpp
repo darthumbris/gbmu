@@ -103,7 +103,7 @@ private:
     bool boot_rom_loaded = false;
 
 
-    std::array<uint8_t, 256> boot_rom = {
+    std::array<uint8_t, 256> gb_boot_rom = {
         0x31, 0xfe, 0xff, 0xaf, 0x21, 0xff, 0x9f, 0x32, 0xcb, 0x7c, 0x20, 0xfb,
         0x21, 0x26, 0xff, 0x0e, 0x11, 0x3e, 0x80, 0x32, 0xe2, 0x0c, 0x3e, 0xf3,
         0xe2, 0x32, 0x3e, 0x77, 0x77, 0x3e, 0xfc, 0xe0, 0x47, 0x11, 0x04, 0x01,
@@ -128,6 +128,8 @@ private:
         0x3e, 0x01, 0xe0, 0x50
     };
 
+    std::array<uint8_t, 2304>	cgb_boot_rom = {};
+
     Cpu *cpu;
 
 
@@ -142,7 +144,7 @@ public:
     INLINE_FN void write_u16(uint16_t addr, uint16_t val);
 
     inline bool is_boot_rom_enabled() {return io_registers[(std::size_t)(0xFF50 - 0xFF00)];}
-    inline uint8_t wram_bank_select() {return io_registers[(std::size_t)(0xFF70 - 0xFF00)];} //TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
+    uint8_t wram_bank_select(); //TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
 
     inline void set_interrupt(uint8_t i) {interrupt |= i;}
 
