@@ -1,3 +1,8 @@
 /obj
 gbmu
 .vscode
+*.bin
+*.sav
+*.state
+*.gb
+*.gbc

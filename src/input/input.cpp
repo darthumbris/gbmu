@@ -13,18 +13,18 @@ void Cpu::handle_input(SDL_Event &e)
                 break;
             case SDLK_F1:
                 if (modstate & KMOD_SHIFT) {
-                    deserialize(rom_path + "1.bin");
+                    deserialize(rom_path + "1.state");
                 }
                 else {
-                    serialize(rom_path + "1.bin");
+                    serialize(rom_path + "1.state");
                 }
                 break;
             case SDLK_F2:
                 if (modstate & KMOD_SHIFT) {
-                    deserialize(rom_path + "2.bin");
+                    deserialize(rom_path + "2.state");
                 }
                 else {
-                    serialize(rom_path + "2.bin");
+                    serialize(rom_path + "2.state");
                 }
                 break;
 
