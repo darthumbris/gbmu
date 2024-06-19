@@ -8,14 +8,12 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu)
 {
     std::vector<std::byte> data;
     std::ifstream ifs(path, std::ios::binary | std::ios::ate);
-    // ifs.open(path.c_str(), std::ifstream::binary);
     if (ifs.fail() || !ifs.good())
     {
         std::cerr << "Error opening file '" << path << "'" << std::endl;
         exit(1);
     }
     uint32_t size = ifs.tellg();
-    // std::cout << "rom size: " << size << std::endl;
     ifs.seekg(0, std::ios::beg);
     while (!ifs.eof())
     {
@@ -47,9 +45,6 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu)
             {
                 break;
             }
-            // if (i == 19562) {
-            //     printf("k: %d j: %zu\n", k, j);
-            // }
             rom_banks[k][j] = (uint8_t)data[i];
             i += 1;
         }
@@ -64,10 +59,7 @@ MemoryMap::~MemoryMap()
 
 INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
 {
-    // if (addr == 0x23F4) {
-    //     std::cout << "reading 0x23F4" << std::endl;
-    // }
-    std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
+    // std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
     {
     case 0x0000 ... 0x00FF:
@@ -77,27 +69,14 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
         }
         return rom[addr];
     case 0x0100 ... 0x3FFF:
-        // if (addr == 0x23F4) {
-        //     std::cout << "reading from rom: " << (uint16_t)rom[addr] << std::endl;
-        // }
         return rom[addr];
     case 0x4000 ... 0x7FFF:
-        // std::cout << "selected rom bank: " << (uint16_t)rom_bank << std::endl;
-        if (addr == 0x64c9) {
-            // std::cout << "reading 0x4c6a: " << (uint16_t)rom_banks[rom_bank][addr - 0x3FFF] << std::endl;
-            // std::cout << "reading from 0x64c9: " << (uint16_t)rom_banks[rom_bank][addr - 0x4000] << std::endl;
-            // std::cout << "reading 0x4c6a: " << (uint16_t)rom_banks[rom_bank][addr - 0x4001] << std::endl;
-        }
-        if (addr == 0x4c6a && rom_bank == 1) {
-            std::cout << "trying to read 0x4c6a [1]:  " << (uint16_t)rom_banks[rom_bank][addr - 0x4000] << std::endl;
-        }
-        std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
-        std::cout << "rom_banks: " << rom_banks.size() << " rom_bank: " << (uint16_t)rom_bank << std::endl;
-        return rom_banks[rom_bank][addr - 0x4000]; // TODO check how to get what rom_bank
+        return rom_banks[rom_bank][addr - 0x4000];
     case 0x8000 ... 0x9FFF:
         return cpu->get_ppu().read_u8_ppu(addr);
     case 0xA000 ... 0xBFFF:
-        return ext_ram[0][addr - 0xA000]; // TODO check how to get what extram_bank
+        // return ext_ram[ram_bank][addr - 0xA000]; //TODO make sure ext_ram and ram_bank are correct()
+        return ext_ram[0][addr - 0xA000];
     case 0xC000 ... 0xDFFF:
         return work_ram[wram_bank_select()][addr - 0xC000];
     case 0xE000 ... 0xFDFF:

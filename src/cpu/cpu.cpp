@@ -55,9 +55,6 @@ INLINE_FN void Cpu::set_16bitregister(Registers reg, uint16_t val)
 
 INLINE_FN void Cpu::set_register(Registers reg, uint8_t val)
 {
-    // if (reg == Registers::A && val == 254) {
-    //     std::cout << "here" << std::endl;
-    // }
     u8_registers[reg] = val;
 }
 
@@ -85,7 +82,6 @@ void Cpu::tick()
         timer_divider++;
         d_cycle -= 256;
     }
-    // printf("d_cycle: %u timer_divider: %u\n", d_cycle, timer_divider);
     event_handler();
     debug_count += 1;
     m_cycle = 0;
@@ -95,7 +91,6 @@ void Cpu::tick()
 void Cpu::handle_interrupt()
 {
 	uint8_t masked = interrupt_enable_register & interrupt;
-    // printf("masked: %u, ie: %u, if: %u\n", masked, interrupt_enable_register, interrupt);
 	if (!masked)
 		return ;
 	if (halted)
@@ -127,7 +122,6 @@ void Cpu::process_interrupt(InterruptType i)
 
 	process_interrupts = false;
 	interrupt &= ~i;
-    // printf("i: %u, if: %u\n", i, interrupt);
 	if (i == InterruptType::Vblank) {
 		pc = 0x40;
     }

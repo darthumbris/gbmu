@@ -13,6 +13,13 @@ class Cpu;
 const int SCREEN_WIDTH = 160;
 const int SCREEN_HEIGHT = 144;
 
+#define GB_COLOR0 0xFFFFFFFF
+#define GB_COLOR1 0xAAAAAAFF
+#define GB_COLOR2 0x555555FF
+#define GB_COLOR3 0x00000000
+
+const uint32_t GB_COLORS[4] = {GB_COLOR0, GB_COLOR1, GB_COLOR2, GB_COLOR3};
+
 struct Sdl_Data
 {
     SDL_Window *window;
@@ -102,6 +109,10 @@ private:
     uint32_t bg_colors[4];
     uint32_t obj_0_colors[4];
     uint32_t obj_1_colors[4];
+
+    //TODO add CGB colors and make constants of some of the colors
+    //TODO add shader for the rasterize effect
+    //TODO add a way to change palettes (if gb game in CGB mode)
 
     Cpu *cpu;
 

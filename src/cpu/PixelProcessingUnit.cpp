@@ -29,10 +29,7 @@ void PixelProcessingUnit::tick(uint8_t cycle)
 {
     // printf("mode: %u clock: %u cycle: %u\n", l_status.mode, lcd_clock, cycle);
     if (ctrl.lcd_enable) {
-        if (dma.cycles) {
-            dma_transfer(cycle);
-        }
-        //TODO have a check for the dma (CGB only?) ?
+        
         lcd_clock += (uint16_t)cycle;
         switch (l_status.mode)
         {
@@ -68,6 +65,7 @@ void PixelProcessingUnit::tick(uint8_t cycle)
             }
             break;
         case PPU_Modes::OAM_Scan:
+            dma_transfer(cycle);
             if (lcd_clock >= 80) {
                 l_status.mode = PPU_Modes::Pixel_Drawing;
                 lcd_clock -= 80;
@@ -95,7 +93,6 @@ void PixelProcessingUnit::dma_transfer(uint8_t cycle) {
     for (uint8_t v = 0; v < nbytes && dma.cycles; v++, dma.cycles -= 4) {
         uint8_t value = cpu->get_mmap().read_u8(src + v);
         write_oam(dma.offset++, value);
-        // printf("writing to oam: %u\n", value);
     }
 }
 
@@ -268,7 +265,6 @@ void PixelProcessingUnit::close() {
 uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
     switch (addr) {
         case 0x8000 ... 0x9FFF:
-            // std::cout << "reading vram: " << uint16_t(addr& 0x1FFF) << "vbank: " << (uint16_t)vbank_select << std::endl;
             return vram[vbank_select][addr& 0x1FFF];
         case 0xFF40: 
             return ctrl.val;
@@ -279,7 +275,6 @@ uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
         case 0xFF43: 
             return scx;
         case 0xFF44: 
-            std::cout << "reading ly?" << std::endl;
             return ly;
         case 0xFF45: 
             return lyc;
@@ -331,70 +326,27 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
             lyc = val;
             break;
         case 0xFF46:
-            // std::cout << cpu->debug_count << "writing to dma" << std::endl;
             dma.set(val);
             break;
         case 0xFF47:
             bg_palette = val;
             for (int i = 0; i < 4; i++)
             {
-                switch ((val >> (i * 2)) & 3)
-                {
-                    case 0:
-                        bg_colors[i] = 0xFFFFFFFF;
-                        break;
-                    case 1:
-                        bg_colors[i] = 0xAAAAAAFF;
-                        break;
-                    case 2:
-                        bg_colors[i] = 0x555555FF;
-                        break;
-                    case 3:
-                        bg_colors[i] = 0x00000000;
-                        break;
-                }
+                bg_colors[i] = GB_COLORS[(val >> (i * 2)) & 3];
             }
             break;
         case 0xFF48: 
             obj_palette_0 = val;
             for (int i = 0; i < 4; i++)
             {
-                switch ((val >> (i * 2)) & 3)
-                {
-                    case 0:
-                        obj_0_colors[i] = 0xFFFFFFFF;
-                        break;
-                    case 1:
-                        obj_0_colors[i] = 0xAAAAAAFF;
-                        break;
-                    case 2:
-                        obj_0_colors[i] = 0x555555FF;
-                        break;
-                    case 3:
-                        obj_0_colors[i] = 0x00000000;
-                        break;
-                }
+                obj_0_colors[i] = GB_COLORS[(val >> (i * 2)) & 3];
             }
             break;
         case 0xFF49: 
             obj_palette_1 = val;
             for (int i = 0; i < 4; i++)
             {
-                switch ((val >> (i * 2)) & 3)
-                {
-                    case 0:
-                        obj_1_colors[i] = 0xFFFFFFFF;
-                        break;
-                    case 1:
-                        obj_1_colors[i] = 0xAAAAAAFF;
-                        break;
-                    case 2:
-                        obj_1_colors[i] = 0x555555FF;
-                        break;
-                    case 3:
-                        obj_1_colors[i] = 0x00000000;
-                        break;
-                }
+                obj_1_colors[i] = GB_COLORS[(val >> (i * 2)) & 3];
             }
             break;
         case 0xFF4A: 
