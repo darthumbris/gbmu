@@ -1,9 +1,9 @@
 NAME = gbmu
 
 CXX := clang++
-CXXFLAGS := -std=c++20 -o3
+CXXFLAGS := -std=c++20 -O3
 
-LINKERFLAGS := -lSDL2 -lSDL2_image -L "/home/$(USER)/.capt/root/usr/lib/x86_64-linux-gnu/"
+LINKERFLAGS := -lSDL2 -lSDL2_image -L "/home/$(USER)/.capt/root/usr/lib/x86_64-linux-gnu/" -flto
 
 SRC_DIR = src
 OBJ_DIR = obj
@@ -74,7 +74,7 @@ $(NAME): $(OBJ)
 $(OBJ_DIR):
 	@mkdir -p $(OBJ_DIR)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.$(SRC_EXT) | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.$(SRC_EXT) | $(OBJ_DIR) Makefile
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) $(INC) -c -o $@ $< 2> $@.log; \
         RESULT=$$?; \

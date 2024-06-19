@@ -71,6 +71,7 @@ private:
 	uint8_t opcode = 0;
 
 	uint8_t timer_divider = 0;
+	std::string rom_path;
 
 	typedef void (Cpu::*OpsFn)(void);
 
@@ -142,18 +143,15 @@ public:
 	inline bool status() {return ppu.status();}
 	inline void set_status(bool val) {ppu.set_status(val);}
 	inline void close() {ppu.close();}
-	inline void set_interrupt(InterruptType i) {
-		// std::cout << "requesting interrupt if: " << (uint16_t)i << std::endl;
-		interrupt |= static_cast<uint8_t>(i);}
-	inline void overwrite_interrupt(uint8_t val) {
-		// std::cout << "settting if: " << (uint16_t)val << std::endl;
-		interrupt = val;}
-	inline void set_interrupt_enable(uint8_t val) {
-		// std::cout << "settting ie: " << (uint16_t)val << std::endl;
-		interrupt_enable_register =val;}
+	inline void set_interrupt(InterruptType i) {interrupt |= static_cast<uint8_t>(i);}
+	inline void overwrite_interrupt(uint8_t val) {interrupt = val;}
+	inline void set_interrupt_enable(uint8_t val) {interrupt_enable_register =val;}
 	inline uint8_t get_interrupt_enable() {return interrupt_enable_register;}
 	inline uint8_t get_timer_divider() {return timer_divider;}
 	inline void reset_timer_divider() {timer_divider = 0;}
+
+	void serialize(const std::string &file);
+	void deserialize(const std::string &file);
 };
 
 #endif

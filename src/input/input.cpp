@@ -5,6 +5,21 @@ void Cpu::handle_input(SDL_Event &e)
     switch (e.type) {
         case SDL_KEYDOWN: 
             get_mmap().handle_keydown(e.key.keysym.sym);
+            switch (e.key.keysym.sym)
+            {
+            case SDLK_ESCAPE:
+                set_status(true);
+                break;
+            case SDLK_F1:
+                serialize("test.bin");
+                break;
+            case SDLK_F2:
+                deserialize("test.bin");
+                break;
+
+            default:
+                break;
+            }
             break;
         case SDL_KEYUP: 
             get_mmap().handle_keyup(e.key.keysym.sym);
@@ -12,15 +27,7 @@ void Cpu::handle_input(SDL_Event &e)
         default:
             break;
     }
-    switch (e.key.keysym.sym)
-    {
-    case SDLK_ESCAPE:
-        set_status(true);
-        break;
-
-    default:
-        break;
-    }
+    
 }
 
 void MemoryMap::handle_keydown(SDL_Keycode key) {

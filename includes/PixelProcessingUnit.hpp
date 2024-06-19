@@ -91,6 +91,7 @@ private:
 
     bool window_active;
     uint8_t window_line_active = 0;
+    bool draw_screen = false;
 
     uint32_t framebuffer[SCREEN_HEIGHT*SCREEN_WIDTH];
 
@@ -117,7 +118,6 @@ public:
     PixelProcessingUnit(Cpu *cpu);
     ~PixelProcessingUnit();
 
-    bool draw_screen = false;
     void tick(uint8_t cycle);
     bool init_window();
     void close();
@@ -130,6 +130,9 @@ public:
 
     uint8_t read_oam(uint16_t addr);
     void write_oam(uint16_t addr, uint8_t val);
+
+    inline bool screen_ready() {return draw_screen;}
+    inline void screen_done() {draw_screen = false;}
 };
 
 #endif

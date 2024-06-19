@@ -1,5 +1,7 @@
 #include "Cpu.hpp"
 
+//TODO fix some of the instructions (illegal) should go to the lockup or illegal thingy
+
 void Cpu::set_instructions() {
     #define u unprefixed_instructions
     u[0x00] = &Cpu::nop;

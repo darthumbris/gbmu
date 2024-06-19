@@ -12,8 +12,8 @@ void Cpu::event_handler()
             handle_input(e);
         }
     }
-    if (ppu.draw_screen) {
+    if (ppu.screen_ready()) {
         ppu.render_screen();
-        ppu.draw_screen = false;
+        ppu.screen_done();
     }
 }

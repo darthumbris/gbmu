@@ -100,6 +100,7 @@ private:
     uint8_t joypad = 0;
     uint8_t joypad_dpad = 0x0F;
     uint8_t joypad_buttons = 0x0F;
+    bool boot_rom_loaded = false;
 
 
     std::array<uint8_t, 256> boot_rom = {
@@ -132,7 +133,6 @@ private:
 
 public:
     MemoryMap(const std::string path, Cpu *cpu);
-    bool boot_rom_loaded = false;
 
     ~MemoryMap();
 

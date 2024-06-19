@@ -4,11 +4,12 @@
 #include <stdexcept>
 #include <chrono>
 #include <ctime>
+#include <iostream>
 
 uint64_t const DEBUG_START = 26979095;
 uint64_t const DEBUG_COUNT = 6381650;
 
-Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec), mmap(path, this), ppu(this)
+Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec), mmap(path, this), ppu(this), rom_path(path)
 {
     u8_registers = {0};
     pc = 0;
@@ -67,7 +68,7 @@ INLINE_FN void Cpu::set_flag(uint8_t flag, uint8_t val)
 
 void Cpu::tick()
 {
-    while (ppu.draw_screen)
+    while (ppu.screen_ready())
         ;
 
     // std::cout << debug_count << " opcode: 0x" << std::hex
@@ -79,7 +80,6 @@ void Cpu::tick()
     execute_instruction();
 
     ppu.tick(t_cycle);
-    printf("cycle: %u\n", t_cycle);
     d_cycle += t_cycle;
     if (d_cycle >= 256) {//TODO check for cpu stopped and handle different frequencies
         timer_divider++;
@@ -199,3 +199,57 @@ void Cpu::execute_instruction()
 }
 
 void Cpu::lockup() {}
+
+
+//TODO serialize and deserialze debug state (memory etc)
+void Cpu::serialize(const std::string &file) {
+    std::ofstream f(file, std::ios::binary);
+    if (!f.is_open()) {
+        std::cerr << "Error: Failed to  open file for serialization Cpu." << std::endl;
+        return;
+    }
+    f.write(reinterpret_cast<const char*>(&u8_registers), sizeof(u8_registers));
+    f.write(reinterpret_cast<const char*>(&sp), sizeof(sp));
+    f.write(reinterpret_cast<const char*>(&pc), sizeof(pc));
+    f.write(reinterpret_cast<const char*>(&halted), sizeof(halted));
+    f.write(reinterpret_cast<const char*>(&interrupt_enable_register), sizeof(interrupt_enable_register));
+    f.write(reinterpret_cast<const char*>(&interrupt), sizeof(interrupt));
+    f.write(reinterpret_cast<const char*>(&m_cycle), sizeof(m_cycle));
+    f.write(reinterpret_cast<const char*>(&t_cycle), sizeof(t_cycle));
+    f.write(reinterpret_cast<const char*>(&d_cycle), sizeof(d_cycle));
+    f.write(reinterpret_cast<const char*>(&process_interrupts), sizeof(process_interrupts));
+    f.write(reinterpret_cast<const char*>(&opcode), sizeof(opcode));
+    f.write(reinterpret_cast<const char*>(&timer_divider), sizeof(timer_divider));
+    f.write(reinterpret_cast<const char*>(&debug_count), sizeof(debug_count));
+    f.write(reinterpret_cast<const char*>(&mmap), sizeof(mmap));
+    f.write(reinterpret_cast<const char*>(&ppu), sizeof(ppu));
+    f.close();
+    std::cout << "done serializing" << std::endl;
+}
+
+void Cpu::deserialize(const std::string &file) {
+    std::ifstream f(file, std::ios::binary);
+
+    if (!f.is_open()) {
+        std::cerr << "Error: Failed to  open file for deserialization Cpu." << std::endl;
+        return;
+    }
+    // f.read(reinterpret_cast<char*>(&o), sizeof(Cpu));
+    f.read(reinterpret_cast<char*>(&u8_registers), sizeof(u8_registers));
+    f.read(reinterpret_cast<char*>(&sp), sizeof(sp));
+    f.read(reinterpret_cast<char*>(&pc), sizeof(pc));
+    f.read(reinterpret_cast<char*>(&halted), sizeof(halted));
+    f.read(reinterpret_cast<char*>(&interrupt_enable_register), sizeof(interrupt_enable_register));
+    f.read(reinterpret_cast<char*>(&interrupt), sizeof(interrupt));
+    f.read(reinterpret_cast<char*>(&m_cycle), sizeof(m_cycle));
+    f.read(reinterpret_cast<char*>(&t_cycle), sizeof(t_cycle));
+    f.read(reinterpret_cast<char*>(&d_cycle), sizeof(d_cycle));
+    f.read(reinterpret_cast<char*>(&process_interrupts), sizeof(process_interrupts));
+    f.read(reinterpret_cast<char*>(&opcode), sizeof(opcode));
+    f.read(reinterpret_cast<char*>(&timer_divider), sizeof(timer_divider));
+    f.read(reinterpret_cast<char*>(&debug_count), sizeof(debug_count));
+    f.read(reinterpret_cast<char*>(&mmap), sizeof(mmap));
+    f.read(reinterpret_cast<char*>(&ppu), sizeof(ppu));
+    f.close();
+    std::cout << "done deserializing" << std::endl;
+}
