@@ -1,7 +1,5 @@
 #include "Cpu.hpp"
 
-//TODO fix some of the instructions (illegal) should go to the lockup or illegal thingy
-
 void Cpu::set_instructions() {
     #define u unprefixed_instructions
     u[0x00] = &Cpu::nop;
@@ -215,7 +213,7 @@ void Cpu::set_instructions() {
     u[0xD0] = &Cpu::ret_cond<Condition::NotCarryFlag> ;
     u[0xD1] = &Cpu::pop_r16stk<Registers::DE> ;
     u[0xD2] = &Cpu::jp_cond_imm16<Condition::NotCarryFlag> ;
-    u[0xD3] = &Cpu::unimplemented<0xD3> ;
+    u[0xD3] = &Cpu::lockup<0xD3> ;
     u[0xD4] = &Cpu::call_cond_imm16<Condition::NotCarryFlag> ;
     u[0xD5] = &Cpu::push_r16stk<Registers::DE> ;
     u[0xD6] = &Cpu::sbc_a_imm8 ;
@@ -223,32 +221,32 @@ void Cpu::set_instructions() {
     u[0xD8] = &Cpu::ret_cond<Condition::CarryFlag> ;
     u[0xD9] = &Cpu::reti ;
     u[0xDA] = &Cpu::jp_cond_imm16<Condition::CarryFlag> ;
-    u[0xDB] = &Cpu::unimplemented<0xDB> ;
+    u[0xDB] = &Cpu::lockup<0xDB> ;
     u[0xDC] = &Cpu::call_cond_imm16<Condition::CarryFlag> ;
-    u[0xDD] = &Cpu::unimplemented<0xDD> ;
+    u[0xDD] = &Cpu::lockup<0xDD> ;
     u[0xDE] = &Cpu::sbc_a_imm8 ;
     u[0xDF] = &Cpu::rst_tg3<0x18> ;
     u[0xE0] = &Cpu::ldh_imm8_a ;
     u[0xE1] = &Cpu::pop_r16stk<Registers::HL> ;
     u[0xE2] = &Cpu::ld_c_a ;
-    u[0xE3] = &Cpu::unimplemented<0xE3> ;
-    u[0xE4] = &Cpu::unimplemented<0xE4> ;
+    u[0xE3] = &Cpu::lockup<0xE3> ;
+    u[0xE4] = &Cpu::lockup<0xE4> ;
     u[0xE5] = &Cpu::push_r16stk<Registers::HL> ;
     u[0xE6] = &Cpu::and_a_imm8 ;
     u[0xE7] = &Cpu::rst_tg3<0x20> ;
     u[0xE8] = &Cpu::add_sp_imm8 ;
     u[0xE9] = &Cpu::jp_hl ;
     u[0xEA] = &Cpu::ld_imm16_a ;
-    u[0xEB] = &Cpu::unimplemented<0xEB> ;
-    u[0xEC] = &Cpu::unimplemented<0xEC> ;
-    u[0xED] = &Cpu::unimplemented<0xED> ;
+    u[0xEB] = &Cpu::lockup<0xEB> ;
+    u[0xEC] = &Cpu::lockup<0xEC> ;
+    u[0xED] = &Cpu::lockup<0xED> ;
     u[0xEE] = &Cpu::xor_a_imm8 ;
     u[0xEF] = &Cpu::rst_tg3<0x28> ;
     u[0xF0] = &Cpu::ldh_a_imm8 ;
     u[0xF1] = &Cpu::pop_r16stk<Registers::AF> ;
     u[0xF2] = &Cpu::ld_a_c ;
     u[0xF3] = &Cpu::di ;
-    u[0xF4] = &Cpu::unimplemented<0xF4> ;
+    u[0xF4] = &Cpu::lockup<0xF4> ;
     u[0xF5] = &Cpu::push_r16stk<Registers::AF> ;
     u[0xF6] = &Cpu::or_a_imm8 ;
     u[0xF7] = &Cpu::rst_tg3<0x30> ;
@@ -256,8 +254,8 @@ void Cpu::set_instructions() {
     u[0xF9] = &Cpu::ld_sp_hl ;
     u[0xFA] = &Cpu::ld_a_imm16 ;
     u[0xFB] = &Cpu::ei ;
-    u[0xFC] = &Cpu::unimplemented<0xFC> ;
-    u[0xFD] = &Cpu::unimplemented<0xFD> ;
+    u[0xFC] = &Cpu::lockup<0xFC> ;
+    u[0xFD] = &Cpu::lockup<0xFD> ;
     u[0xFE] = &Cpu::cp_a_imm8 ;
     u[0xFF] = &Cpu::rst_tg3<0x38> ;
 

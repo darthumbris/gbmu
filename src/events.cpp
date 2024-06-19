@@ -7,12 +7,12 @@ void Cpu::event_handler()
     {
         if (e.type == SDL_QUIT)
             set_status(true);
-        else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
+        else if ((e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) && !locked)
         {
             handle_input(e);
         }
     }
-    if (ppu.screen_ready()) {
+    if (ppu.screen_ready() && !locked) {
         ppu.render_screen();
         ppu.screen_done();
     }

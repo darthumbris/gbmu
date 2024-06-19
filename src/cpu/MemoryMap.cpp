@@ -30,9 +30,6 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu)
         }
         rom[i] = (uint8_t)data[i];
     }
-    std::cout << "rom data at 23f4: " << (uint16_t)rom[0x23f4] << std::endl;
-    std::cout << "rom data at 19562: " << (uint16_t)data[19562] << std::endl;
-    std::cout << "rom data at 0x64c9: " << (uint16_t)data[0x64c9] << std::endl;
     if (i < data.size())
     {
         rom_banks.push_back(Mem16k());
@@ -51,6 +48,7 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu)
         rom_banks.push_back(Mem16k());
     }
     ext_ram.push_back(Mem8k());
+    //TODO handle different cartridge types
 }
 
 MemoryMap::~MemoryMap()

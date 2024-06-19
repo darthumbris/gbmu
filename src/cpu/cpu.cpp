@@ -65,27 +65,29 @@ INLINE_FN void Cpu::set_flag(uint8_t flag, uint8_t val)
 
 void Cpu::tick()
 {
-    while (ppu.screen_ready())
-        ;
+    if (!locked) {
+        while (ppu.screen_ready())
+            ;
 
-    // std::cout << debug_count << " opcode: 0x" << std::hex
-    //             << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
-    if (opcode != 0xFB && opcode != 0xD9) {
-        handle_interrupt();
-    }
+        // std::cout << debug_count << " opcode: 0x" << std::hex
+        //             << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
+        if (opcode != 0xFB && opcode != 0xD9) {
+            handle_interrupt();
+        }
 
-    execute_instruction();
+        execute_instruction();
 
-    ppu.tick(t_cycle);
-    d_cycle += t_cycle;
-    if (d_cycle >= 256) {//TODO check for cpu stopped and handle different frequencies
-        timer_divider++;
-        d_cycle -= 256;
+        ppu.tick(t_cycle);
+        d_cycle += t_cycle;
+        if (d_cycle >= 256) {//TODO check for cpu stopped and handle different frequencies
+            timer_divider++;
+            d_cycle -= 256;
+        }
+        m_cycle = 0;
+        t_cycle = 0;
     }
     event_handler();
     debug_count += 1;
-    m_cycle = 0;
-    t_cycle = 0;
 }
 
 void Cpu::handle_interrupt()
@@ -192,4 +194,3 @@ void Cpu::execute_instruction()
     (this->*op)();
 }
 
-void Cpu::lockup() {}

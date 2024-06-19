@@ -32,10 +32,12 @@ enum Condition
  enum InterruptType {
 	Vblank = 1 << 0, //0x40 Vblank interrupt
 	Stat = 1 << 1, // 0x48 STAT interrupt
-	Timer = 1 << 2, //0x50 Timer interrupt
-	Serial = 1 << 3, //0x58 Serial interrupt
+	Timer = 1 << 2, //0x50 Timer interrupt //TODO check when this needs to be done
+	Serial = 1 << 3, //0x58 Serial interrupt //TODO check when this needs to be done
 	Joypad  = 1 << 4 //0x60 Joypad interrupt
  };
+
+//TODO handle CGB freq etc
 
 class Cpu
 {
@@ -62,6 +64,7 @@ private:
 	MemoryMap mmap;
 	PixelProcessingUnit ppu;
 	bool halted = false;
+	bool locked = false;
 	uint8_t interrupt_enable_register = 0; //0xFFFF
 	uint8_t interrupt = 0; //0xFF0F
 	uint16_t m_cycle;
@@ -84,6 +87,10 @@ private:
 	template<uint8_t opcode>
 	void unimplemented() {std::cout << "unimplemented opcode: 0x" << std::setfill('0') << std::setw(2) << std::hex << opcode << std::dec << std::endl;}
 
+	//$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
+	template<uint8_t opcode>
+	void lockup() {locked = true; std::cout << "Illegal instruction. Hard-Locks the CPU. opcode: 0x" << std::setfill('0') << std::setw(2) << std::hex << opcode << std::dec << std::endl;}
+
 	#include "ops/ops_add.tcc"
 	#include "ops/ops_alu.tcc"
 	#include "ops/ops_bit.tcc"
@@ -97,8 +104,6 @@ private:
 	#include "ops/ops_ret.tcc"
 	#include "ops/ops_rotate_shift.tcc"
 	#include "ops/ops_sub.tcc"
-
-	void lockup(); //$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
 
 	template <typename IntegerType1, typename IntegerType2>
 	bool half_carry_flag_set(IntegerType1 val1, IntegerType2 val2)
