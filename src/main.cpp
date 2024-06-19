@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 {
     std::string path = argv[1];
     Rom rom = Rom(path);
-    // rom.print_rom();
+    rom.print_rom();
 
     std::string p = "Opcodes.json";
     Dict::Decoder decode = Dict::Decoder(p);
