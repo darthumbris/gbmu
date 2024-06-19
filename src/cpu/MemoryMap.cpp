@@ -67,7 +67,7 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
     // if (addr == 0x23F4) {
     //     std::cout << "reading 0x23F4" << std::endl;
     // }
-    // std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
+    std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
     switch (addr)
     {
     case 0x0000 ... 0x00FF:
@@ -88,6 +88,11 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
             // std::cout << "reading from 0x64c9: " << (uint16_t)rom_banks[rom_bank][addr - 0x4000] << std::endl;
             // std::cout << "reading 0x4c6a: " << (uint16_t)rom_banks[rom_bank][addr - 0x4001] << std::endl;
         }
+        if (addr == 0x4c6a && rom_bank == 1) {
+            std::cout << "trying to read 0x4c6a [1]:  " << (uint16_t)rom_banks[rom_bank][addr - 0x4000] << std::endl;
+        }
+        std::cout << "trying to read addr: " << std::hex << (std::size_t)addr << std::dec << std::endl;
+        std::cout << "rom_banks: " << rom_banks.size() << " rom_bank: " << (uint16_t)rom_bank << std::endl;
         return rom_banks[rom_bank][addr - 0x4000]; // TODO check how to get what rom_bank
     case 0x8000 ... 0x9FFF:
         return cpu->get_ppu().read_u8_ppu(addr);
@@ -103,19 +108,11 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
         return not_usable[addr - 0xFEA0];
     case 0xFF00 ... 0xFF3F:
         if (addr == 0xFF00) {
-            uint8_t val;
-            // switch (joypad) {
-            //     case 1: return joypad_buttons;
-            //     case 2: return joypad_dpad;
-            //     default: return 0xFF;
-            // }
             switch (joypad) {
-                case 1: val = joypad_buttons; break;
-                case 2: val =joypad_dpad; break;
-                default: val = 0xFF;break;
+                case 1: return joypad_buttons;
+                case 2: return joypad_dpad;
+                default: return 0xFF;
             }
-            // std::cout << "0xFF00: " << (uint16_t)val << std::endl;
-            return val;
         }
         if (addr == 0xFF04) {
             return cpu->get_timer_divider();

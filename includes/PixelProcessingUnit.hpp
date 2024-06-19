@@ -133,6 +133,9 @@ public:
 
     inline bool screen_ready() {return draw_screen;}
     inline void screen_done() {draw_screen = false;}
+    inline void set_cpu(Cpu *cpu) {cpu = cpu;}
+    void serialize(std::ofstream &f);
+	void deserialize(std::ifstream &f);
 };
 
 #endif

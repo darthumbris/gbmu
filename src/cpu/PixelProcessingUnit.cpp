@@ -1,6 +1,8 @@
 #include "PixelProcessingUnit.hpp"
 #include "Cpu.hpp"
 #include <cstring>
+#include <iostream>
+#include <fstream>
 
 PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu)
 {
@@ -277,6 +279,7 @@ uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
         case 0xFF43: 
             return scx;
         case 0xFF44: 
+            std::cout << "reading ly?" << std::endl;
             return ly;
         case 0xFF45: 
             return lyc;

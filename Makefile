@@ -22,6 +22,7 @@ SRC =	main.cpp \
         cpu/MemoryMap.cpp \
         cpu/PixelProcessingUnit.cpp \
         cpu/instruction_table.cpp \
+        cpu/Serialization.cpp \
 
 
 SRC_EXT = cpp

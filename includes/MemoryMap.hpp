@@ -83,11 +83,11 @@ class MemoryMap
 {
 private:
     Mem16k rom{0};                            // 0x0000 - 0x3FFF
-    std::vector<Mem16k> rom_banks{0};          // 0x4000 - 0x7FFF   // From cartridge, switchable bank if any //2M max
+    
     std::vector<Mem8k> ext_ram{0};             // 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
     std::array<Mem4k, 8> work_ram{0};         // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
     std::array<Mem4k, 8> echo_ram{0};         // 0xE000 - 0xFDFF   //(mirror of C000–DDFF) use of this area is prohibited.
-    
+    std::vector<Mem16k> rom_banks{0};          // 0x4000 - 0x7FFF   // From cartridge, switchable bank if any //2M max
     std::array<uint8_t, 96> not_usable{0};    // 0xFEA0 - 0xFEFF
     std::array<uint8_t, 128> io_registers{0}; // 0xFF00 - 0xFF7F
     std::array<uint8_t, 127> high_ram{0};     // 0xFF80 - 0xFFFE
@@ -148,6 +148,9 @@ public:
 
     void handle_keydown(SDL_Keycode key);
     void handle_keyup(SDL_Keycode key);
+
+    void serialize(std::ofstream &f);
+	void deserialize(std::ifstream &f);
 };
 
 #endif

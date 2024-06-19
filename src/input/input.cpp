@@ -2,6 +2,7 @@
 
 void Cpu::handle_input(SDL_Event &e)
 {
+    SDL_Keymod modstate = SDL_GetModState();
     switch (e.type) {
         case SDL_KEYDOWN: 
             get_mmap().handle_keydown(e.key.keysym.sym);
@@ -11,10 +12,20 @@ void Cpu::handle_input(SDL_Event &e)
                 set_status(true);
                 break;
             case SDLK_F1:
-                serialize("test.bin");
+                if (modstate & KMOD_SHIFT) {
+                    deserialize(rom_path + "1.bin");
+                }
+                else {
+                    serialize(rom_path + "1.bin");
+                }
                 break;
             case SDLK_F2:
-                deserialize("test.bin");
+                if (modstate & KMOD_SHIFT) {
+                    deserialize(rom_path + "2.bin");
+                }
+                else {
+                    serialize(rom_path + "2.bin");
+                }
                 break;
 
             default:
