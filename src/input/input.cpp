@@ -13,18 +13,22 @@ void Cpu::handle_input(SDL_Event &e)
                 break;
             case SDLK_F1:
                 if (modstate & KMOD_SHIFT) {
-                    deserialize(rom_path + "1.state");
+                    //TODO maybe use the rom _name instead of the rom_path
+                    deserialize(rom_path + "_1.state");
                 }
                 else {
-                    serialize(rom_path + "1.state");
+                    //TODO maybe use the rom _name instead of the rom_path
+                    serialize(rom_path + "_1.state");
                 }
                 break;
             case SDLK_F2:
                 if (modstate & KMOD_SHIFT) {
-                    deserialize(rom_path + "2.state");
+                    //TODO maybe use the rom _name instead of the rom_path
+                    deserialize(rom_path + "_2.state");
                 }
                 else {
-                    serialize(rom_path + "2.state");
+                    //TODO maybe use the rom _name instead of the rom_path
+                    serialize(rom_path + "_2.state");
                 }
                 break;
 
