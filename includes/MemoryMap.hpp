@@ -9,6 +9,7 @@ class Cpu;
 #include <string>
 #include <iostream>
 #include <SDL2/SDL_keycode.h>
+#include "Rom.hpp"
 
 constexpr std::uint8_t mask0{ 0b0000'0001 }; // represents bit 0
 constexpr std::uint8_t mask1{ 0b0000'0010 }; // represents bit 1
@@ -82,20 +83,22 @@ using Mem4k = std::array<uint8_t, 4096>;
 class MemoryMap
 {
 private:
-    Mem16k rom{0};                            // 0x0000 - 0x3FFF
+
+    Rom rom;
+    // Mem16k rom{0};                            // 0x0000 - 0x3FFF
     
-    std::vector<Mem8k> ext_ram{0};             // 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
+    // std::vector<Mem8k> ext_ram{0};             // 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
     std::array<Mem4k, 8> work_ram{0};         // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
     std::array<Mem4k, 8> echo_ram{0};         // 0xE000 - 0xFDFF   //(mirror of C000–DDFF) use of this area is prohibited.
-    std::vector<Mem16k> rom_banks{0};          // 0x4000 - 0x7FFF   // From cartridge, switchable bank if any //2M max
+    // std::vector<Mem16k> rom_banks{0};          // 0x4000 - 0x7FFF   // From cartridge, switchable bank if any //2M max
     std::array<uint8_t, 96> not_usable{0};    // 0xFEA0 - 0xFEFF
     std::array<uint8_t, 128> io_registers{0}; // 0xFF00 - 0xFF7F
     std::array<uint8_t, 127> high_ram{0};     // 0xFF80 - 0xFFFE
     uint8_t interrupt = 0;                    // 0xFFFF - 0xFFFF
 
-    uint8_t rom_bank = 1;
-    uint8_t ram_bank = 0;
-    bool ram_enable = false;
+    // uint8_t rom_bank = 1;
+    // uint8_t ram_bank = 0;
+    // bool ram_enable = false;
 
     uint8_t joypad = 0;
     uint8_t joypad_dpad = 0x0F;

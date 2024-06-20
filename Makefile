@@ -13,12 +13,12 @@ INC_DIR = includes
 SRC =	main.cpp \
         events.cpp \
         input/input.cpp \
-        rom.cpp \
+        Rom.cpp \
         cpu/Decoder.cpp \
         cpu/Operand.cpp \
         cpu/Instruction.cpp \
         cpu/Flags.cpp \
-        cpu/cpu.cpp \
+        cpu/Cpu.cpp \
         cpu/MemoryMap.cpp \
         cpu/PixelProcessingUnit.cpp \
         cpu/instruction_table.cpp \

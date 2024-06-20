@@ -4,50 +4,8 @@
 #include <iostream>
 #include <fstream>
 
-MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu)
+MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), rom(path)
 {
-    std::vector<std::byte> data;
-    std::ifstream ifs(path, std::ios::binary | std::ios::ate);
-    if (ifs.fail() || !ifs.good())
-    {
-        std::cerr << "Error opening file '" << path << "'" << std::endl;
-        exit(1);
-    }
-    uint32_t size = ifs.tellg();
-    ifs.seekg(0, std::ios::beg);
-    while (!ifs.eof())
-    {
-        char c = ifs.get();
-        data.push_back(static_cast<std::byte>(c));
-    }
-    ifs.close();
-    size_t i;
-    for (i = 0; i < 16384; i++)
-    {
-        if (i >= data.size())
-        {
-            break;
-        }
-        rom[i] = (uint8_t)data[i];
-    }
-    if (i < data.size())
-    {
-        rom_banks.push_back(Mem16k());
-        rom_banks.push_back(Mem16k());
-    }
-    for (int k = 1; k < 128; k ++) {
-        for (size_t j = 0; j < 16384; j++)
-        {
-            if (i >= data.size())
-            {
-                break;
-            }
-            rom_banks[k][j] = (uint8_t)data[i];
-            i += 1;
-        }
-        rom_banks.push_back(Mem16k());
-    }
-    ext_ram.push_back(Mem8k());
     std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
     std::cout << "cgb_boot size: " << cgb.tellg() << std::endl;
     cgb.read(reinterpret_cast<char*>(&cgb_boot_rom), sizeof(cgb_boot_rom));
@@ -66,22 +24,16 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr)
     switch (addr)
     {
         //TODO have a check if gb or cgb mode and then load correct boot rom (also gb is 256 and cgb is 2048 bytes)
-    case 0x0000 ... 0x07FF:
+    case 0x0000 ... 0x7FFF:
         if (!boot_rom_loaded && addr <= 0xFF)
         {
             return gb_boot_rom[addr];
         }
-        return rom[addr];
-    case 0x0800 ... 0x3FFF:
-        return rom[addr];
-    case 0x4000 ... 0x7FFF:
-        return rom_banks[rom_bank][addr - 0x4000];
+        return rom.read_u8(addr);;
     case 0x8000 ... 0x9FFF:
         return cpu->get_ppu().read_u8_ppu(addr);
     case 0xA000 ... 0xBFFF:
-        // std::cout << "ram bank: " << (uint16_t)ram_bank << " wram_bank: " << (uint16_t)wram_bank_select() << std::endl;
-        // return ext_ram[ram_bank][addr - 0xA000]; //TODO make sure ext_ram and ram_bank are correct()
-        return ext_ram[0][addr - 0xA000];
+        return rom.read_u8(addr);
     case 0xC000 ... 0xDFFF:
         if (addr <= 0xCFFF) {
             return work_ram[0][uint16_t(addr & 0x0FFF)];
@@ -139,47 +91,20 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
 {    
     switch (addr)
     {
-    case 0x0000 ... 0x07FF:
+    case 0x0000 ... 0x7FFF:
     //TODO have a check if gb or cgb mode and then load correct boot rom (also gb is 256 and cgb is 2048 bytes)
         if (!boot_rom_loaded && addr <= 0xFF)
         {
             gb_boot_rom[addr] = val;
             break;
         }
-        if (addr <= 0x1FFF)
-        {
-            if (val == 0x0A)
-                ram_enable = true;
-            else if (val == 0x00)
-                ram_enable = false;
-            break;
-        }
-        break;
-    case 0x0800 ... 0x3FFF:
-        if (addr <= 0x1FFF)
-        {
-            if (val == 0x0A)
-                ram_enable = true;
-            else if (val == 0x00)
-                ram_enable = false;
-        }
-        else if (addr <= 0x2FFF) {
-            rom_bank = (ram_bank & (1 << 8)) | val;
-        }
-        else if (addr <= 0x3FFF) {
-            rom_bank = (ram_bank & 0xFF) | ((val & 1) << 8);
-        }
-        break;
-    case 0x4000 ... 0x7FFF:        
-        if (addr <= 0x5FFF)
-            ram_bank = val & 0x0F;
+        rom.write_u8(addr, val);
         break;
     case 0x8000 ... 0x9FFF:
         cpu->get_ppu().write_u8_ppu(addr, val);
         break;
     case 0xA000 ... 0xBFFF:
-        ext_ram[0][addr - 0xA000] = val;
-        // ext_ram[ram_bank][addr - 0xA000] = val; //TODO fix this
+        rom.write_u8(addr, val);
         break;
     case 0xC000 ... 0xDFFF:
         if (addr <= 0xCFFF) {
@@ -225,9 +150,6 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val)
         break;
     case 0xFF51 ... 0xFF7F:
         cpu->get_ppu().write_u8_ppu(addr, val);
-        // if (addr == 0xFF70) {
-        //     std::cout << "hey" << std::endl;
-        // }
         break;
     case 0xFF50:
         if (!boot_rom_loaded) {

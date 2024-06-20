@@ -7,7 +7,7 @@
 #include <iostream>
 
 uint64_t const DEBUG_START = 26979095;
-uint64_t const DEBUG_COUNT = 6381650;
+uint64_t const DEBUG_COUNT = 32;
 
 Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec), mmap(path, this), ppu(this), rom_path(path)
 {
