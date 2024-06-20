@@ -86,6 +86,8 @@ public:
 
     void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);
+
+    std::string get_rom_name() const {return _name;}
 };
 
 #endif
