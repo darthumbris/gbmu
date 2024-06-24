@@ -3,8 +3,8 @@
 
 #include <array>
 #include <cstdint>
-#include <string>
 #include <iostream>
+#include <string>
 
 enum CGB_FLAGS {
 	Non_CGB_Mode,
@@ -47,9 +47,9 @@ enum CartridgeType {
 
 class RomHeader {
 private:
-    uint32_t _entry_point;         // 0x100-0x103
+	uint32_t _entry_point;         // 0x100-0x103
 	std::array<uint8_t, 48> _logo; // 0x104-0x133
-	char _name[15];               // 0x134-0x142
+	char _name[15];                // 0x134-0x142
 	CGB_FLAGS _cgb_flag;           // 0x143
 	uint16_t _license_code;        // 0x144-0x145
 	bool _sgb_flag;                // 0x146
@@ -62,11 +62,11 @@ private:
 	uint8_t _header_checksum;      // 0x14D
 	uint16_t _global_checksum;     // 0x14E-0x14F
 public:
-    RomHeader(const std::string rom_path);
+	RomHeader(const std::string rom_path);
 	~RomHeader();
 
-    void print_rom_info() const;
-    std::string name() const {
+	void print_rom_info() const;
+	std::string name() const {
 		return _name;
 	}
 	CartridgeType cartridge_type() const {
@@ -75,11 +75,15 @@ public:
 	inline bool is_cgb_game() const {
 		return (_cgb_flag == CGB_ONLY || _cgb_flag == CGB_Enhanced);
 	}
-    inline uint8_t ram_size() const {return _ram_size;}
-    inline uint8_t rom_size() const {return _rom_size;}
-    bool has_battery() const;
-    bool has_rumble() const;
-    bool has_timer() const;
+	inline uint8_t ram_size() const {
+		return _ram_size;
+	}
+	inline uint8_t rom_size() const {
+		return _rom_size;
+	}
+	bool has_battery() const;
+	bool has_rumble() const;
+	bool has_timer() const;
 };
 
 #endif

@@ -8,7 +8,6 @@ namespace Dict {
 
 	class Flags {
 	private:
-		/* data */
 	public:
 		Flags();
 		~Flags();

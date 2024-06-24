@@ -1,13 +1,13 @@
 #ifndef ROM_HPP
 #define ROM_HPP
 
+#include "rom/RomHeader.hpp"
 #include <array>
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include "rom/RomHeader.hpp"
 
 using Mem16k = std::array<uint8_t, 16384>;
 using Mem8k = std::array<uint8_t, 8192>;
@@ -21,11 +21,10 @@ public:
 	Rom(const std::string rom_path, RomHeader rheader);
 	virtual ~Rom();
 
-	template<typename MBC, typename ...Args>
-    static std::unique_ptr<Rom> make(Args... args)
-    {
-        return (std::make_unique<MBC>(args...));
-    }
+	template <typename MBC, typename... Args>
+	static std::unique_ptr<Rom> make(Args... args) {
+		return (std::make_unique<MBC>(args...));
+	}
 
 	virtual uint8_t read_u8(uint16_t addr) = 0;
 	virtual void write_u8(uint16_t addr, uint8_t val) = 0;
@@ -40,12 +39,11 @@ public:
 		return cgb_on;
 	}
 
-	protected:
-		std::vector<Mem16k> rom_banks{0};
-		std::vector<Mem8k> ram_banks{0};
+protected:
+	std::vector<Mem16k> rom_banks{0};
+	std::vector<Mem8k> ram_banks{0};
 };
 
-
-//TODO handle MCB1, MCB2, MCB3, MCB5
+// TODO handle MCB1, MCB2, MCB3, MCB5
 
 #endif

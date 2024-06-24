@@ -14,39 +14,38 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 	cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 	cgb.close();
 
-    switch (header.cartridge_type())
-    {
-    case CartridgeType::MBC1:
-    case CartridgeType::MBC1_RAM:
-    case CartridgeType::MBC1_RAM_BATTERY:
-        rom = Rom::make<MCB1>(path, header, header.has_battery());
-        break;
-    case CartridgeType::MBC2:
-    case CartridgeType::MBC2_BATTERY:
-        rom = Rom::make<MCB2>(path, header, header.has_battery());
-        break;
-    case CartridgeType::MBC3_TIMER_BATTERY:
-    case CartridgeType::MBC3_TIMER_RAM_BATTERY:
-    case CartridgeType::MBC3:
-    case CartridgeType::MBC3_RAM:
-    case CartridgeType::MBC3_RAM_BATTERY:
-        rom = Rom::make<MCB1>(path, header, header.has_battery());
-        break;
-    case CartridgeType::MBC5:
-    case CartridgeType::MBC5_RAM:
-    case CartridgeType::MBC5_RAM_BATTERY:
-    case CartridgeType::MBC5_RUMBLE:
-    case CartridgeType::MBC5_RUMBLE_RAM:
-    case CartridgeType::MBC5_RUMBLE_RAM_BATTERY:
-        rom = Rom::make<MCB5>(path, header, header.has_battery(), header.has_rumble());
-        break;
-    default:
-        rom = Rom::make<MCB1>(path, header, header.has_battery());
-        break;
-    }
+	switch (header.cartridge_type()) {
+	case CartridgeType::MBC1:
+	case CartridgeType::MBC1_RAM:
+	case CartridgeType::MBC1_RAM_BATTERY:
+		rom = Rom::make<MCB1>(path, header, header.has_battery());
+		break;
+	case CartridgeType::MBC2:
+	case CartridgeType::MBC2_BATTERY:
+		rom = Rom::make<MCB2>(path, header, header.has_battery());
+		break;
+	case CartridgeType::MBC3_TIMER_BATTERY:
+	case CartridgeType::MBC3_TIMER_RAM_BATTERY:
+	case CartridgeType::MBC3:
+	case CartridgeType::MBC3_RAM:
+	case CartridgeType::MBC3_RAM_BATTERY:
+		rom = Rom::make<MCB1>(path, header, header.has_battery());
+		break;
+	case CartridgeType::MBC5:
+	case CartridgeType::MBC5_RAM:
+	case CartridgeType::MBC5_RAM_BATTERY:
+	case CartridgeType::MBC5_RUMBLE:
+	case CartridgeType::MBC5_RUMBLE_RAM:
+	case CartridgeType::MBC5_RUMBLE_RAM_BATTERY:
+		rom = Rom::make<MCB5>(path, header, header.has_battery(), header.has_rumble());
+		break;
+	default:
+		rom = Rom::make<MCB1>(path, header, header.has_battery());
+		break;
+	}
 	// TODO handle MBC7, cartridge types and give an error when not mbc1,3,5,7 or Rom only roms
-    // TODO handle (ROM_ONLY, ROM_RAM, ROM_RAM_BATTERY)
-    // TODO add a way to force CGB_Enhanced roms in GB mode
+	// TODO handle (ROM_ONLY, ROM_RAM, ROM_RAM_BATTERY)
+	// TODO add a way to force CGB_Enhanced roms in GB mode
 }
 
 MemoryMap::~MemoryMap() {}

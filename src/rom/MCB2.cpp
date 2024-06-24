@@ -9,35 +9,34 @@ uint8_t MCB2::read_u8(uint16_t addr) {
 	case 0x4000 ... 0x7FFF:
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
-        if (ram_enable) {
-            // printf("ram_bank: %u rom_ram_mode %u addr: %#06x\n", ram_bank, rom_ram_mode, addr);
-            return ram_banks[0][addr - 0xA000]; 
-        }
+		if (ram_enable) {
+			// printf("ram_bank: %u rom_ram_mode %u addr: %#06x\n", ram_bank, rom_ram_mode, addr);
+			return ram_banks[0][addr - 0xA000];
+		}
 	default:
 		std::cout << "should not reach this" << std::endl;
 		break;
 	}
-    return 0xFF;
+	return 0xFF;
 }
 
 void MCB2::write_u8(uint16_t addr, uint8_t val) {
 	switch (addr) {
 	case 0x000 ... 0x7FFF:
-        if (addr <= 0x3FFF) {
-            if (addr & mask8) {
-                rom_bank = (val ? val & 0x1F : 1);
-            }
-            else {
-                ram_enable = (val & 0x0A);
-            }
-        }
+		if (addr <= 0x3FFF) {
+			if (addr & mask8) {
+				rom_bank = (val ? val & 0x1F : 1);
+			} else {
+				ram_enable = (val & 0x0A);
+			}
+		}
 		break;
 
 	case 0xA000 ... 0xBFFF:
-        if (ram_enable) {
-            ram_banks[0][addr - 0xA000] = val;
-            //TODO this only has 512 bytes of ram and repeats echoes of it
-        }
+		if (ram_enable) {
+			ram_banks[0][addr - 0xA000] = val;
+			// TODO this only has 512 bytes of ram and repeats echoes of it
+		}
 		break;
 	default:
 		std::cout << "should not reach this" << std::endl;

@@ -28,20 +28,19 @@ void MCB5::write_u8(uint16_t addr, uint8_t val) {
 			ram_enable = (val == 0x0A);
 		} else if (addr <= 0x2FFF) {
 			rom_bank = (ram_bank & (1 << 8)) | val; // 8 least significant bits
+		} else if (addr <= 0x3FFF) {
+			rom_bank = (ram_bank & 0xFF) | ((val & 1) << 8); // 9th bit
 		}
-        else if (addr <= 0x3FFF) {
-            rom_bank = (ram_bank & 0xFF) | ((val & 1) << 8); //9th bit
-        }
 		if (addr >= 0x4000 && addr <= 0x5FFF) {
 			ram_bank = val & 0x0F;
-        }
+		}
 		break;
 
 	case 0xA000 ... 0xBFFF:
-        if (ram_enable) {
-            // printf("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
-            ram_banks[ram_bank][addr - 0xA000] = val;
-        }
+		if (ram_enable) {
+			// printf("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
+			ram_banks[ram_bank][addr - 0xA000] = val;
+		}
 		break;
 	default:
 		std::cout << "should not reach this" << std::endl;

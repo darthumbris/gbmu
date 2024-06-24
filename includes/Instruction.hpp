@@ -10,7 +10,6 @@ namespace Dict {
 
 	class Instruction {
 	private:
-		/* data */
 	public:
 		Instruction(const json &j);
 		Instruction();

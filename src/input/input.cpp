@@ -47,7 +47,6 @@ void MemoryMap::handle_keydown(SDL_Keycode key) {
 		break;
 	case SDLK_SPACE: // Select
 		joypad_buttons &= ~(0x4);
-		std::cout << "hey space" << std::endl;
 		break;
 	case SDLK_RETURN: // Start
 		joypad_buttons &= ~(0x8);
