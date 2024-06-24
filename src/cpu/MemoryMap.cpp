@@ -10,7 +10,6 @@
 
 MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) {
 	std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
-	std::cout << "cgb_boot size: " << cgb.tellg() << std::endl;
 	cgb.seekg(0, std::ios::beg);
 	cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 	cgb.close();
@@ -45,7 +44,7 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
         rom = Rom::make<MCB1>(path, header, header.has_battery());
         break;
     }
-	// TODO handle different cartridge types
+	// TODO handle MBC7, cartridge types and give an error when not mbc1,3,5,7
 }
 
 MemoryMap::~MemoryMap() {}

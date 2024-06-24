@@ -5,7 +5,7 @@
 
 class MCB3 : public Rom {
 private:
-    uint16_t rom_bank = 1; //0x00 - 0x7F
+    uint8_t rom_bank = 1; //0x00 - 0x7F
 	uint8_t ram_bank = 0; //0x00 - 0x03
 	bool ram_enable = false;
     bool battery = false;
