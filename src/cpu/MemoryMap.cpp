@@ -45,6 +45,7 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
         break;
     }
 	// TODO handle MBC7, cartridge types and give an error when not mbc1,3,5,7
+    // TODO add a way to force CGB_Enhanced roms in GB mode
 }
 
 MemoryMap::~MemoryMap() {}
