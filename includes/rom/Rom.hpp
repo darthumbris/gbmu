@@ -71,6 +71,7 @@ private:
 	uint8_t rom_bank = 1;
 	uint8_t ram_bank = 0;
 	bool ram_enable = false;
+    bool rom_ram_mode = false;
 
 public:
 	Rom(const std::string path);
@@ -92,5 +93,7 @@ public:
 		return (cgb_flag == CGB_ONLY || cgb_flag == CGB_Enhanced);
 	}
 };
+
+//TODO handle MCB1, MCB2, MCB3, MCB5
 
 #endif
