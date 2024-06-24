@@ -3,13 +3,14 @@
 
 class Cpu;
 
-#include "Rom.hpp"
+#include "rom/Rom.hpp"
 #include <SDL2/SDL_keycode.h>
 #include <array>
 #include <cstdint>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <memory>
 
 constexpr std::uint8_t mask0{0b0000'0001}; // represents bit 0
 constexpr std::uint8_t mask1{0b0000'0010}; // represents bit 1
@@ -81,7 +82,8 @@ using Mem4k = std::array<uint8_t, 4096>;
 
 class MemoryMap {
 private:
-	Rom rom;
+    RomHeader header;
+	std::unique_ptr<Rom> rom;
 	// 0x0000 - 0x3FFF
 	// 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
 	std::array<Mem4k, 8> work_ram{0}; // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
@@ -144,7 +146,7 @@ public:
 	void deserialize(std::ifstream &f);
 
 	std::string get_rom_name() const {
-		return rom.get_rom_name();
+		return rom->name();
 	}
 };
 

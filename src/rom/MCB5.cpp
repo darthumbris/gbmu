@@ -1,4 +1,4 @@
-#include "MCB5.hpp"
+#include "rom/MCB5.hpp"
 
 uint8_t MCB5::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -14,10 +14,6 @@ uint8_t MCB5::read_u8(uint16_t addr) {
 		std::cout << "should not reach this" << std::endl;
 		return 0xFF;
 	}
-}
-
-uint16_t MCB5::read_u16(uint16_t addr) {
-	return ((uint16_t)read_u8(addr) + ((uint16_t)read_u8(addr + 1) << 8));
 }
 
 void MCB5::write_u8(uint16_t addr, uint8_t val) {
@@ -54,9 +50,4 @@ void MCB5::write_u8(uint16_t addr, uint8_t val) {
 		std::cout << "should not reach this" << std::endl;
 		break;
 	}
-}
-
-void MCB5::write_u16(uint16_t addr, uint16_t val) {
-	write_u8(addr, (uint8_t)(val & 0xFF));
-	write_u8(addr + 1, (uint8_t)((val & 0xFF00) >> 8));
 }

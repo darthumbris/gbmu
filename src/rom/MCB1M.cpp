@@ -1,10 +1,12 @@
-#include "MCB1M.hpp"
+#include "rom/MCB1M.hpp"
 
 uint8_t MCB1M::read_u8(uint16_t addr) {
 	switch (addr) {
 	case 0x0000 ... 0x3FFF:
+        //TODO if rom > 1Mib this can also be different rom banks
 		return rom_banks[0][addr];
 	case 0x4000 ... 0x7FFF:
+        // rom_banks 01-7F
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
 		// printf("ram_bank: %u rom_ram_mode %u addr: %#06x\n", ram_bank, rom_ram_mode, addr);
@@ -14,10 +16,6 @@ uint8_t MCB1M::read_u8(uint16_t addr) {
 		std::cout << "should not reach this" << std::endl;
 		return 0xFF;
 	}
-}
-
-uint16_t MCB1M::read_u16(uint16_t addr) {
-	return ((uint16_t)read_u8(addr) + ((uint16_t)read_u8(addr + 1) << 8));
 }
 
 void MCB1M::write_u8(uint16_t addr, uint8_t val) {
@@ -54,9 +52,4 @@ void MCB1M::write_u8(uint16_t addr, uint8_t val) {
 		std::cout << "should not reach this" << std::endl;
 		break;
 	}
-}
-
-void MCB1M::write_u16(uint16_t addr, uint16_t val) {
-	write_u8(addr, (uint8_t)(val & 0xFF));
-	write_u8(addr + 1, (uint8_t)((val & 0xFF00) >> 8));
 }

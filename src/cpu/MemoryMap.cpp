@@ -1,16 +1,29 @@
 #include "MemoryMap.hpp"
 #include "Cpu.hpp"
+#include "rom/MCB1.hpp"
 #include <cstddef>
 #include <fstream>
 #include <iostream>
 
-MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), rom(path) {
+MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) {
 	std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
 	std::cout << "cgb_boot size: " << cgb.tellg() << std::endl;
 	cgb.seekg(0, std::ios::beg);
 	cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 	cgb.close();
 
+    // switch (rom.get_rom_type())
+    // {
+    // case CartridgeType::MCB1:
+    // case CartridgeType::MCB1_RAM:
+    // case CartridgeType::MCB1_RAM_BATTERY:
+    //     rom = MCB1();
+    //     break;
+    
+    // default:
+    //     break;
+    // }
+    rom = Rom::make<MCB1>(path, header, header.cartridge_type() == MBC1_RAM_BATTERY);
 	// TODO handle different cartridge types
 }
 
@@ -21,18 +34,18 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr) {
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
 		if (!boot_rom_loaded) {
-			if (rom.is_cgb_game()) {
+			if (rom->cgb_mode()) {
 				return cgb_boot_rom[addr];
 			} else if (addr <= 0xFF) {
 				return gb_boot_rom[addr];
 			}
 		}
-		return rom.read_u8(addr);
+		return rom->read_u8(addr);
 		;
 	case 0x8000 ... 0x9FFF:
 		return cpu->get_ppu().read_u8_ppu(addr);
 	case 0xA000 ... 0xBFFF:
-		return rom.read_u8(addr);
+		return rom->read_u8(addr);
 	case 0xC000 ... 0xDFFF:
 		if (addr <= 0xCFFF) {
 			return work_ram[0][uint16_t(addr & 0x0FFF)];
@@ -91,14 +104,14 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
 		if (boot_rom_loaded) {
-			rom.write_u8(addr, val);
+			rom->write_u8(addr, val);
 		}
 		break;
 	case 0x8000 ... 0x9FFF:
 		cpu->get_ppu().write_u8_ppu(addr, val);
 		break;
 	case 0xA000 ... 0xBFFF:
-		rom.write_u8(addr, val);
+		rom->write_u8(addr, val);
 		break;
 	case 0xC000 ... 0xDFFF:
 		if (addr <= 0xCFFF) {

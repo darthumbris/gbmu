@@ -1,6 +1,5 @@
 #include "Cpu.hpp"
 #include "Decoder.hpp"
-#include "Rom.hpp"
 #include <SDL2/SDL.h>
 #include <cstddef>
 #include <fstream>

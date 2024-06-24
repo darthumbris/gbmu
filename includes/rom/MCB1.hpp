@@ -1,7 +1,7 @@
 #ifndef MCB1_HPP
 #define MCB1_HPP
 
-#include "Rom.hpp"
+#include "rom/Rom.hpp"
 
 class MCB1 : public Rom {
     private:
@@ -12,10 +12,13 @@ class MCB1 : public Rom {
     bool battery = false;
 
     public:
+    MCB1(const std::string rom_path, RomHeader rheader, bool battery) : Rom(rom_path, rheader), battery(battery) {}
+
     uint8_t read_u8(uint16_t addr);
-    uint16_t read_u16(uint16_t addr);
     void write_u8(uint16_t addr, uint8_t val);
-    void write_u16(uint16_t addr, uint16_t val);
+
+    void serialize(std::ofstream &f);
+    void deserialize(std::ifstream &f);
 };
 
 #endif

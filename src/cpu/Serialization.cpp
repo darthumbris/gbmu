@@ -66,7 +66,7 @@ void MemoryMap::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&gb_boot_rom), sizeof(gb_boot_rom));
 	f.write(reinterpret_cast<const char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 	std::cout << "done serializing mmap" << std::endl;
-	rom.serialize(f);
+	rom->serialize(f);
 }
 
 void MemoryMap::deserialize(std::ifstream &f) {
@@ -82,7 +82,7 @@ void MemoryMap::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&gb_boot_rom), sizeof(gb_boot_rom));
 	f.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 	std::cout << "done deserializing mmap" << std::endl;
-	rom.deserialize(f);
+	rom->deserialize(f);
 }
 
 void PixelProcessingUnit::serialize(std::ofstream &f) {
@@ -143,28 +143,28 @@ void PixelProcessingUnit::deserialize(std::ifstream &f) {
 	std::cout << "done deserializing ppu" << std::endl;
 }
 
-void Rom::serialize(std::ofstream &f) {
-	for (int i = 0; i < rom_banks.size(); i++) {
-		f.write(reinterpret_cast<const char *>(&rom_banks[i]), sizeof(rom_banks[i]));
-	}
-	for (int i = 0; i < ram_banks.size(); i++) {
-		f.write(reinterpret_cast<const char *>(&ram_banks[i]), sizeof(ram_banks[i]));
-	}
-	f.write(reinterpret_cast<const char *>(&rom_bank), sizeof(rom_bank));
-	f.write(reinterpret_cast<const char *>(&ram_bank), sizeof(ram_bank));
-	f.write(reinterpret_cast<const char *>(&ram_enable), sizeof(ram_enable));
-	std::cout << "done serializing rom" << std::endl;
-}
+// void Rom::serialize(std::ofstream &f) {
+// 	for (int i = 0; i < rom_banks.size(); i++) {
+// 		f.write(reinterpret_cast<const char *>(&rom_banks[i]), sizeof(rom_banks[i]));
+// 	}
+// 	for (int i = 0; i < ram_banks.size(); i++) {
+// 		f.write(reinterpret_cast<const char *>(&ram_banks[i]), sizeof(ram_banks[i]));
+// 	}
+// 	f.write(reinterpret_cast<const char *>(&rom_bank), sizeof(rom_bank));
+// 	f.write(reinterpret_cast<const char *>(&ram_bank), sizeof(ram_bank));
+// 	f.write(reinterpret_cast<const char *>(&ram_enable), sizeof(ram_enable));
+// 	std::cout << "done serializing rom" << std::endl;
+// }
 
-void Rom::deserialize(std::ifstream &f) {
-	for (int i = 0; i < rom_banks.size(); i++) {
-		f.read(reinterpret_cast<char *>(&rom_banks[i]), sizeof(rom_banks[i]));
-	}
-	for (int i = 0; i < ram_banks.size(); i++) {
-		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
-	}
-	f.read(reinterpret_cast<char *>(&rom_bank), sizeof(rom_bank));
-	f.read(reinterpret_cast<char *>(&ram_bank), sizeof(ram_bank));
-	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
-	std::cout << "done deserializing rom" << std::endl;
-}
+// void Rom::deserialize(std::ifstream &f) {
+// 	for (int i = 0; i < rom_banks.size(); i++) {
+// 		f.read(reinterpret_cast<char *>(&rom_banks[i]), sizeof(rom_banks[i]));
+// 	}
+// 	for (int i = 0; i < ram_banks.size(); i++) {
+// 		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
+// 	}
+// 	f.read(reinterpret_cast<char *>(&rom_bank), sizeof(rom_bank));
+// 	f.read(reinterpret_cast<char *>(&ram_bank), sizeof(ram_bank));
+// 	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
+// 	std::cout << "done deserializing rom" << std::endl;
+// }

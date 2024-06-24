@@ -14,7 +14,8 @@ SRC =	main.cpp \
         events.cpp \
         input/input.cpp \
         rom/Rom.cpp \
-        rom/MCB1_Rom.cpp \
+        rom/RomHeader.cpp \
+        rom/MCB1.cpp \
         cpu/Decoder.cpp \
         cpu/Operand.cpp \
         cpu/Instruction.cpp \
