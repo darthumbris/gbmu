@@ -269,3 +269,19 @@ void RomHeader::print_rom_info() const {
 	printf("header_checksum: %u\n", _header_checksum);
 	printf("global_checksum: %u\n", _global_checksum);
 }
+
+bool RomHeader::has_battery() const {
+    return (_cartridge_type == MBC1_RAM_BATTERY || _cartridge_type == MBC2_BATTERY || _cartridge_type == ROM_RAM_BATTERY || 
+    _cartridge_type == MMM01_RAM_BATTERY || _cartridge_type == MBC3_TIMER_BATTERY || _cartridge_type == MBC3_TIMER_RAM_BATTERY || 
+    _cartridge_type == MBC3_RAM_BATTERY || _cartridge_type == MBC5_RAM_BATTERY || _cartridge_type == MBC5_RUMBLE_RAM_BATTERY || 
+    _cartridge_type == MBC7_SENSOR_RUMBLE_RAM_BATTERY || _cartridge_type == HuC1_RAM_BATTERY);
+}
+
+bool RomHeader::has_rumble() const {
+    return (_cartridge_type == MBC5_RUMBLE || _cartridge_type == MBC5_RUMBLE_RAM ||_cartridge_type == MBC5_RUMBLE_RAM_BATTERY ||
+    _cartridge_type == MBC7_SENSOR_RUMBLE_RAM_BATTERY) ;
+}
+
+bool RomHeader::has_timer() const {
+    return (_cartridge_type == MBC3_TIMER_BATTERY || _cartridge_type == MBC3_TIMER_RAM_BATTERY) ;
+}

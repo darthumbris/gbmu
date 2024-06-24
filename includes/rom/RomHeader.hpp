@@ -77,6 +77,9 @@ public:
 	}
     inline uint8_t ram_size() const {return _ram_size;}
     inline uint8_t rom_size() const {return _rom_size;}
+    bool has_battery() const;
+    bool has_rumble() const;
+    bool has_timer() const;
 };
 
 #endif

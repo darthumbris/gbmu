@@ -16,6 +16,9 @@ SRC =	main.cpp \
         rom/Rom.cpp \
         rom/RomHeader.cpp \
         rom/MCB1.cpp \
+        rom/MCB2.cpp \
+        rom/MCB3.cpp \
+        rom/MCB5.cpp \
         cpu/Decoder.cpp \
         cpu/Operand.cpp \
         cpu/Instruction.cpp \

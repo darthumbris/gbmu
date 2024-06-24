@@ -6,9 +6,10 @@
 class MCB1 : public Rom {
     private:
     uint8_t rom_bank = 1;
-	uint8_t ram_bank = 0;
+    uint8_t secondary_rom_bank = 0; // only needed for 1MiB or larger roms 
+	uint8_t ram_bank = 0; // 0-3
 	bool ram_enable = false;
-    bool rom_ram_mode = false;
+    bool rom_ram_mode = false; //Not needed for (≤ 8 KiB RAM and ≤ 512 KiB ROM)
     bool battery = false;
 
     public:
