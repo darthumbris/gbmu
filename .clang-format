@@ -1,0 +1,16 @@
+BasedOnStyle: LLVM
+
+ColumnLimit: 120
+IndentWidth: 4
+TabWidth: 4
+AccessModifierOffset: -4
+UseTab: ForIndentation
+
+FixNamespaceComments: false
+NamespaceIndentation: All
+
+DerivePointerAlignment: false
+PointerAlignment: Right
+
+AlwaysBreakTemplateDeclarations: Yes
+AllowShortFunctionsOnASingleLine: Empty
