@@ -145,6 +145,10 @@ public:
 	std::string get_rom_name() const {
 		return rom->name();
 	}
+
+	bool is_cgb_rom() const {
+		return header.is_cgb_game();
+	}
 };
 
 #endif

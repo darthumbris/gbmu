@@ -18,6 +18,8 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	std::memset(obj_1_colors, 0, sizeof(obj_1_colors));
 	std::memset(tile_data, 0, sizeof(tile_data));
 	dma = {0};
+	cgb_colors = cpu->get_mmap().is_cgb_rom();
+	std::memset(cgb_bg_colors, 0, sizeof(cgb_bg_colors));
 }
 
 PixelProcessingUnit::~PixelProcessingUnit() {}
@@ -186,7 +188,19 @@ void PixelProcessingUnit::render_scanline() {
 	size_t spr_index = 0;
 	for (uint32_t i = 0; i < 160; i++) {
 		uint8_t tile_dat = tile_data[vbank_select][tile_index][(uint16_t)(y) * 8 + x];
-		*framebuffer_ptr = bg_colors[tile_dat];
+		if (cgb_colors) {
+			uint16_t tile_attr_index = vram[1][tile_map_offset + line_offset];
+			uint8_t tile_attr = tile_data[1][tile_attr_index][(uint16_t)(y) * 8 + x];
+			uint8_t tile_pal = tile_attr & 0b111;
+			if (tile_dat) {
+				printf("tile_dat: %u tile_attr: %u tile_pal: %u\n", tile_dat, tile_attr, tile_pal);
+			}
+			*framebuffer_ptr = cgb_bg_colors_other_32[tile_pal][tile_dat];
+		}
+		else {
+			*framebuffer_ptr = bg_colors[tile_dat];
+		}
+
 		handle_sprites(sprites, i, tile_dat, framebuffer_ptr, &spr_index);
 		framebuffer_ptr++;
 		x++;
@@ -202,6 +216,28 @@ void PixelProcessingUnit::render_scanline() {
 	if (window_active) {
 		window_line_active++;
 	}
+
+
+	/* TODO CGB COLOR STUFF
+		needs:
+			- color_index (tile_dat?)
+			- palette_nb (Option if None -> Default color) otherwise (bits & 0b111) where bits is from tile_index from bank1?
+			- is_background (if sprite this is false)
+
+		//Also need to handle mixing of colors (only for background)
+	*/ 
+}
+
+uint32_t PixelProcessingUnit::get_cgb_color(uint8_t value1, uint8_t value2) {
+	uint16_t color_bytes = ((static_cast<uint16_t>(value2)) << 8) | static_cast<uint16_t>(value1);
+	uint8_t red = static_cast<uint8_t>(static_cast<float>(color_bytes & RED_MASK) * 255.0 / 31.0);
+	uint8_t green = static_cast<uint8_t>(static_cast<float>((color_bytes & GREEN_MASK) >> 5) * 255.0 / 31.0);
+	uint8_t blue = static_cast<uint8_t>(static_cast<float>((color_bytes & BLUE_MASK) >> 10) * 255.0 / 31.0);
+	uint32_t color = ((red << 24) | (green << 16) | (blue << 8) | 0xFF);
+	// if (color != 0x000000FF || value1 || value2) {
+	// 	printf("color: %#012x red: %#04x green: %#04x blue: %#04x color_bytes: %u, values: (%u, %u)\n", color, red, green, blue, color_bytes, value1, value2);
+	// }
+	return color; 
 }
 
 void PixelProcessingUnit::render_screen() {
@@ -213,32 +249,25 @@ void PixelProcessingUnit::render_screen() {
 }
 
 bool PixelProcessingUnit::init_window() {
-	bool success = true;
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-		success = false;
+		return false;
 	} else {
-		data.window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		                               SCREEN_WIDTH * 4, SCREEN_HEIGHT * 4, SDL_WINDOW_SHOWN);
-		if (data.window == NULL) {
+		SDL_CreateWindowAndRenderer(SCREEN_WIDTH * 4, SCREEN_HEIGHT * 4, 0, &data.window, &data.renderer);
+		SDL_SetWindowTitle(data.window, "GBMU");
+		if (data.window == NULL || data.renderer == NULL) {
 			printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-			success = false;
+			return false;
 		} else {
-			data.renderer = SDL_CreateRenderer(data.window, -1, 0);
-			if (data.renderer == NULL) {
-				printf("renderer could not be created! SDL_Error: %s\n", SDL_GetError());
+			data.texture = SDL_CreateTexture(data.renderer, SDL_PIXELFORMAT_ABGR32, SDL_TEXTUREACCESS_STREAMING,
+												SCREEN_WIDTH, SCREEN_HEIGHT);
+			if (data.texture == NULL) {
+				printf("texture could not be created! SDL_Error: %s\n", SDL_GetError());
 				return false;
-			} else {
-				data.texture = SDL_CreateTexture(data.renderer, SDL_PIXELFORMAT_ABGR32, SDL_TEXTUREACCESS_STREAMING,
-				                                 SCREEN_WIDTH, SCREEN_HEIGHT);
-				if (data.texture == NULL) {
-					printf("texture could not be created! SDL_Error: %s\n", SDL_GetError());
-					return false;
-				}
 			}
 		}
 	}
-	return success;
+	return true;
 }
 
 void PixelProcessingUnit::close() {
@@ -351,14 +380,41 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		break;
 	case 0xFF4F:
 		// TODO have a check if CGB mode or not and then do this
-		//  vbank_select = val & 1;
-		vbank_select = 0;
+		if (cgb_colors) {
+			printf("setting vbank select to: %u val: %u\n", val & 1, val);
+			vbank_select = val & 1;
+		}
+		else {
+			vbank_select = 0;
+		}
 		break;
 	case 0xFF68:
 		bg_palette_cgb = val;
 		break;
 	case 0xFF69:
-		bg_color_cgb = val;
+		// bg_color_cgb = val;
+		// cgb_bg_colors[(bg_palette_cgb & (PALETTE_SIZE - 1))] = val;
+		// bool hl = bg_palette_cgb & mask0;
+		// // printf("cgb_bg_colors[%u]: %u\n", (bg_palette_cgb & (64 - 1)), val);
+		// if ((bg_palette_cgb & AUTO_INC) != 0) {
+		// 	if (bg_palette_cgb == (AUTO_INC | SPEC_INDEX)) {
+		// 		bg_palette_cgb = AUTO_INC;
+		// 	}
+		// 	else {
+		// 		bg_palette_cgb +=1;
+		// 	}
+		// }
+		// int index = (bg_palette_cgb >> 1) & 0x03;
+		// int pal = (bg_palette_cgb >> 3) & 0x07;
+		// uint32_t *pa_gbc = &cgb_bg_colors_other[pal][index][0];
+		// uint32_t *pa_final = &cgb_bg_colors_other[pal][index][1];
+
+		// *pa_gbc = hl ? (*pa_gbc & 0x00FF) | (val << 8) : (*pa_gbc & 0xFF00) | val;
+		// uint8_t red_5bit = *pa_gbc & 0x1F;
+		// uint8_t blue_5bit = (*pa_gbc >> 10) & 0x1F;
+		// uint8_t green_5bit = (*pa_gbc >> 5) & 0x1F;
+		// *pa_final = red_5bit << 24 | green_5bit << 16 | blue_5bit << 8 | 0xFF; 
+		set_cgb_bg_palette(val);
 		break;
 	case 0xFF6A:
 		obj_palette_cgb = val;
@@ -367,8 +423,12 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		obj_color_cgb = val;
 		break;
 	case 0xFF70:
-		// wram_bank_select = ((val & 4) + (val & 2) + (val & 1)); //TODO check this
-		wram_bank_select = 0;
+		if (cgb_colors) {
+			wram_bank_select = ((val & 4) + (val & 2) + (val & 1)); //TODO check this
+		}
+		else {
+			wram_bank_select = 0;
+		}
 		break;
 	default:
 		break;
@@ -389,6 +449,69 @@ Sprite PixelProcessingUnit::get_sprite(size_t index) {
 	uint8_t tile_index = oam[index][2];
 	uint8_t attr_flags = oam[index][3];
 	return {y_pos, x_pos, tile_index, attr_flags};
+}
+
+void PixelProcessingUnit::update_palette_cgb(uint8_t val) {
+	bool hl = val & mask0;
+    int index = (val >> 1) & 0x03;
+    int pal = (val >> 3) & 0x07;
+
+    uint16_t color = cgb_bg_colors_other[pal][index][0];
+	bg_color_cgb = hl ? (color >> 8) & 0xFF : color & 0xFF;
+	// write_u8_ppu(0xFF69, hl ? (color >> 8) & 0xFF : color & 0xFF);
+    // m_pMemory->Load(background ? 0xFF69 : 0xFF6B, hl ? (color >> 8) & 0xFF : color & 0xFF);
+}
+
+void PixelProcessingUnit::set_cgb_bg_palette(uint8_t val) {
+	uint8_t ps = bg_palette_cgb;
+	bool hl = ps & mask0;
+	int index = (ps >> 1) & 0x03;
+	int pal = (ps >> 3) & 0x07;
+	bool increment = ps & mask7;
+	bg_color_cgb = val;
+	cgb_bg_colors[(bg_palette_cgb & (PALETTE_SIZE - 1))] = val;
+	// printf("cgb_bg_colors[%u]: %u\n", (bg_palette_cgb & (64 - 1)), val);
+	// if ((bg_palette_cgb & AUTO_INC) != 0) {
+	// 	if (bg_palette_cgb == (AUTO_INC | SPEC_INDEX)) {
+	// 		bg_palette_cgb = AUTO_INC;
+	// 	}
+	// 	else {
+	// 		bg_palette_cgb +=1;
+	// 	}
+	// }
+
+	if (increment) {
+		uint8_t addr = ps & 0x3F;
+		addr++;
+		addr &= 0x3F;
+		ps = (ps & 0x80) | addr;
+		bg_palette_cgb = ps;
+		update_palette_cgb(ps);
+	}
+
+	uint16_t *pa_gbc = &cgb_bg_colors_other[pal][index][0];
+	uint16_t *pa_final = &cgb_bg_colors_other[pal][index][1];
+	uint32_t *pa_32 = &cgb_bg_colors_other_32[pal][index];
+	uint16_t before = *pa_gbc;
+	*pa_gbc = hl ? (*pa_gbc & 0x00FF) | (val << 8) : (*pa_gbc & 0xFF00) | val;
+	uint8_t red_5bit = *pa_gbc & 0x1F;
+	uint8_t blue_5bit = (*pa_gbc >> 10) & 0x1F;
+	uint8_t green_5bit = (*pa_gbc >> 5) & 0x1F;
+	*pa_final = 0x8000 | (red_5bit << 10) | (green_5bit << 5) | blue_5bit;
+	// uint8_t green_6bit = (*pa_gbc >> 4) & 0x3E;
+	// *pa_final = (blue_5bit << 11) | (green_6bit << 5) | red_5bit;
+	uint8_t red = static_cast<uint8_t>(static_cast<float>(red_5bit) * 255.0 / 31.0);
+	uint8_t green = static_cast<uint8_t>(static_cast<float>(green_5bit) * 255.0 / 31.0);
+	uint8_t blue = static_cast<uint8_t>(static_cast<float>(blue_5bit) * 255.0 / 31.0);
+	*pa_32 = red << 24 | green << 16 | blue << 8 | 0xFF;
+	// uint8_t red = red_5bit >> 
+	// printf("red: (%#04x, %#04x) green: (%#04x, %#04x) blue: (%#04x, %#04x)\n", red_5bit * 8, red, green_5bit, green, blue_5bit, blue);
+	// printf("red: (%u, %u) green: (%u, %u) blue: (%u, %u)\n", red_5bit * 8, red, green_5bit, green, blue_5bit, blue);
+	// *pa_32 = red_5bit << 24 | green_5bit << 16 | blue_5bit << 8 | 0xFF;
+	// printf("final: %#10x\n", *pa_32);
+	// if (blue_5bit) {
+		// printf("set color to: %#010x red: %#04x green: %#04x blue: %#04x\n", *pa_final, red_5bit, green_5bit, blue_5bit);
+	// }
 }
 
 void PixelProcessingUnit::set_tile_data(uint16_t addr) {

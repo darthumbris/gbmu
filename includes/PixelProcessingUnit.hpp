@@ -20,6 +20,13 @@ const int SCREEN_HEIGHT = 144;
 
 const uint32_t GB_COLORS[4] = {GB_COLOR0, GB_COLOR1, GB_COLOR2, GB_COLOR3};
 
+const uint16_t RED_MASK  = {0b0000'0000'0001'1111};
+const uint16_t GREEN_MASK = {0b0000'0011'1110'0000};
+const uint16_t BLUE_MASK = {0b0111'1100'0000'0000};
+const uint8_t AUTO_INC = {0b1000'0000};
+const uint8_t SPEC_INDEX = !AUTO_INC;
+const uint8_t PALETTE_SIZE = 64;
+
 struct Sdl_Data {
 	SDL_Window *window;
 	SDL_Texture *texture;
@@ -92,9 +99,10 @@ private:
 	uint8_t vbank_select = 0;     // 0xFF4F
 	uint8_t wram_bank_select = 0; // 0xFF70
 
-	bool window_active;
+	bool window_active = false;
 	uint8_t window_line_active = 0;
 	bool draw_screen = false;
+	bool cgb_colors;
 
 	uint32_t framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 
@@ -104,6 +112,9 @@ private:
 	uint8_t tile_data[2][384][64];
 
 	uint32_t bg_colors[4];
+	uint8_t cgb_bg_colors[64];
+	uint16_t cgb_bg_colors_other[8][4][2];
+	uint32_t cgb_bg_colors_other_32[8][4];
 	uint32_t obj_0_colors[4];
 	uint32_t obj_1_colors[4];
 
@@ -122,6 +133,9 @@ private:
 
 	void set_tile_data(uint16_t addr);
 	void dma_transfer(uint8_t cycle);
+	uint32_t get_cgb_color(uint8_t value1, uint8_t value2);
+	void set_cgb_bg_palette(uint8_t val);
+	void update_palette_cgb(uint8_t val);
 
 public:
 	PixelProcessingUnit(Cpu *cpu);
