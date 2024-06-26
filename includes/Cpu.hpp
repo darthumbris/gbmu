@@ -88,19 +88,24 @@ private:
 		printf("Illegal instruction. Hard-Locks the Cpu. opcode: %#04x\n", op);
 	}
 
-#include "ops/ops_add.tcc"
-#include "ops/ops_alu.tcc"
-#include "ops/ops_bit.tcc"
-#include "ops/ops_call.tcc"
-#include "ops/ops_dec.tcc"
-#include "ops/ops_inc.tcc"
-#include "ops/ops_jumps.tcc"
-#include "ops/ops_loads.tcc"
-#include "ops/ops_misc.tcc"
-#include "ops/ops_reset.tcc"
-#include "ops/ops_ret.tcc"
-#include "ops/ops_rotate_shift.tcc"
-#include "ops/ops_sub.tcc"
+	inline bool zero() const {return (u8_registers[Registers::F] >> 7) == 0b1;}
+	inline bool carry() const {return ((u8_registers[Registers::F] >> 6) & 1) == 1;}
+	inline bool half_carry() const {return ((u8_registers[Registers::F] >> 5) & 1) == 1;}
+	inline bool subtraction() const {return ((u8_registers[Registers::F] >> 4) & 1) == 1;}
+
+	#include "ops/ops_add.tcc"
+	#include "ops/ops_alu.tcc"
+	#include "ops/ops_bit.tcc"
+	#include "ops/ops_call.tcc"
+	#include "ops/ops_dec.tcc"
+	#include "ops/ops_inc.tcc"
+	#include "ops/ops_jumps.tcc"
+	#include "ops/ops_loads.tcc"
+	#include "ops/ops_misc.tcc"
+	#include "ops/ops_reset.tcc"
+	#include "ops/ops_ret.tcc"
+	#include "ops/ops_rotate_shift.tcc"
+	#include "ops/ops_sub.tcc"
 
 	template <typename IntegerType1, typename IntegerType2>
 	bool half_carry_flag_set(IntegerType1 val1, IntegerType2 val2) {
@@ -111,6 +116,8 @@ private:
 	bool carry_flag_set(IntegerType1 val1, IntegerType2 val2) {
 		return (((val1 & 0xFF) + (val2 & 0xFF)) > 0xFF);
 	}
+
+
 	void execute_instruction();
 
 	void debug_print(bool prefix);
@@ -131,7 +138,6 @@ public:
 	INLINE_FN uint8_t get_register(Registers reg) const;
 	INLINE_FN uint16_t get_16bitregister(Registers reg) const;
 	INLINE_FN uint8_t get_flag(uint8_t flag) const;
-
 	INLINE_FN void set_16bitregister(Registers reg, uint16_t val);
 	INLINE_FN void set_register(Registers reg, uint8_t val);
 	INLINE_FN void set_flag(uint8_t flag, uint8_t val);

@@ -7,16 +7,20 @@ void inc_r16() {
 template <Registers rec>
 void inc_r8() {
 	uint8_t val;
+	uint16_t res;
 	if (rec == Registers::HL) {
-		val = mmap.read_u8(get_16bitregister(Registers::HL));
-		mmap.write_u8(get_16bitregister(Registers::HL), val + 1);
+		uint16_t addr = get_16bitregister(Registers::HL);
+		val = mmap.read_u8(addr);
+		res = val + 1;
+		mmap.write_u8(addr, static_cast<uint8_t>(res));
 		set_cycle(3);
 	} else {
 		val = get_register(rec);
-		set_register(rec, val + 1);
+		res = val + 1;
+		set_register(rec, static_cast<uint8_t>(res));
 		set_cycle(1);
 	}
-	set_flag(FlagRegisters::z, get_register(rec) == 0);
+	set_flag(FlagRegisters::z, static_cast<uint8_t>(res) == 0);
 	set_flag(FlagRegisters::n, 0);
-	set_flag(FlagRegisters::h, (get_register(rec) & 0xF) == 0x00);
+	set_flag(FlagRegisters::h, ((val & 0xF) + (1 & 0xF)) > 0xF);
 }

@@ -9,10 +9,11 @@ void sub_a_r8() {
 		val = get_register(src);
 		set_cycle(1);
 	}
-	set_register(Registers::A, a_val - val);
-	set_flag(FlagRegisters::z, (a_val - val) == 0);
+	uint16_t sub = a_val - val;
+	set_register(Registers::A, static_cast<uint8_t>(sub));
+	set_flag(FlagRegisters::z, sub == 0);
 	set_flag(FlagRegisters::n, 1);
-	set_flag(FlagRegisters::h, ((get_register(Registers::A) ^ val ^ a_val) & 0x10) != 0);
+	set_flag(FlagRegisters::h, (a_val & 0xf) < (val & 0xf));
 	set_flag(FlagRegisters::c, val > a_val);
 }
 
@@ -20,13 +21,12 @@ void sub_a_imm8() {
 	uint8_t val = mmap.read_u8(pc);
 	pc += 1;
 	uint8_t a_val = get_register(Registers::A);
-
-	set_flag(FlagRegisters::z, (a_val - val) == 0);
+	uint16_t sub = a_val - val;
+	set_flag(FlagRegisters::z, sub == 0);
 	set_flag(FlagRegisters::n, 1);
-	set_flag(FlagRegisters::h, ((get_register(Registers::A) ^ val ^ a_val) & 0x10) != 0);
+	set_flag(FlagRegisters::h, (a_val & 0xf) < (val & 0xf));
 	set_flag(FlagRegisters::c, val > a_val);
-
-	set_register(Registers::A, a_val - val);
+	set_register(Registers::A, static_cast<uint8_t>(sub));
 	set_cycle(2);
 }
 
@@ -45,9 +45,9 @@ void sbc_a_r8() {
 	uint16_t sbc = a_val - val - carry;
 	set_flag(FlagRegisters::n, 1);
 	set_flag(FlagRegisters::c, (sbc >> 8) != 0);
-	set_register(Registers::A, sbc);
 	set_flag(FlagRegisters::z, sbc == 0);
 	set_flag(FlagRegisters::h, (a_val & 0xF) < (val & 0xF) + carry);
+	set_register(Registers::A, static_cast<uint8_t>(sbc));
 }
 
 void sbc_a_imm8() {

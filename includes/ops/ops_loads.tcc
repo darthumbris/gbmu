@@ -82,32 +82,32 @@ void ld_hl_sp_imm8() {
 	set_16bitregister(Registers::HL, static_cast<uint16_t>(val + e8));
 	set_flag(FlagRegisters::z, 0);
 	set_flag(FlagRegisters::n, 0);
-	set_flag(FlagRegisters::h, half_carry_flag_set(e8, val));
-	set_flag(FlagRegisters::c, carry_flag_set(e8, val));
+	set_flag(FlagRegisters::h, (val & 0xf) + (e8 & 0xf) > 0xf);
+	set_flag(FlagRegisters::c, (val & 0xff) + (e8 & 0xff) > 0xff);
 	set_cycle(3);
 }
 
 void ldh_a_imm8() {
-	uint16_t addr = mmap.read_u8(pc);
+	uint8_t addr = mmap.read_u8(pc);
 	pc += 1;
-	set_register(Registers::A, mmap.read_u8(0xFF00 + addr));
+	set_register(Registers::A, mmap.read_u8(0xFF00 + static_cast<uint16_t>(addr)));
 	set_cycle(3);
 }
 
 void ldh_imm8_a() {
-	uint16_t addr = mmap.read_u8(pc);
+	uint8_t addr = mmap.read_u8(pc);
 	pc += 1;
-	mmap.write_u8(0xFF00 + addr, get_register(Registers::A));
+	mmap.write_u8(0xFF00 + static_cast<uint16_t>(addr), get_register(Registers::A));
 	set_cycle(3);
 }
 
 void ld_c_a() {
-	mmap.write_u8(0xFF00 + get_register(Registers::C), get_register(Registers::A));
+	mmap.write_u8(0xFF00 + static_cast<uint16_t>(get_register(Registers::C)), get_register(Registers::A));
 	set_cycle(2);
 }
 
 void ld_a_c() {
-	set_register(Registers::A, mmap.read_u8(0xFF00 + get_register(Registers::C)));
+	set_register(Registers::A, mmap.read_u8(0xFF00 + static_cast<uint16_t>(get_register(Registers::C))));
 	set_cycle(2);
 }
 
@@ -154,16 +154,8 @@ INLINE_FN void pop_r16stk() {
 
 template <Registers src>
 INLINE_FN void push_r16stk() {
-	// Push ss
 	uint16_t val = get_16bitregister(src);
-	uint16_t sp_val = this->sp;
-
-	//(SP - 1) <- ssh (high byte)
-	mmap.write_u8(sp_val - 1, (uint8_t)((val & 0xFF00) >> 8));
-	//(SP - 2) <- ssl (low byte)
-	mmap.write_u8(sp_val - 2, (uint8_t)((val & 0xFF)));
-
-	// SP <- (SP - 2)
-	sp = sp_val - 2;
+	sp -= 2;
+	mmap.write_u16(sp, val);
 	set_cycle(4);
 }

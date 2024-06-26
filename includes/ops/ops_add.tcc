@@ -36,7 +36,7 @@ void add_hl_r16() {
 	uint16_t hl_val = get_16bitregister(Registers::HL);
 	set_16bitregister(Registers::HL, static_cast<uint16_t>(val + hl_val));
 	set_flag(FlagRegisters::n, 0);
-	set_flag(FlagRegisters::h, ((hl_val & 0xFFF) + (val & 0xFFF)) > 0xFFF);
+	set_flag(FlagRegisters::h, (val & 0xfff) + (hl_val & 0xfff) > 0xfff);
 	set_flag(FlagRegisters::c, (val + hl_val) >> 16);
 	set_cycle(2);
 }
@@ -45,11 +45,11 @@ void add_sp_imm8() {
 	uint8_t e8 = mmap.read_u8(pc);
 	pc += 1;
 	uint16_t sp_val = sp;
-	sp = static_cast<uint16_t>(e8 + sp_val);
 	set_flag(FlagRegisters::z, 0);
 	set_flag(FlagRegisters::n, 0);
-	set_flag(FlagRegisters::h, half_carry_flag_set(e8, sp_val));
-	set_flag(FlagRegisters::c, carry_flag_set(e8, sp_val));
+	set_flag(FlagRegisters::h, (sp_val & 0xf) + (e8 & 0xf) > 0xf);
+	set_flag(FlagRegisters::c, (sp_val & 0xff) + (e8 & 0xff) > 0xff);
+	sp = static_cast<uint16_t>(e8 + sp_val);
 	set_cycle(4);
 }
 
