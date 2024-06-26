@@ -216,7 +216,7 @@ void Cpu::set_instructions() {
 	u[0xD3] = &Cpu::lockup<0xD3>;
 	u[0xD4] = &Cpu::call_cond_imm16<Condition::NotCarryFlag>;
 	u[0xD5] = &Cpu::push_r16stk<Registers::DE>;
-	u[0xD6] = &Cpu::sbc_a_imm8;
+	u[0xD6] = &Cpu::sub_a_imm8; //Ok1
 	u[0xD7] = &Cpu::rst_tg3<0x10>;
 	u[0xD8] = &Cpu::ret_cond<Condition::CarryFlag>;
 	u[0xD9] = &Cpu::reti;
