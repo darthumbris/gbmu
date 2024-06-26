@@ -69,6 +69,7 @@ struct LCD_DMA {
 	void set(uint8_t value);
 };
 
+//TODO instead of the att_flags use 4 bools: (background, y_flip, x_flip, palette)
 struct Sprite {
 	uint8_t y_pos;
 	uint8_t x_pos;

@@ -104,6 +104,7 @@ void PixelProcessingUnit::handle_interrupt(bool val) {
 	}
 }
 
+//TODO seems to be an issue here (see one of the sprites in Pokemon blue if you move have a line in it)
 void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, uint32_t i, uint8_t tile_data_pos,
                                          uint32_t *framebuffer_ptr, size_t *spr_index) {
 	bool drawn = false;
@@ -111,44 +112,45 @@ void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, uint32_t i
 		if (!(spr->x_pos - 8 <= (int)(i) && spr->x_pos > (int)(i))) {
 			break;
 		}
-		uint8_t tile_x = i - (spr->x_pos - 8);
-		uint8_t tile_y = ly - (spr->y_pos - 16);
-
-		if ((spr->att_flags >> 5) & 1)
-			tile_x = 7 - tile_x;
-		if ((spr->att_flags >> 6) & 1)
-			tile_y = (ctrl.obj_size ? 15 : 7) - tile_y;
-
-		uint8_t sprite_index = spr->tile_index;
-
-		if (ctrl.obj_size) {
-			sprite_index = (sprite_index & 0xFE) + (tile_y >= 8);
-			tile_y %= 8;
-		}
-
-		uint8_t color_index = tile_data[vbank_select][sprite_index][(uint16_t)tile_y * 8 + tile_x];
-
-		bool background = ((spr->att_flags >> 7) & 1);
-		if (color_index && !drawn && (!background || (background && !tile_data_pos))) {
-			if ((spr->att_flags >> 4) & 1) {
-				*framebuffer_ptr = obj_1_colors[color_index];
-			} else {
-				*framebuffer_ptr = obj_0_colors[color_index];
-			}
-			drawn = true;
-		}
-
 		// Go to next sprite if this x marks the end of it
 		if (i + 1 == spr->x_pos)
 			(*spr_index)++;
+		if (!drawn) {
+			uint8_t tile_x = i - (spr->x_pos - 8);
+			uint8_t tile_y = ly - (spr->y_pos - 16);
+
+			if ((spr->att_flags >> 5) & 1)
+				tile_x = 7 - tile_x;
+			if ((spr->att_flags >> 6) & 1)
+				tile_y = (ctrl.obj_size ? 15 : 7) - tile_y;
+
+			uint8_t sprite_index = spr->tile_index;
+
+			if (ctrl.obj_size) {
+				sprite_index = (sprite_index & 0xFE) + (tile_y >= 8);
+				tile_y %= 8;
+			}
+
+			uint8_t color_index = tile_data[vbank_select][sprite_index][(uint16_t)tile_y * 8 + tile_x];
+
+			bool background = ((spr->att_flags >> 7) & 1);
+			if (color_index && (!background || (background && !tile_data_pos))) {
+				if ((spr->att_flags >> 4) & 1) {
+					*framebuffer_ptr = obj_1_colors[color_index];
+				} else {
+					*framebuffer_ptr = obj_0_colors[color_index];
+				}
+				drawn = true;
+			}
+		}
 	}
 }
 
 void PixelProcessingUnit::render_scanline() {
 	std::vector<Sprite> sprites;
 
-	sprites.reserve(10);
 	if (ctrl.obj_enable) {
+		sprites.reserve(10);
 		for (int i = 0; i < 40; i++) {
 			Sprite spr = get_sprite(i);
 			if (ly < spr.y_pos &&
@@ -192,9 +194,9 @@ void PixelProcessingUnit::render_scanline() {
 			uint16_t tile_attr_index = vram[1][tile_map_offset + line_offset];
 			uint8_t tile_attr = tile_data[1][tile_attr_index][(uint16_t)(y) * 8 + x];
 			uint8_t tile_pal = tile_attr & 0b111;
-			if (tile_dat) {
-				printf("tile_dat: %u tile_attr: %u tile_pal: %u\n", tile_dat, tile_attr, tile_pal);
-			}
+			// if (tile_dat) {
+			// 	printf("tile_dat: %u tile_attr: %u tile_pal: %u\n", tile_dat, tile_attr, tile_pal);
+			// }
 			*framebuffer_ptr = cgb_bg_colors_other_32[tile_pal][tile_dat];
 		}
 		else {
@@ -379,7 +381,6 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		window_x = val;
 		break;
 	case 0xFF4F:
-		// TODO have a check if CGB mode or not and then do this
 		if (cgb_colors) {
 			printf("setting vbank select to: %u val: %u\n", val & 1, val);
 			vbank_select = val & 1;
@@ -436,6 +437,7 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 }
 
 void PixelProcessingUnit::write_oam(uint16_t addr, uint8_t val) {
+	//TODO also change the sprites here?
 	oam[addr / 4][addr % 4] = val;
 }
 
