@@ -126,6 +126,7 @@ uint16_t get_rom_size(uint8_t s) {
 }
 
 uint8_t get_ram_size(uint8_t s) {
+	printf("ram_size: %u\n", s);
 	switch (s) {
 	case 0x00:
 		return 0;
@@ -248,7 +249,7 @@ RomHeader::RomHeader(const std::string path) {
 	ifs.read(reinterpret_cast<char *>(&val), sizeof(val));
 	bitsToInt(_global_checksum, val, true);
 	ifs.close();
-	// print_rom_info();
+	print_rom_info();
 }
 
 RomHeader::~RomHeader() {}

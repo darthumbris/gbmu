@@ -13,7 +13,7 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 	cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 	cgb.close();
 
-	header.disable_cgb_enhancement();
+	// header.disable_cgb_enhancement();
 	switch (header.cartridge_type()) {
 	case CartridgeType::MBC1:
 	case CartridgeType::MBC1_RAM:
