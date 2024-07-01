@@ -13,6 +13,7 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 	cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 	cgb.close();
 
+	header.disable_cgb_enhancement();
 	switch (header.cartridge_type()) {
 	case CartridgeType::MBC1:
 	case CartridgeType::MBC1_RAM:
@@ -42,6 +43,7 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 		rom = Rom::make<MCB1>(path, header, header.has_battery());
 		break;
 	}
+
 	// TODO handle MBC7, cartridge types and give an error when not mbc1,3,5,7 or Rom only roms
 	// TODO handle (ROM_ONLY, ROM_RAM, ROM_RAM_BATTERY)
 	// TODO add a way to force CGB_Enhanced roms in GB mode
@@ -85,7 +87,8 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 	case 0xFEA0 ... 0xFEFF:
 		return not_usable[addr - 0xFEA0];
 	case 0xFF00 ... 0xFF3F:
-		if (addr == 0xFF00) {
+		switch (addr) {
+		case 0xFF00:
 			switch (joypad) {
 			case 1:
 				return joypad_buttons;
@@ -94,11 +97,19 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 			default:
 				return 0xFF;
 			}
-		}
-		if (addr == 0xFF04) {
+		case 0xFF04:
 			return cpu->get_timer_divider();
+		case 0xFF05:
+			return cpu->get_timer_counter();
+		case 0xFF06:
+			return cpu->get_timer_module();
+		case 0xFF07:
+			return cpu->get_timer_control();
+		case 0xFF0F:
+			return cpu->get_interrupt();
+		default:
+			return io_registers[addr - 0xFF00];
 		}
-		return io_registers[addr - 0xFF00];
 	case 0xFF40 ... 0xFF4F:
 		return cpu->get_ppu().read_u8_ppu(addr);
 	case 0xFF51 ... 0xFF7F:
@@ -156,19 +167,29 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		not_usable[addr - 0xFEA0] = val;
 		break;
 	case 0xFF00 ... 0xFF3F:
-		if (addr == 0xFF00) {
+		switch (addr) {
+		case 0xFF00:
 			joypad = (val >> 4) & 3;
 			break;
-		}
-		if (addr == 0xFF0F) {
-			cpu->overwrite_interrupt(val);
-			break;
-		}
-		if (addr == 0xFF04) {
+		case 0xFF04:
 			cpu->reset_timer_divider();
 			break;
+		case 0xFF05:
+			cpu->set_timer_counter(val);
+			break;
+		case 0xFF06:
+			cpu->set_timer_modulo(val);
+			break;
+		case 0xFF07:
+			cpu->set_timer_control(val);
+			break;
+		case 0xFF0F:
+			cpu->overwrite_interrupt(val);
+			break;
+		default:
+			io_registers[addr - 0xFF00] = val;
+			break;
 		}
-		io_registers[addr - 0xFF00] = val;
 		break;
 	case 0xFF40 ... 0xFF4F:
 		cpu->get_ppu().write_u8_ppu(addr, val);

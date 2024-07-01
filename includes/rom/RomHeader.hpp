@@ -83,6 +83,10 @@ public:
 	bool has_battery() const;
 	bool has_rumble() const;
 	bool has_timer() const;
+
+	inline void disable_cgb_enhancement() {
+		_cgb_flag = Non_CGB_Mode;
+	}
 };
 
 #endif

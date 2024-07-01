@@ -14,13 +14,13 @@ void Cpu::add_a_imm8() {
 }
 
 void Cpu::add_sp_imm8() {
-	uint8_t e8 = mmap.read_u8(pc);
+	int8_t e8 = mmap.read_u8(pc);
 	pc += 1;
 	uint16_t sp_val = sp;
 	set_flag(FlagRegisters::z, 0);
 	set_flag(FlagRegisters::n, 0);
-	set_flag(FlagRegisters::h, (sp_val & 0xf) + (e8 & 0xf) > 0xf);
-	set_flag(FlagRegisters::c, (sp_val & 0xff) + (e8 & 0xff) > 0xff);
+	set_flag(FlagRegisters::h, ((e8 & 0xf) + (sp_val & 0xf)) > 0xf);
+	set_flag(FlagRegisters::c, ((e8 & 0xff) + (sp_val & 0xff)) > 0xff);
 	sp = static_cast<uint16_t>(e8 + sp_val);
 	set_cycle(4);
 }

@@ -22,8 +22,8 @@ void Cpu::sbc_a_imm8() {
 
 	set_flag(FlagRegisters::n, 1);
 	set_flag(FlagRegisters::c, (sbc >> 8) != 0);
-	set_register(Registers::A, sbc);
-	set_flag(FlagRegisters::z, sbc == 0);
+	set_register(Registers::A, static_cast<uint8_t>(sbc));
+	set_flag(FlagRegisters::z, static_cast<uint8_t>(sbc) == 0);
 	set_flag(FlagRegisters::h, (a_val & 0xF) < (val & 0xF) + carry);
 	set_cycle(2);
 }

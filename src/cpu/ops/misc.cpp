@@ -20,7 +20,7 @@ void Cpu::daa() {
 			a_val += 0x6;
 	}
 	set_flag(FlagRegisters::z, a_val == 0);
-	set_flag(FlagRegisters::h, 1);
+	set_flag(FlagRegisters::h, 0);
 	set_register(Registers::A, a_val);
 	set_cycle(1);
 }

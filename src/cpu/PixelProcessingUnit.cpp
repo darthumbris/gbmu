@@ -1,6 +1,7 @@
 #include "PixelProcessingUnit.hpp"
 #include "Cpu.hpp"
 #include <cstring>
+#include <iostream>
 
 PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	lcd_clock = 0;

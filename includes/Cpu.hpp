@@ -63,10 +63,14 @@ private:
 	bool process_interrupts = false;
 	uint8_t opcode = 0;
 
-	uint8_t timer_divider = 0;
+	uint8_t timer_divider = 0;      // 0xFF04
+	uint8_t timer_counter = 0;      // 0xFF05
+	uint8_t timer_modulo = 0;       // 0xFF06
+	bool timer_enable = false;      // 0xFF07
+	uint8_t timer_clock_select = 0; // 0xFF07
 	std::string rom_path;
 
-	typedef void (Cpu::*OpsFn)(void);
+	using OpsFn = void (Cpu::*)();
 
 	std::array<OpsFn, 256> unprefixed_instructions;
 	std::array<OpsFn, 256> prefixed_instructions;
@@ -492,8 +496,11 @@ private:
 
 	template <Registers rec>
 	void pop_r16stk() {
-		uint16_t val = sp;
-		set_16bitregister(rec, mmap.read_u16(sp));
+		uint16_t val = mmap.read_u16(sp);
+		if constexpr (rec == Registers::AF) {
+			val &= 0xFFF0;
+		}
+		set_16bitregister(rec, val);
 		sp += 2;
 		set_cycle(3);
 	}
@@ -734,7 +741,7 @@ private:
 		}
 		uint16_t sub = a_val - val;
 		set_register(Registers::A, static_cast<uint8_t>(sub));
-		set_flag(FlagRegisters::z, sub == 0);
+		set_flag(FlagRegisters::z, static_cast<uint8_t>(sub) == 0);
 		set_flag(FlagRegisters::n, 1);
 		set_flag(FlagRegisters::h, (a_val & 0xf) < (val & 0xf));
 		set_flag(FlagRegisters::c, val > a_val);
@@ -755,7 +762,7 @@ private:
 		uint16_t sbc = a_val - val - carry;
 		set_flag(FlagRegisters::n, 1);
 		set_flag(FlagRegisters::c, (sbc >> 8) != 0);
-		set_flag(FlagRegisters::z, sbc == 0);
+		set_flag(FlagRegisters::z, static_cast<uint8_t>(sbc) == 0);
 		set_flag(FlagRegisters::h, (a_val & 0xF) < (val & 0xF) + carry);
 		set_register(Registers::A, static_cast<uint8_t>(sbc));
 	}
@@ -809,6 +816,9 @@ public:
 	inline void overwrite_interrupt(uint8_t val) {
 		interrupt = val;
 	}
+	inline uint8_t get_interrupt() const {
+		return interrupt;
+	}
 	inline void set_interrupt_enable(uint8_t val) {
 		interrupt_enable_register = val;
 	}
@@ -822,8 +832,36 @@ public:
 		timer_divider = 0;
 	}
 
+	inline uint8_t get_timer_counter() {
+		return timer_counter;
+	}
+	inline void set_timer_counter(uint8_t val) {
+		timer_counter = val;
+	}
+
+	inline uint8_t get_timer_module() {
+		return timer_modulo;
+	}
+	inline void set_timer_modulo(uint8_t val) {
+		timer_modulo = val;
+	}
+
+	inline uint8_t get_timer_control() {
+		return (timer_enable << 2 | timer_clock_select << 0);
+	}
+	inline void set_timer_control(uint8_t val) {
+		timer_enable = (val >> 2) & 1;
+		if (!timer_enable) {
+			t_cycle = 0;
+		}
+		timer_clock_select = (val >> 0) & 3;
+	}
+
 	void serialize(const std::string &file);
 	void deserialize(const std::string &file);
 };
 
 #endif
+
+// 09:01
+// 11:01

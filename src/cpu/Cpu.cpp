@@ -2,8 +2,8 @@
 #include <ctime>
 #include <iostream>
 
-uint64_t const DEBUG_START = 26979095;
-uint64_t const DEBUG_COUNT = 32;
+uint64_t const DEBUG_START = 0;
+uint64_t const DEBUG_COUNT = 1;
 
 Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec), mmap(path, this), ppu(this), rom_path(path) {
 	u8_registers = {0};
@@ -67,6 +67,23 @@ void Cpu::tick() {
 		if (d_cycle >= 256) { // TODO check for cpu stopped and handle different frequencies
 			timer_divider++;
 			d_cycle -= 256;
+		}
+		if (timer_enable) {
+			if (timer_clock_select == 1 && t_cycle >= 16) {
+				t_cycle -= 16;
+			} else if (timer_clock_select == 2 && t_cycle >= 64) {
+				t_cycle -= 64;
+			} else if (timer_clock_select == 3 && t_cycle >= 256) {
+				t_cycle -= 256;
+			} else if (timer_clock_select == 0 && t_cycle >= 1024) {
+				t_cycle -= 1024;
+			} else {
+				timer_counter++;
+				if (!timer_counter) {
+					set_interrupt(InterruptType::Timer);
+					timer_counter = timer_modulo;
+				}
+			}
 		}
 		m_cycle = 0;
 		t_cycle = 0;
@@ -133,14 +150,17 @@ void Cpu::debug_print(bool prefix) {
 void Cpu::prefix() {
 	opcode = mmap.read_u8(pc);
 #ifdef DEBUG_MODE
-	if (debug_count > DEBUG_START - DEBUG_COUNT && debug_count < DEBUG_START + DEBUG_COUNT) {
+	if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
 		// debug_print(true);
-		std::cout << debug_count << " opcode: 0xCB" << std::hex << std::setfill('0') << std::setw(2) << (uint16_t)opcode
-		          << std::dec << std::endl;
-		std::cout << debug_count << " PC: 0x" << std::hex << std::setfill('0') << std::setw(4) << pc << std::dec
-		          << std::endl;
-		printf("register a %u b %u f %u HL %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
-		       u8_registers[Registers::F], get_16bitregister(Registers::HL));
+		// std::cout << debug_count << " opcode: 0xCB" << std::hex << std::setfill('0') << std::setw(2) <<
+		// (uint16_t)opcode
+		//           << std::dec << std::endl;
+		// std::cout << debug_count << " PC: 0x" << std::hex << std::setfill('0') << std::setw(4) << pc << std::dec
+		//           << std::endl;
+		printf("debug_count: %lu opcode CB: %#04x pc: %u\n", debug_count, opcode, pc);
+		printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
+		       u8_registers[Registers::F], get_16bitregister(Registers::HL), sp);
+		printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D], u8_registers[Registers::E]);
 	}
 #endif
 	pc += 1;
@@ -156,14 +176,16 @@ void Cpu::execute_instruction() {
 	opcode = mmap.read_u8(pc);
 #ifdef DEBUG_MODE
 	if (opcode != 0xCB) {
-		if (debug_count > DEBUG_START - DEBUG_COUNT && debug_count < DEBUG_START + DEBUG_COUNT) {
+		if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
 			// debug_print(false);
-			std::cout << debug_count << " opcode: 0x" << std::hex << std::setfill('0') << std::setw(2)
-			          << (uint16_t)opcode << std::dec << std::endl;
-			std::cout << debug_count << " PC: 0x" << std::hex << std::setfill('0') << std::setw(4) << pc << std::dec
-			          << std::endl;
-			printf("register a %u b %u f %u HL %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
-			       u8_registers[Registers::F], get_16bitregister(Registers::HL));
+			// std::cout << debug_count << " opcode: 0x" << std::hex << std::setfill('0') << std::setw(2)
+			//           << (uint16_t)opcode << std::dec << std::endl;
+			// std::cout << debug_count << " PC: 0x" << std::hex << std::setfill('0') << std::setw(4) << pc << std::dec
+			//           << std::endl;
+			printf("debug_count: %lu opcode: %#04x pc: %u\n", debug_count, opcode, pc);
+			printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
+			       u8_registers[Registers::F], get_16bitregister(Registers::HL), sp);
+			printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D], u8_registers[Registers::E]);
 		}
 	}
 #endif
