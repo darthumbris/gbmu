@@ -28,6 +28,15 @@ SRC =	main.cpp \
         cpu/PixelProcessingUnit.cpp \
         cpu/instruction_table.cpp \
         cpu/Serialization.cpp \
+        cpu/ops/add.cpp \
+        cpu/ops/alu.cpp \
+        cpu/ops/call.cpp \
+        cpu/ops/jumps.cpp \
+        cpu/ops/loads.cpp \
+        cpu/ops/misc.cpp \
+        cpu/ops/ret.cpp \
+        cpu/ops/rotate_shift.cpp \
+        cpu/ops/sub.cpp \
 
 
 SRC_EXT = cpp

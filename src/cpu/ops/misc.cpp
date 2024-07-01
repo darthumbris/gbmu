@@ -1,30 +1,10 @@
-template <Registers rec>
-void swap_r8() {
-	uint8_t val;
-	if (rec == Registers::HL) {
-		val = mmap.read_u8(get_16bitregister(Registers::HL));
-		mmap.write_u8(get_16bitregister(Registers::HL), (val & 0xF) << 4);
-		mmap.write_u8(get_16bitregister(Registers::HL),
-		              mmap.read_u8(get_16bitregister(Registers::HL)) | ((val & 0xF0) >> 4));
-		set_cycle(4);
-	} else {
-		val = get_register(rec);
-		set_register(rec, (val & 0xF) << 4);
-		set_register(rec, get_register(rec) | ((val & 0xF0) >> 4));
-		set_cycle(2);
-	}
-	set_flag(FlagRegisters::z, val == 0);
-	set_flag(FlagRegisters::n, 0);
-	set_flag(FlagRegisters::c, 0);
-	set_flag(FlagRegisters::h, 0);
-}
+#include "Cpu.hpp"
 
-void nop() {
+void Cpu::nop() {
 	set_cycle(1);
 }
 
-// Decimal Adjust a Converts A into packed BCD.
-void daa() {
+void Cpu::daa() {
 	uint8_t a_val = get_register(Registers::A);
 	if (get_flag(FlagRegisters::n)) {
 		if (get_flag(FlagRegisters::c))
@@ -45,43 +25,43 @@ void daa() {
 	set_cycle(1);
 }
 
-void cpl() {
+void Cpu::cpl() {
 	set_register(Registers::A, ~get_register(Registers::A));
 	set_flag(FlagRegisters::n, 1);
 	set_flag(FlagRegisters::h, 1);
 	set_cycle(1);
 }
 
-void scf() {
+void Cpu::scf() {
 	set_flag(FlagRegisters::n, 0);
 	set_flag(FlagRegisters::h, 0);
 	set_flag(FlagRegisters::c, 1);
 	set_cycle(1);
 }
 
-void ccf() {
+void Cpu::ccf() {
 	set_flag(FlagRegisters::n, 0);
 	set_flag(FlagRegisters::h, 0);
 	set_flag(FlagRegisters::c, !get_flag(FlagRegisters::c));
 	set_cycle(1);
 }
 
-void stop() {
+void Cpu::stop() {
 	pc += 1;
 	set_cycle(1);
 }
 
-void halt() {
+void Cpu::halt() {
 	halted = true;
 	set_cycle(1);
 }
 
-void di() {
+void Cpu::di() {
 	process_interrupts = false;
 	set_cycle(1);
 }
 
-void ei() {
+void Cpu::ei() {
 	process_interrupts = true;
 	set_cycle(1);
 }

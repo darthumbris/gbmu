@@ -24,8 +24,6 @@ using Mem16k = std::array<uint8_t, 16384>;
 using Mem8k = std::array<uint8_t, 8192>;
 using Mem4k = std::array<uint8_t, 4096>;
 
-#define INLINE_FN
-
 /*IO_Registers
  * 0xFF00           Joypad input
  * 0xFF01-0xFF02    Serial transfer
@@ -119,10 +117,10 @@ public:
 
 	~MemoryMap();
 
-	INLINE_FN uint8_t read_u8(uint16_t addr);
-	INLINE_FN uint16_t read_u16(uint16_t addr);
-	INLINE_FN void write_u8(uint16_t addr, uint8_t val);
-	INLINE_FN void write_u16(uint16_t addr, uint16_t val);
+	uint8_t read_u8(uint16_t addr);
+	uint16_t read_u16(uint16_t addr);
+	void write_u8(uint16_t addr, uint8_t val);
+	void write_u16(uint16_t addr, uint16_t val);
 
 	inline bool is_boot_rom_enabled() {
 		return io_registers[(std::size_t)(0xFF50 - 0xFF00)];

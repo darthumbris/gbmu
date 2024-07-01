@@ -17,22 +17,22 @@ Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec), mmap(path, this), 
 
 Cpu::~Cpu() {}
 
-INLINE_FN uint16_t Cpu::get_16bitregister(Registers reg) const {
+uint16_t Cpu::get_16bitregister(Registers reg) const {
 	if (reg == Registers::SP) {
 		return sp;
 	}
 	return ((uint16_t)(u8_registers[reg - Registers::BC] << 8) + (uint16_t)u8_registers[reg - Registers::BC + 1]);
 }
 
-INLINE_FN uint8_t Cpu::get_register(Registers reg) const {
+uint8_t Cpu::get_register(Registers reg) const {
 	return (u8_registers[reg]);
 }
 
-INLINE_FN uint8_t Cpu::get_flag(uint8_t flag) const {
+uint8_t Cpu::get_flag(uint8_t flag) const {
 	return ((u8_registers[Registers::F] >> flag) & 1);
 }
 
-INLINE_FN void Cpu::set_16bitregister(Registers reg, uint16_t val) {
+void Cpu::set_16bitregister(Registers reg, uint16_t val) {
 	if (reg == Registers::SP) {
 		sp = val;
 	} else {
@@ -41,11 +41,11 @@ INLINE_FN void Cpu::set_16bitregister(Registers reg, uint16_t val) {
 	}
 }
 
-INLINE_FN void Cpu::set_register(Registers reg, uint8_t val) {
+void Cpu::set_register(Registers reg, uint8_t val) {
 	u8_registers[reg] = val;
 }
 
-INLINE_FN void Cpu::set_flag(uint8_t flag, uint8_t val) {
+void Cpu::set_flag(uint8_t flag, uint8_t val) {
 	u8_registers[Registers::F] ^= ((-val) ^ u8_registers[Registers::F]) & (1U << flag);
 }
 

@@ -49,7 +49,7 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 
 MemoryMap::~MemoryMap() {}
 
-INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr) {
+uint8_t MemoryMap::read_u8(uint16_t addr) {
 	// printf("trying to read addr: %#06x\n", addr);
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
@@ -115,11 +115,11 @@ INLINE_FN uint8_t MemoryMap::read_u8(uint16_t addr) {
 	}
 }
 
-INLINE_FN uint16_t MemoryMap::read_u16(uint16_t addr) {
+uint16_t MemoryMap::read_u16(uint16_t addr) {
 	return ((uint16_t)read_u8(addr) + ((uint16_t)read_u8(addr + 1) << 8));
 }
 
-INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
+void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	// printf("trying to write to addr: %#06x with val: %u\n", addr, val);
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
@@ -194,7 +194,7 @@ INLINE_FN void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	}
 }
 
-INLINE_FN void MemoryMap::write_u16(uint16_t addr, uint16_t val) {
+void MemoryMap::write_u16(uint16_t addr, uint16_t val) {
 	write_u8(addr, (uint8_t)(val & 0xFF));
 	write_u8(addr + 1, (uint8_t)((val & 0xFF00) >> 8));
 }
