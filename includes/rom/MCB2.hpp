@@ -1,7 +1,7 @@
 #ifndef MCB2_HPP
 #define MCB2_HPP
 
-#include "rom/Rom.hpp"
+#include "Rom.hpp"
 
 constexpr std::uint16_t mask8{0b0000'0001'0000'0000}; // represents bit 8
 

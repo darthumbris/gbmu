@@ -1,10 +1,6 @@
 #include "Cpu.hpp"
 #include "Decoder.hpp"
 #include <SDL2/SDL.h>
-#include <cstddef>
-#include <fstream>
-#include <iostream>
-#include <stdio.h>
 
 int main(int argc, char *argv[]) {
 	std::string path = argv[1];

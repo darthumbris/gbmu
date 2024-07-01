@@ -105,7 +105,7 @@ void PixelProcessingUnit::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&window_line_active), sizeof(window_line_active));
 	f.write(reinterpret_cast<const char *>(&draw_screen), sizeof(draw_screen));
 	f.write(reinterpret_cast<const char *>(&framebuffer), sizeof(framebuffer));
-	f.write(reinterpret_cast<const char *>(&oam), sizeof(oam));
+	f.write(reinterpret_cast<const char *>(&sprites), sizeof(sprites));
 	f.write(reinterpret_cast<const char *>(&vram), sizeof(vram));
 	f.write(reinterpret_cast<const char *>(&tile_data), sizeof(tile_data));
 	f.write(reinterpret_cast<const char *>(&bg_colors), sizeof(bg_colors));
@@ -134,7 +134,7 @@ void PixelProcessingUnit::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&window_line_active), sizeof(window_line_active));
 	f.read(reinterpret_cast<char *>(&draw_screen), sizeof(draw_screen));
 	f.read(reinterpret_cast<char *>(&framebuffer), sizeof(framebuffer));
-	f.read(reinterpret_cast<char *>(&oam), sizeof(oam));
+	f.read(reinterpret_cast<char *>(&sprites), sizeof(sprites));
 	f.read(reinterpret_cast<char *>(&vram), sizeof(vram));
 	f.read(reinterpret_cast<char *>(&tile_data), sizeof(tile_data));
 	f.read(reinterpret_cast<char *>(&bg_colors), sizeof(bg_colors));

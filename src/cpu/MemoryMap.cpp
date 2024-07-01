@@ -4,7 +4,6 @@
 #include "rom/MCB2.hpp"
 #include "rom/MCB3.hpp"
 #include "rom/MCB5.hpp"
-#include <cstddef>
 #include <fstream>
 #include <iostream>
 
@@ -29,7 +28,7 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 	case CartridgeType::MBC3:
 	case CartridgeType::MBC3_RAM:
 	case CartridgeType::MBC3_RAM_BATTERY:
-		rom = Rom::make<MCB1>(path, header, header.has_battery());
+		rom = Rom::make<MCB3>(path, header, header.has_battery());
 		break;
 	case CartridgeType::MBC5:
 	case CartridgeType::MBC5_RAM:

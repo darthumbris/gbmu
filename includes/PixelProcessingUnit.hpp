@@ -4,8 +4,7 @@
 #include <SDL2/SDL.h>
 #include <array>
 #include <cstdint>
-#include <deque>
-#include <iostream>
+#include <fstream>
 #include <vector>
 
 class Cpu;
@@ -20,7 +19,7 @@ const int SCREEN_HEIGHT = 144;
 
 const uint32_t GB_COLORS[4] = {GB_COLOR0, GB_COLOR1, GB_COLOR2, GB_COLOR3};
 
-const uint16_t RED_MASK  = {0b0000'0000'0001'1111};
+const uint16_t RED_MASK = {0b0000'0000'0001'1111};
 const uint16_t GREEN_MASK = {0b0000'0011'1110'0000};
 const uint16_t BLUE_MASK = {0b0111'1100'0000'0000};
 const uint8_t AUTO_INC = {0b1000'0000};
@@ -69,12 +68,21 @@ struct LCD_DMA {
 	void set(uint8_t value);
 };
 
-//TODO instead of the att_flags use 4 bools: (background, y_flip, x_flip, palette)
+struct Sprite_Attributes {
+	bool background;
+	bool y_flip;
+	bool x_flip;
+	bool palette;
+	void set(uint8_t value);
+	uint8_t get();
+};
+
+// TODO instead of the att_flags use 4 bools: (background, y_flip, x_flip, palette)
 struct Sprite {
 	uint8_t y_pos;
 	uint8_t x_pos;
 	uint8_t tile_index;
-	uint8_t att_flags;
+	Sprite_Attributes attributes;
 };
 
 class PixelProcessingUnit {
@@ -106,9 +114,8 @@ private:
 	bool cgb_colors;
 
 	uint32_t framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
-
-	uint8_t oam[40][4]; // 0xFE00 - 0xFE9F 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3:
-	                    // Attributes/flags)
+	std::array<Sprite, 40> sprites; // 0xFE00 - 0xFE9F 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3:
+	                                // Attributes/flags)
 	std::array<uint8_t, 8192> vram[2]{0};
 	uint8_t tile_data[2][384][64];
 
@@ -128,9 +135,9 @@ private:
 	void handle_interrupt(bool val);
 
 	void render_scanline();
-	void handle_sprites(std::vector<Sprite> sprites, uint32_t i, uint8_t tile_data_pos, uint32_t *framebuffer_ptr,
-	                    size_t *spr_index);
-	Sprite get_sprite(size_t index);
+	void handle_sprites(std::vector<std::reference_wrapper<Sprite>> sprites, uint32_t i, uint8_t tile_data_pos,
+	                    uint32_t *framebuffer_ptr, size_t *spr_index);
+	// Sprite get_sprite(size_t index);
 
 	void set_tile_data(uint16_t addr);
 	void dma_transfer(uint8_t cycle);

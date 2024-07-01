@@ -7,10 +7,7 @@ class Cpu;
 #include <SDL2/SDL_keycode.h>
 #include <array>
 #include <cstdint>
-#include <iostream>
-#include <memory>
 #include <string>
-#include <vector>
 
 constexpr std::uint8_t mask0{0b0000'0001}; // represents bit 0
 constexpr std::uint8_t mask1{0b0000'0010}; // represents bit 1

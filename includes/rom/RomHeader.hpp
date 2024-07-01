@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstdint>
-#include <iostream>
 #include <string>
 
 enum CGB_FLAGS {

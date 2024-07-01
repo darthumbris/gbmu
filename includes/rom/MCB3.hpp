@@ -1,7 +1,7 @@
 #ifndef MCB3_HPP
 #define MCB3_HPP
 
-#include "rom/Rom.hpp"
+#include "Rom.hpp"
 
 class MCB3 : public Rom {
 private:

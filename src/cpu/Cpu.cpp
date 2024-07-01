@@ -1,10 +1,6 @@
 #include "Cpu.hpp"
-#include <chrono>
 #include <ctime>
-#include <fstream>
 #include <iostream>
-#include <stdexcept>
-#include <typeinfo>
 
 uint64_t const DEBUG_START = 26979095;
 uint64_t const DEBUG_COUNT = 32;

@@ -1,6 +1,5 @@
 #include "rom/Rom.hpp"
 #include <fstream>
-#include <stdio.h>
 
 Rom::Rom(const std::string rom_path, RomHeader rheader) : header(rheader) {
 	std::ifstream ifs;

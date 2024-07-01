@@ -1,4 +1,5 @@
 #include "rom/MCB1M.hpp"
+#include <iostream>
 
 // TODO handle this one
 
@@ -13,7 +14,7 @@ uint8_t MCB1M::read_u8(uint16_t addr) {
 	case 0xA000 ... 0xBFFF:
 		// printf("ram_bank: %u rom_ram_mode %u addr: %#06x\n", ram_bank, rom_ram_mode, addr);
 		return ram_banks[ram_bank][addr - 0xA000]; // TODO make sure ext_ram and ram_bank are correct()
-		// return ram_banks[0][addr - 0xA000];
+		                                           // return ram_banks[0][addr - 0xA000];
 	default:
 		std::cout << "should not reach this" << std::endl;
 		return 0xFF;

@@ -1,10 +1,9 @@
 #ifndef ROM_HPP
 #define ROM_HPP
 
-#include "rom/RomHeader.hpp"
+#include "RomHeader.hpp"
 #include <array>
 #include <cstdint>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>

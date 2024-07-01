@@ -21,7 +21,7 @@ uint8_t MCB1::read_u8(uint16_t addr) {
 		if (ram_enable) {
 			// printf("ram_bank: %u rom_ram_mode %u addr: %#06x\n", ram_bank, rom_ram_mode, addr);
 			return ram_banks[ram_bank][addr - 0xA000]; // TODO make sure ext_ram and ram_bank are correct()
-			// return ram_banks[0][addr - 0xA000];
+			                                           // return ram_banks[0][addr - 0xA000];
 		}
 		// return ram_banks[ram_bank][addr - 0xA000];
 		return 0xFF; // TODO should return open bus values?

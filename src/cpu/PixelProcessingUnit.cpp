@@ -1,8 +1,6 @@
 #include "PixelProcessingUnit.hpp"
 #include "Cpu.hpp"
 #include <cstring>
-#include <fstream>
-#include <iostream>
 
 PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	lcd_clock = 0;
@@ -11,7 +9,7 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	ctrl = {0};
 	l_status = {0};
 	l_status.mode = PPU_Modes::Pixel_Drawing;
-	std::memset(oam, 0, sizeof(oam));
+	sprites = {0};
 	std::memset(framebuffer, 0, sizeof(framebuffer));
 	std::memset(vram, 0, sizeof(vram));
 	std::memset(obj_0_colors, 0, sizeof(obj_0_colors));
@@ -104,27 +102,27 @@ void PixelProcessingUnit::handle_interrupt(bool val) {
 	}
 }
 
-//TODO seems to be an issue here (see one of the sprites in Pokemon blue if you move have a line in it)
-void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, uint32_t i, uint8_t tile_data_pos,
-                                         uint32_t *framebuffer_ptr, size_t *spr_index) {
+// TODO seems to be an issue here (see one of the sprites in Pokemon blue if you move have a line in it)
+void PixelProcessingUnit::handle_sprites(std::vector<std::reference_wrapper<Sprite>> sprites, uint32_t i,
+                                         uint8_t tile_data_pos, uint32_t *framebuffer_ptr, size_t *spr_index) {
 	bool drawn = false;
 	for (auto spr = sprites.begin() + *spr_index; !sprites.empty() && spr != sprites.end(); ++spr) {
-		if (!(spr->x_pos - 8 <= (int)(i) && spr->x_pos > (int)(i))) {
+		if (!(spr->get().x_pos - 8 <= (int)(i) && spr->get().x_pos > (int)(i))) {
 			break;
 		}
 		// Go to next sprite if this x marks the end of it
-		if (i + 1 == spr->x_pos)
+		if (i + 1 == spr->get().x_pos)
 			(*spr_index)++;
 		if (!drawn) {
-			uint8_t tile_x = i - (spr->x_pos - 8);
-			uint8_t tile_y = ly - (spr->y_pos - 16);
+			uint8_t tile_x = i - (spr->get().x_pos - 8);
+			uint8_t tile_y = ly - (spr->get().y_pos - 16);
 
-			if ((spr->att_flags >> 5) & 1)
+			if (spr->get().attributes.x_flip)
 				tile_x = 7 - tile_x;
-			if ((spr->att_flags >> 6) & 1)
+			if (spr->get().attributes.y_flip)
 				tile_y = (ctrl.obj_size ? 15 : 7) - tile_y;
 
-			uint8_t sprite_index = spr->tile_index;
+			uint8_t sprite_index = spr->get().tile_index;
 
 			if (ctrl.obj_size) {
 				sprite_index = (sprite_index & 0xFE) + (tile_y >= 8);
@@ -133,9 +131,9 @@ void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, uint32_t i
 
 			uint8_t color_index = tile_data[vbank_select][sprite_index][(uint16_t)tile_y * 8 + tile_x];
 
-			bool background = ((spr->att_flags >> 7) & 1);
+			bool background = (spr->get().attributes.background);
 			if (color_index && (!background || (background && !tile_data_pos))) {
-				if ((spr->att_flags >> 4) & 1) {
+				if (spr->get().attributes.palette) {
 					*framebuffer_ptr = obj_1_colors[color_index];
 				} else {
 					*framebuffer_ptr = obj_0_colors[color_index];
@@ -147,25 +145,27 @@ void PixelProcessingUnit::handle_sprites(std::vector<Sprite> sprites, uint32_t i
 }
 
 void PixelProcessingUnit::render_scanline() {
-	std::vector<Sprite> sprites;
+	std::vector<std::reference_wrapper<Sprite>> sprites_sorted;
 
 	if (ctrl.obj_enable) {
-		sprites.reserve(10);
-		for (int i = 0; i < 40; i++) {
-			Sprite spr = get_sprite(i);
+		sprites_sorted.reserve(10);
+		for (Sprite &spr : sprites) {
 			if (ly < spr.y_pos &&
 			    ly >= spr.y_pos - 16) { // obj can be 8*8 or 8*16 //TODO maybe do a obj_size check that returns 8 or 16
 				if (ctrl.obj_size || ly < spr.y_pos - 8) {
-					sprites.push_back(spr);
-					if (sprites.size() == 10)
+					sprites_sorted.push_back(spr);
+					if (sprites_sorted.size() == 10)
 						break;
 				}
 			}
 		}
 
 		// TODO do this in a differnt way
-		std::stable_sort(sprites.begin(), sprites.end(), [](const Sprite a, Sprite b) { return (a.x_pos < b.x_pos); });
-		std::erase_if(sprites, [](const auto &a) { return (a.x_pos <= 0 || a.x_pos >= 168); });
+		std::stable_sort(sprites_sorted.begin(), sprites_sorted.end(),
+		                 [](const std::reference_wrapper<Sprite> &a, const std::reference_wrapper<Sprite> &b) {
+			                 return (a.get().x_pos < b.get().x_pos);
+		                 });
+		std::erase_if(sprites_sorted, [](const auto &a) { return (a.get().x_pos <= 0 || a.get().x_pos >= 168); });
 	}
 
 	int tile_map_offset = ctrl.bg_tile_map_address ? 0x1c00 : 0x1800;
@@ -198,12 +198,11 @@ void PixelProcessingUnit::render_scanline() {
 			// 	printf("tile_dat: %u tile_attr: %u tile_pal: %u\n", tile_dat, tile_attr, tile_pal);
 			// }
 			*framebuffer_ptr = cgb_bg_colors_other_32[tile_pal][tile_dat];
-		}
-		else {
+		} else {
 			*framebuffer_ptr = bg_colors[tile_dat];
 		}
 
-		handle_sprites(sprites, i, tile_dat, framebuffer_ptr, &spr_index);
+		handle_sprites(sprites_sorted, i, tile_dat, framebuffer_ptr, &spr_index);
 		framebuffer_ptr++;
 		x++;
 		if (x == 8) {
@@ -219,15 +218,15 @@ void PixelProcessingUnit::render_scanline() {
 		window_line_active++;
 	}
 
-
 	/* TODO CGB COLOR STUFF
-		needs:
-			- color_index (tile_dat?)
-			- palette_nb (Option if None -> Default color) otherwise (bits & 0b111) where bits is from tile_index from bank1?
-			- is_background (if sprite this is false)
+	    needs:
+	        - color_index (tile_dat?)
+	        - palette_nb (Option if None -> Default color) otherwise (bits & 0b111) where bits is from tile_index from
+	   bank1?
+	        - is_background (if sprite this is false)
 
-		//Also need to handle mixing of colors (only for background)
-	*/ 
+	    //Also need to handle mixing of colors (only for background)
+	*/
 }
 
 uint32_t PixelProcessingUnit::get_cgb_color(uint8_t value1, uint8_t value2) {
@@ -237,9 +236,10 @@ uint32_t PixelProcessingUnit::get_cgb_color(uint8_t value1, uint8_t value2) {
 	uint8_t blue = static_cast<uint8_t>(static_cast<float>((color_bytes & BLUE_MASK) >> 10) * 255.0 / 31.0);
 	uint32_t color = ((red << 24) | (green << 16) | (blue << 8) | 0xFF);
 	// if (color != 0x000000FF || value1 || value2) {
-	// 	printf("color: %#012x red: %#04x green: %#04x blue: %#04x color_bytes: %u, values: (%u, %u)\n", color, red, green, blue, color_bytes, value1, value2);
+	// 	printf("color: %#012x red: %#04x green: %#04x blue: %#04x color_bytes: %u, values: (%u, %u)\n", color, red,
+	// green, blue, color_bytes, value1, value2);
 	// }
-	return color; 
+	return color;
 }
 
 void PixelProcessingUnit::render_screen() {
@@ -262,7 +262,7 @@ bool PixelProcessingUnit::init_window() {
 			return false;
 		} else {
 			data.texture = SDL_CreateTexture(data.renderer, SDL_PIXELFORMAT_ABGR32, SDL_TEXTUREACCESS_STREAMING,
-												SCREEN_WIDTH, SCREEN_HEIGHT);
+			                                 SCREEN_WIDTH, SCREEN_HEIGHT);
 			if (data.texture == NULL) {
 				printf("texture could not be created! SDL_Error: %s\n", SDL_GetError());
 				return false;
@@ -384,8 +384,7 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		if (cgb_colors) {
 			printf("setting vbank select to: %u val: %u\n", val & 1, val);
 			vbank_select = val & 1;
-		}
-		else {
+		} else {
 			vbank_select = 0;
 		}
 		break;
@@ -414,7 +413,7 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		// uint8_t red_5bit = *pa_gbc & 0x1F;
 		// uint8_t blue_5bit = (*pa_gbc >> 10) & 0x1F;
 		// uint8_t green_5bit = (*pa_gbc >> 5) & 0x1F;
-		// *pa_final = red_5bit << 24 | green_5bit << 16 | blue_5bit << 8 | 0xFF; 
+		// *pa_final = red_5bit << 24 | green_5bit << 16 | blue_5bit << 8 | 0xFF;
 		set_cgb_bg_palette(val);
 		break;
 	case 0xFF6A:
@@ -425,9 +424,8 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		break;
 	case 0xFF70:
 		if (cgb_colors) {
-			wram_bank_select = ((val & 4) + (val & 2) + (val & 1)); //TODO check this
-		}
-		else {
+			wram_bank_select = ((val & 4) + (val & 2) + (val & 1)); // TODO check this
+		} else {
 			wram_bank_select = 0;
 		}
 		break;
@@ -437,31 +435,48 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 }
 
 void PixelProcessingUnit::write_oam(uint16_t addr, uint8_t val) {
-	//TODO also change the sprites here?
-	oam[addr / 4][addr % 4] = val;
+	uint16_t sprite_addr = addr & 0xFF;
+	switch (sprite_addr & 3) {
+	case 0:
+		sprites[sprite_addr >> 2].y_pos = val;
+		break;
+	case 1:
+		sprites[sprite_addr >> 2].x_pos = val;
+		break;
+	case 2:
+		sprites[sprite_addr >> 2].tile_index = val;
+		break;
+	case 3:
+		sprites[sprite_addr >> 2].attributes.set(val);
+		break;
+	}
 }
 
 uint8_t PixelProcessingUnit::read_oam(uint16_t addr) {
-	return oam[addr / 4][addr % 4];
-}
-
-Sprite PixelProcessingUnit::get_sprite(size_t index) {
-	uint8_t y_pos = oam[index][0];
-	uint8_t x_pos = oam[index][1];
-	uint8_t tile_index = oam[index][2];
-	uint8_t attr_flags = oam[index][3];
-	return {y_pos, x_pos, tile_index, attr_flags};
+	uint16_t sprite_addr = addr & 0xFF;
+	switch (sprite_addr & 3) {
+	case 0:
+		return sprites[sprite_addr >> 2].y_pos;
+	case 1:
+		return sprites[sprite_addr >> 2].x_pos;
+	case 2:
+		return sprites[sprite_addr >> 2].tile_index;
+	case 3:
+		return sprites[sprite_addr >> 2].attributes.get();
+	default:
+		return 0xFF;
+	}
 }
 
 void PixelProcessingUnit::update_palette_cgb(uint8_t val) {
 	bool hl = val & mask0;
-    int index = (val >> 1) & 0x03;
-    int pal = (val >> 3) & 0x07;
+	int index = (val >> 1) & 0x03;
+	int pal = (val >> 3) & 0x07;
 
-    uint16_t color = cgb_bg_colors_other[pal][index][0];
+	uint16_t color = cgb_bg_colors_other[pal][index][0];
 	bg_color_cgb = hl ? (color >> 8) & 0xFF : color & 0xFF;
 	// write_u8_ppu(0xFF69, hl ? (color >> 8) & 0xFF : color & 0xFF);
-    // m_pMemory->Load(background ? 0xFF69 : 0xFF6B, hl ? (color >> 8) & 0xFF : color & 0xFF);
+	// m_pMemory->Load(background ? 0xFF69 : 0xFF6B, hl ? (color >> 8) & 0xFF : color & 0xFF);
 }
 
 void PixelProcessingUnit::set_cgb_bg_palette(uint8_t val) {
@@ -506,13 +521,12 @@ void PixelProcessingUnit::set_cgb_bg_palette(uint8_t val) {
 	uint8_t green = static_cast<uint8_t>(static_cast<float>(green_5bit) * 255.0 / 31.0);
 	uint8_t blue = static_cast<uint8_t>(static_cast<float>(blue_5bit) * 255.0 / 31.0);
 	*pa_32 = red << 24 | green << 16 | blue << 8 | 0xFF;
-	// uint8_t red = red_5bit >> 
-	// printf("red: (%#04x, %#04x) green: (%#04x, %#04x) blue: (%#04x, %#04x)\n", red_5bit * 8, red, green_5bit, green, blue_5bit, blue);
-	// printf("red: (%u, %u) green: (%u, %u) blue: (%u, %u)\n", red_5bit * 8, red, green_5bit, green, blue_5bit, blue);
-	// *pa_32 = red_5bit << 24 | green_5bit << 16 | blue_5bit << 8 | 0xFF;
-	// printf("final: %#10x\n", *pa_32);
-	// if (blue_5bit) {
-		// printf("set color to: %#010x red: %#04x green: %#04x blue: %#04x\n", *pa_final, red_5bit, green_5bit, blue_5bit);
+	// uint8_t red = red_5bit >>
+	// printf("red: (%#04x, %#04x) green: (%#04x, %#04x) blue: (%#04x, %#04x)\n", red_5bit * 8, red, green_5bit, green,
+	// blue_5bit, blue); printf("red: (%u, %u) green: (%u, %u) blue: (%u, %u)\n", red_5bit * 8, red, green_5bit, green,
+	// blue_5bit, blue); *pa_32 = red_5bit << 24 | green_5bit << 16 | blue_5bit << 8 | 0xFF; printf("final: %#10x\n",
+	// *pa_32); if (blue_5bit) { printf("set color to: %#010x red: %#04x green: %#04x blue: %#04x\n", *pa_final,
+	// red_5bit, green_5bit, blue_5bit);
 	// }
 }
 
@@ -556,4 +570,15 @@ void LCD_DMA::set(uint8_t value) {
 	val = value;
 	cycles = 640; // TODO 160 M-cycles: 640 dots (1.4 lines) in normal speed, or 320 dots
 	offset = 0;
+}
+
+void Sprite_Attributes::set(uint8_t value) {
+	background = (value >> 7) & 1;
+	y_flip = (value >> 6) & 1;
+	x_flip = (value >> 5) & 1;
+	palette = (value >> 4) & 1;
+}
+
+uint8_t Sprite_Attributes::get() {
+	return (background << 7) | (y_flip << 6) | (x_flip << 5) | (palette << 4);
 }
