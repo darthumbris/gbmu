@@ -144,6 +144,9 @@ public:
 	bool is_cgb_rom() const {
 		return header.is_cgb_game();
 	}
+
+	uint8_t read_io_registers(uint16_t addr);
+	void write_io_registers(uint16_t addr, uint8_t val);
 };
 
 #endif

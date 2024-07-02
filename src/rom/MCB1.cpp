@@ -53,7 +53,7 @@ void MCB1::write_u8(uint16_t addr, uint8_t val) {
 	case 0xA000 ... 0xBFFF:
 		// ram_banks[0][addr - 0xA000] = val;
 		if (ram_enable && ram_banks.size()) {
-			printf("writing at addr: %#06x ram_bank: %u ram_banks size: %u\n", addr, ram_bank, ram_banks.size());
+			printf("writing at addr: %#06x ram_bank: %u ram_banks size: %zu\n", addr, ram_bank, ram_banks.size());
 			// printf("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
 			ram_banks[ram_bank][addr - 0xA000] = val; // TODO fix this
 		}

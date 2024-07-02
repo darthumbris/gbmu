@@ -68,6 +68,9 @@ private:
 	uint8_t timer_modulo = 0;       // 0xFF06
 	bool timer_enable = false;      // 0xFF07
 	uint8_t timer_clock_select = 0; // 0xFF07
+	
+	bool cgb_speed = false;
+	
 	std::string rom_path;
 
 	using OpsFn = void (Cpu::*)();
@@ -771,11 +774,6 @@ private:
 
 	void debug_print(bool prefix);
 
-	inline void set_cycle(uint8_t c) {
-		m_cycle += c;
-		t_cycle += c * 4;
-	}
-
 	void handle_interrupt();
 	void process_interrupt(InterruptType i);
 
@@ -856,6 +854,18 @@ public:
 		}
 		timer_clock_select = (val >> 0) & 3;
 	}
+
+	inline void set_cycle(uint8_t c) {
+		m_cycle += c;
+		t_cycle += c * 4;
+	}
+
+	inline void set_cycle_16(uint16_t c) {
+		m_cycle += c;
+		t_cycle += c * 4;
+	}
+
+	inline bool get_cgb_speed() const {return cgb_speed;}
 
 	void serialize(const std::string &file);
 	void deserialize(const std::string &file);

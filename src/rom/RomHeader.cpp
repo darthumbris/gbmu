@@ -1,4 +1,5 @@
 #include "rom/RomHeader.hpp"
+#include <cstdint>
 #include <fstream>
 
 template <typename IntegerType>
@@ -31,8 +32,10 @@ CGB_FLAGS get_cgb_flag(uint8_t flag) {
 	}
 }
 
-CartridgeType get_cartridge_type(uint8_t c) {
-	switch (c) {
+CartridgeType RomHeader::get_cartridge_type(uint8_t type, uint8_t rom_size) {
+	if ((type != 0xEA) && (rom_size == 0))
+        return ROM_ONLY;
+	switch (type) {
 	case 0x00:
 		return ROM_ONLY;
 	case 0x01:
@@ -238,8 +241,10 @@ RomHeader::RomHeader(const std::string path) {
 	ifs.read(reinterpret_cast<char *>(&v), sizeof(v));
 	bitsToInt(_license_code, v, true);
 	_sgb_flag = ifs.get() == 0x03;
-	_cartridge_type = get_cartridge_type(ifs.get());
-	_rom_size = get_rom_size(ifs.get());
+	uint8_t type = ifs.get();
+	uint8_t rom_size = ifs.get();
+	_rom_size = get_rom_size(rom_size);
+	_cartridge_type = get_cartridge_type(type, rom_size);
 	_ram_size = get_ram_size(ifs.get());
 	_dest_code = ifs.get();
 	_old_license_code = ifs.get();

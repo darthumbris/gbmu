@@ -77,6 +77,13 @@ struct Sprite_Attributes {
 	uint8_t get();
 };
 
+enum HDMA_Register {
+	HDMA_1,
+	HDMA_2,
+	HDMA_3,
+	HDMA_4,
+};
+
 // TODO instead of the att_flags use 4 bools: (background, y_flip, x_flip, palette)
 struct Sprite {
 	uint8_t y_pos;
@@ -108,6 +115,13 @@ private:
 	uint8_t vbank_select = 0;     // 0xFF4F
 	uint8_t wram_bank_select = 0; // 0xFF70
 
+	//Horizontal blanking DMA (HDMA)
+	uint16_t hdma_source = 0;
+	uint16_t hdma_dest = 0;
+	uint8_t hdma[5];
+	bool hdma_enable = false;
+	uint16_t hdma_bytes=0;
+
 	bool window_active = false;
 	uint8_t window_line_active = 0;
 	bool draw_screen = false;
@@ -122,7 +136,9 @@ private:
 	uint32_t bg_colors[4];
 	uint8_t cgb_bg_colors[64];
 	uint16_t cgb_bg_colors_other[8][4][2];
+	uint16_t cgb_sprite_colors_other[8][4][2];
 	uint32_t cgb_bg_colors_other_32[8][4];
+	uint32_t cgb_sprite_colors_other_32[8][4];
 	uint32_t obj_0_colors[4];
 	uint32_t obj_1_colors[4];
 
@@ -142,8 +158,8 @@ private:
 	void set_tile_data(uint16_t addr);
 	void dma_transfer(uint8_t cycle);
 	uint32_t get_cgb_color(uint8_t value1, uint8_t value2);
-	void set_cgb_bg_palette(uint8_t val);
-	void update_palette_cgb(uint8_t val);
+	void set_color_palette(bool background, uint8_t val);
+	void update_palette_cgb(bool background, uint8_t val);
 
 public:
 	PixelProcessingUnit(Cpu *cpu);
@@ -175,6 +191,17 @@ public:
 	inline void set_cpu(Cpu *cpu) {
 		cpu = cpu;
 	}
+
+	void switch_cgb_dma(uint8_t value);
+	void set_hdma_register(HDMA_Register reg, uint8_t value);
+
+	uint8_t read_cgb_vram(uint16_t addr, bool force);
+	
+	uint8_t perform_hdma();
+	void perform_gdma(uint8_t value);
+
+	inline uint8_t get_wram_bank_select() const {return wram_bank_select;}
+
 	void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);
 };

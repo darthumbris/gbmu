@@ -1,5 +1,6 @@
 #include "PixelProcessingUnit.hpp"
 #include "Cpu.hpp"
+#include "MemoryMap.hpp"
 #include <cstring>
 #include <iostream>
 
@@ -18,6 +19,7 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	std::memset(tile_data, 0, sizeof(tile_data));
 	dma = {0};
 	cgb_colors = cpu->get_mmap().is_cgb_rom();
+	printf("is cgb_rom: %u\n", cgb_colors);
 	std::memset(cgb_bg_colors, 0, sizeof(cgb_bg_colors));
 }
 
@@ -314,7 +316,7 @@ uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
 	case 0xFF4F:
 		return vbank_select;
 	case 0xFF70:
-		return wram_bank_select;
+		return cgb_colors ? (cpu->get_mmap().read_io_registers(addr) | 0xF8) : 0xFF;
 	case 0xFF68:
 		return bg_palette_cgb;
 	case 0xFF69:
@@ -384,51 +386,88 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 	case 0xFF4F:
 		if (cgb_colors) {
 			printf("setting vbank select to: %u val: %u\n", val & 1, val);
-			vbank_select = val & 1;
+			vbank_select = val & 0x01;
+		}
+		cpu->get_mmap().write_io_registers(addr, val);
+		break;
+	case 0xFF51:
+		if (cgb_colors) {
+			set_hdma_register(HDMA_1, val);
 		} else {
-			vbank_select = 0;
+			cpu->get_mmap().write_io_registers(addr, val);
+		}
+		break;
+	case 0xFF52:
+		if (cgb_colors) {
+			set_hdma_register(HDMA_2, val);
+		} else {
+			cpu->get_mmap().write_io_registers(addr, val);
+		}
+		break;
+	case 0xFF53:
+		if (cgb_colors) {
+			set_hdma_register(HDMA_3, val);
+		} else {
+			cpu->get_mmap().write_io_registers(addr, val);
+		}
+		break;
+	case 0xFF54:
+		if (cgb_colors) {
+			set_hdma_register(HDMA_4, val);
+		} else {
+			cpu->get_mmap().write_io_registers(addr, val);
+		}
+		break;
+	case 0xFF55:
+		if (cgb_colors) {
+			switch_cgb_dma(val);
+		} else {
+			cpu->get_mmap().write_io_registers(addr, val);
 		}
 		break;
 	case 0xFF68:
-		bg_palette_cgb = val;
+		if (cgb_colors) {
+			bg_palette_cgb = val;
+			update_palette_cgb(true, val);
+		}
+		cpu->get_mmap().write_io_registers(addr, val);
 		break;
 	case 0xFF69:
-		// bg_color_cgb = val;
-		// cgb_bg_colors[(bg_palette_cgb & (PALETTE_SIZE - 1))] = val;
-		// bool hl = bg_palette_cgb & mask0;
-		// // printf("cgb_bg_colors[%u]: %u\n", (bg_palette_cgb & (64 - 1)), val);
-		// if ((bg_palette_cgb & AUTO_INC) != 0) {
-		// 	if (bg_palette_cgb == (AUTO_INC | SPEC_INDEX)) {
-		// 		bg_palette_cgb = AUTO_INC;
-		// 	}
-		// 	else {
-		// 		bg_palette_cgb +=1;
-		// 	}
-		// }
-		// int index = (bg_palette_cgb >> 1) & 0x03;
-		// int pal = (bg_palette_cgb >> 3) & 0x07;
-		// uint32_t *pa_gbc = &cgb_bg_colors_other[pal][index][0];
-		// uint32_t *pa_final = &cgb_bg_colors_other[pal][index][1];
-
-		// *pa_gbc = hl ? (*pa_gbc & 0x00FF) | (val << 8) : (*pa_gbc & 0xFF00) | val;
-		// uint8_t red_5bit = *pa_gbc & 0x1F;
-		// uint8_t blue_5bit = (*pa_gbc >> 10) & 0x1F;
-		// uint8_t green_5bit = (*pa_gbc >> 5) & 0x1F;
-		// *pa_final = red_5bit << 24 | green_5bit << 16 | blue_5bit << 8 | 0xFF;
-		set_cgb_bg_palette(val);
+		if (cgb_colors) {
+			set_color_palette(true, val);
+		}
+		cpu->get_mmap().write_io_registers(addr, val);
 		break;
 	case 0xFF6A:
-		obj_palette_cgb = val;
+		if (cgb_colors) {
+			obj_palette_cgb = val;
+			update_palette_cgb(false, val);
+		}
+		cpu->get_mmap().write_io_registers(addr, val);
 		break;
 	case 0xFF6B:
-		obj_color_cgb = val;
+		if (cgb_colors) {
+			obj_color_cgb = val;
+			set_color_palette(false, val);
+		}
+		cpu->get_mmap().write_io_registers(addr, val);
+		break;
+	case 0xFF6C:
+		cpu->get_mmap().write_io_registers(addr, val | 0xFE);
 		break;
 	case 0xFF70:
 		if (cgb_colors) {
-			wram_bank_select = ((val & 4) + (val & 2) + (val & 1)); // TODO check this
+			wram_bank_select = val & 0x07;
+			if (wram_bank_select == 0) {
+				wram_bank_select = 1;
+			}
 		} else {
 			wram_bank_select = 0;
 		}
+		cpu->get_mmap().write_io_registers(addr, val);
+		break;
+	case 0xFF75:
+		cpu->get_mmap().write_io_registers(addr, val | 0x8F);
 		break;
 	default:
 		break;
@@ -469,66 +508,57 @@ uint8_t PixelProcessingUnit::read_oam(uint16_t addr) {
 	}
 }
 
-void PixelProcessingUnit::update_palette_cgb(uint8_t val) {
+void PixelProcessingUnit::update_palette_cgb(bool background, uint8_t val) {
 	bool hl = val & mask0;
 	int index = (val >> 1) & 0x03;
 	int pal = (val >> 3) & 0x07;
 
-	uint16_t color = cgb_bg_colors_other[pal][index][0];
-	bg_color_cgb = hl ? (color >> 8) & 0xFF : color & 0xFF;
+	uint16_t color = background ? cgb_bg_colors_other[pal][index][0] : cgb_sprite_colors_other[pal][index][0];
+	if (background) {
+		bg_color_cgb = hl ? (color >> 8) & 0xFF : color & 0xFF;
+	}
+	else {
+		obj_color_cgb = hl ? (color >> 8) & 0xFF : color & 0xFF;
+	}
 	// write_u8_ppu(0xFF69, hl ? (color >> 8) & 0xFF : color & 0xFF);
-	// m_pMemory->Load(background ? 0xFF69 : 0xFF6B, hl ? (color >> 8) & 0xFF : color & 0xFF);
 }
 
-void PixelProcessingUnit::set_cgb_bg_palette(uint8_t val) {
-	uint8_t ps = bg_palette_cgb;
+void PixelProcessingUnit::set_color_palette(bool background, uint8_t val) {
+	uint8_t ps = background ? bg_palette_cgb : obj_palette_cgb;
 	bool hl = ps & mask0;
 	int index = (ps >> 1) & 0x03;
 	int pal = (ps >> 3) & 0x07;
 	bool increment = ps & mask7;
-	bg_color_cgb = val;
-	cgb_bg_colors[(bg_palette_cgb & (PALETTE_SIZE - 1))] = val;
-	// printf("cgb_bg_colors[%u]: %u\n", (bg_palette_cgb & (64 - 1)), val);
-	// if ((bg_palette_cgb & AUTO_INC) != 0) {
-	// 	if (bg_palette_cgb == (AUTO_INC | SPEC_INDEX)) {
-	// 		bg_palette_cgb = AUTO_INC;
-	// 	}
-	// 	else {
-	// 		bg_palette_cgb +=1;
-	// 	}
-	// }
 
 	if (increment) {
 		uint8_t addr = ps & 0x3F;
 		addr++;
 		addr &= 0x3F;
 		ps = (ps & 0x80) | addr;
-		bg_palette_cgb = ps;
-		update_palette_cgb(ps);
+		if (background) {
+			bg_palette_cgb = ps;
+		}
+		else {
+			obj_palette_cgb = ps;
+		}
+		update_palette_cgb(background, ps);
 	}
 
-	uint16_t *pa_gbc = &cgb_bg_colors_other[pal][index][0];
-	uint16_t *pa_final = &cgb_bg_colors_other[pal][index][1];
-	uint32_t *pa_32 = &cgb_bg_colors_other_32[pal][index];
-	uint16_t before = *pa_gbc;
+	uint16_t *pa_gbc = background ? &cgb_bg_colors_other[pal][index][0] : &cgb_sprite_colors_other[pal][index][0];
+	uint16_t *pa_final = background ? &cgb_bg_colors_other[pal][index][1]: &cgb_sprite_colors_other[pal][index][1];
+	uint32_t *pa_32 = background ? &cgb_bg_colors_other_32[pal][index] : &cgb_sprite_colors_other_32[pal][index];
 	*pa_gbc = hl ? (*pa_gbc & 0x00FF) | (val << 8) : (*pa_gbc & 0xFF00) | val;
 	uint8_t red_5bit = *pa_gbc & 0x1F;
 	uint8_t blue_5bit = (*pa_gbc >> 10) & 0x1F;
 	uint8_t green_5bit = (*pa_gbc >> 5) & 0x1F;
-	*pa_final = 0x8000 | (red_5bit << 10) | (green_5bit << 5) | blue_5bit;
-	// uint8_t green_6bit = (*pa_gbc >> 4) & 0x3E;
-	// *pa_final = (blue_5bit << 11) | (green_6bit << 5) | red_5bit;
+	// *pa_final = 0x8000 | (red_5bit << 10) | (green_5bit << 5) | blue_5bit;
+	uint8_t green_6bit = (*pa_gbc >> 4) & 0x3E;
+	*pa_final = (blue_5bit << 11) | (green_6bit << 5) | red_5bit;
 	uint8_t red = static_cast<uint8_t>(static_cast<float>(red_5bit) * 255.0 / 31.0);
-	uint8_t green = static_cast<uint8_t>(static_cast<float>(green_5bit) * 255.0 / 31.0);
+	// uint8_t green = static_cast<uint8_t>(static_cast<float>(green_5bit) * 255.0 / 31.0);
+	uint8_t green = static_cast<uint8_t>(static_cast<float>(green_6bit) * 255.0 / 62.0);
 	uint8_t blue = static_cast<uint8_t>(static_cast<float>(blue_5bit) * 255.0 / 31.0);
 	*pa_32 = red << 24 | green << 16 | blue << 8 | 0xFF;
-	// uint8_t red = red_5bit >>
-	// printf("red: (%#04x, %#04x) green: (%#04x, %#04x) blue: (%#04x, %#04x)\n", red_5bit * 8, red, green_5bit, green,
-	// blue_5bit, blue); printf("red: (%u, %u) green: (%u, %u) blue: (%u, %u)\n", red_5bit * 8, red, green_5bit, green,
-	// blue_5bit, blue); *pa_32 = red_5bit << 24 | green_5bit << 16 | blue_5bit << 8 | 0xFF; printf("final: %#10x\n",
-	// *pa_32); if (blue_5bit) { printf("set color to: %#010x red: %#04x green: %#04x blue: %#04x\n", *pa_final,
-	// red_5bit, green_5bit, blue_5bit);
-	// }
 }
 
 void PixelProcessingUnit::set_tile_data(uint16_t addr) {
@@ -545,6 +575,107 @@ void PixelProcessingUnit::set_tile_data(uint16_t addr) {
 		tile_data[vbank_select][tile_index][y * 8 + x] = static_cast<uint8_t>(
 		    ((vram[vbank_select][addr] & bitmask) ? 1 : 0) + ((vram[vbank_select][addr + 1] & bitmask) ? 2 : 0));
 	}
+}
+
+void PixelProcessingUnit::switch_cgb_dma(uint8_t value) {
+	hdma_bytes = 16 + ((value & 0x7f) * 16);
+
+	if (hdma_enable) {
+		if (value & mask7) {
+			hdma[4] = value & 0x7F;
+		} else {
+			hdma[4] = 0xFF;
+			hdma_enable = false;
+		}
+	} else {
+		if (value & mask7) {
+			hdma_enable = true;
+			hdma[4] = value & 0x7F;
+			if (l_status.mode == PPU_Modes::Horizontal_Blank) {
+				cpu->set_cycle(perform_hdma());
+			}
+		} else {
+			perform_gdma(value);
+		}
+	}
+}
+void PixelProcessingUnit::set_hdma_register(HDMA_Register reg, uint8_t value) {
+	switch (reg) {
+	case HDMA_1:
+		if (value > 0x7f && value < 0xa0)
+			value = 0;
+		hdma_source = (value << 8) | (hdma_source & 0xF0);
+		break;
+	case HDMA_2:
+		value &= 0xF0;
+		hdma_source = (hdma_source & 0xFF00) | value;
+		break;
+	case HDMA_3:
+		value &= 0x1F;
+		hdma_dest = (value << 8) | (hdma_dest & 0xF0);
+		hdma_dest |= 0x8000;
+		break;
+	case HDMA_4:
+		value &= 0xF0;
+		hdma_dest = (hdma_dest & 0x1F00) | value;
+		hdma_dest |= 0x8000;
+		break;
+	}
+}
+
+// This is the gameboy color Horizontal Blanking DMA
+uint8_t PixelProcessingUnit::perform_hdma() {
+	uint16_t source = hdma_source & 0xFFF0;
+	uint16_t destination = (hdma_dest & 0x1FF0) | 0x8000;
+
+	for (int i = 0; i < 0x10; i++) {
+		write_u8_ppu(destination + i, cpu->get_mmap().read_u8(source + i));
+	}
+
+	hdma_dest += 0x10;
+	if (hdma_dest == 0xA000)
+		hdma_dest = 0x8000;
+
+	hdma_source += 0x10;
+	if (hdma_source == 0x8000)
+		hdma_source = 0xA000;
+
+	hdma[1] = hdma_source & 0xFF;
+	hdma[0] = hdma_source >> 8;
+	hdma[3] = hdma_dest & 0xFF;
+	hdma[2] = hdma_dest >> 8;
+	hdma_bytes -= 0x10;
+	hdma[4]--;
+
+	if (hdma[4] == 0xFF)
+		hdma_enable = false;
+
+	return (cpu->get_cgb_speed() ? 17 : 9);
+}
+
+// This is the gameboy color general purpose DMA
+void PixelProcessingUnit::perform_gdma(uint8_t value) {
+	uint16_t source = hdma_source & 0xFFF0;
+    uint16_t destination = (hdma_dest & 0x1FF0) | 0x8000;
+
+        for (int i = 0; i < hdma_bytes; i++) {
+			write_u8_ppu(destination + i, cpu->get_mmap().read_u8(source + i));
+		}
+
+    hdma_dest += hdma_bytes;
+    hdma_source += hdma_bytes;
+
+    for (int i = 0; i < 5; i++)
+        hdma[i] = 0xFF;
+
+    uint16_t clock_cycles = 0;
+
+    if (cpu->get_cgb_speed())
+        clock_cycles = 2 + 16 * ((value & 0x7f) + 1);
+    else
+        clock_cycles = 1 + 8 * ((value & 0x7f) + 1);
+
+	cpu->set_cycle_16(clock_cycles);
 }
 
 void LCD_CONTROL::set(uint8_t value) {

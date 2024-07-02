@@ -4,6 +4,7 @@
 #include "rom/MCB2.hpp"
 #include "rom/MCB3.hpp"
 #include "rom/MCB5.hpp"
+#include "rom/RomOnly.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -39,6 +40,11 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 	case CartridgeType::MBC5_RUMBLE_RAM_BATTERY:
 		rom = Rom::make<MCB5>(path, header, header.has_battery(), header.has_rumble());
 		break;
+	case CartridgeType::ROM_ONLY:
+	case CartridgeType::ROM_RAM:
+	case CartridgeType::ROM_RAM_BATTERY:
+		rom = Rom::make<RomOnly>(path, header, header.has_battery());
+		break;
 	default:
 		rom = Rom::make<MCB1>(path, header, header.has_battery());
 		break;
@@ -72,15 +78,23 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 		if (addr <= 0xCFFF) {
 			return work_ram[0][uint16_t(addr & 0x0FFF)];
 		} else {
-			return work_ram[1][uint16_t(addr & 0x0FFF)];
-			// fix this return work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF];
+			if (is_cgb_rom()) { 
+				return work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF];
+			}
+			else {
+				return work_ram[1][uint16_t(addr & 0x1FFF) - 0x0FFF];
+			}
 		}
 	case 0xE000 ... 0xFDFF:
 		if (addr <= 0xEFFF) {
 			return echo_ram[0][uint16_t(addr & 0x0FFF)];
 		} else {
-			return echo_ram[1][uint16_t(addr & 0x0FFF)];
-			// TODO fix this return echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF];
+			if (is_cgb_rom()) { 
+				return echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF];
+			}
+			else {
+				return echo_ram[1][uint16_t(addr & 0x0FFF) - 0x0FFF];
+			}
 		}
 	case 0xFE00 ... 0xFE9F:
 		return cpu->get_ppu().read_oam(addr & 0xFF);
@@ -148,16 +162,25 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		if (addr <= 0xCFFF) {
 			work_ram[0][uint16_t(addr & 0x0FFF)] = val;
 		} else {
-			work_ram[1][uint16_t(addr & 0x0FFF)] = val;
-			// TODO fix this work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF] = val;
+			if (is_cgb_rom()) {
+				work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF] = val;
+			}
+			else {
+				work_ram[1][uint16_t(addr & 0x0FFF)] = val;
+			}
 		}
 		break;
 	case 0xE000 ... 0xFDFF:
 		if (addr <= 0xEFFF) {
 			echo_ram[0][uint16_t(addr & 0x0FFF)] = val;
 		} else {
-			echo_ram[1][uint16_t(addr & 0x0FFF)] = val;
-			// TODO fix this echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF] = val;
+			if (is_cgb_rom()) {
+				echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF] = val;
+			}
+			else {
+				echo_ram[1][uint16_t(addr & 0x0FFF)] = val;
+			}
+			
 		}
 		break;
 	case 0xFE00 ... 0xFE9F:
@@ -198,7 +221,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		cpu->get_ppu().write_u8_ppu(addr, val);
 		break;
 	case 0xFF50:
-		if (!boot_rom_loaded) {
+		if (!boot_rom_loaded && (val & 0x01) > 0) {
 			boot_rom_loaded = true;
 		}
 		io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
@@ -221,5 +244,12 @@ void MemoryMap::write_u16(uint16_t addr, uint16_t val) {
 }
 
 uint8_t MemoryMap::wram_bank_select() {
-	return cpu->get_ppu().read_u8_ppu(0xFF70);
+	return cpu->get_ppu().get_wram_bank_select();
 }
+
+uint8_t MemoryMap::read_io_registers(uint16_t addr) {
+	return io_registers[addr - 0xFF00];
+}
+	void MemoryMap::write_io_registers(uint16_t addr, uint8_t val) {
+		io_registers[addr - 0xFF00] = val;
+	}

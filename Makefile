@@ -15,6 +15,7 @@ SRC =	main.cpp \
         input/input.cpp \
         rom/Rom.cpp \
         rom/RomHeader.cpp \
+        rom/RomOnly.cpp \
         rom/MCB1.cpp \
         rom/MCB2.cpp \
         rom/MCB3.cpp \

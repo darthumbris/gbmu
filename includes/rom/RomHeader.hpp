@@ -60,6 +60,8 @@ private:
 	uint8_t _version;              // 0x14C
 	uint8_t _header_checksum;      // 0x14D
 	uint16_t _global_checksum;     // 0x14E-0x14F
+
+	CartridgeType get_cartridge_type(uint8_t type, uint8_t rom_size);
 public:
 	RomHeader(const std::string rom_path);
 	~RomHeader();
