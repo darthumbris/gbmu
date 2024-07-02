@@ -865,6 +865,11 @@ public:
 		t_cycle += c * 4;
 	}
 
+	inline bool is_halted() const {return halted;}
+	inline bool interrupt_ready() const {
+		return (interrupt & interrupt_enable_register & 0x1F) != 0;
+	}
+
 	inline bool get_cgb_speed() const {return cgb_speed;}
 
 	void serialize(const std::string &file);

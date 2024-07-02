@@ -36,26 +36,26 @@ struct Sdl_Data {
 enum PPU_Modes { Horizontal_Blank, Vertical_Blank, OAM_Scan, Pixel_Drawing };
 
 struct LCD_STATUS {
-	bool ly_interrupt;
-	bool mode_2_oam_interrupt;
-	bool mode_1_vblank_interrupt;
-	bool mode_0_hblank_interrupt;
-	bool ly_flag;
-	uint8_t mode;
+	bool ly_interrupt; //bit 6
+	bool mode_2_oam_interrupt; //bit 5
+	bool mode_1_vblank_interrupt; //bit 4
+	bool mode_0_hblank_interrupt; //bit 3
+	bool ly_flag; //bit2
+	uint8_t mode; //bit 0-1
 	uint8_t val;
 
 	void set(uint8_t value);
 };
 
 struct LCD_CONTROL {
-	bool lcd_enable;
-	bool window_tile_map_address;
-	bool window_enable;
-	bool bg_window_tile_data;
-	bool bg_tile_map_address;
-	bool obj_size;
-	bool obj_enable;
-	bool bg_enable;
+	bool lcd_enable; //bit7
+	bool window_tile_map_address; //bit6
+	bool window_enable; //bit5
+	bool bg_window_tile_data; //bit4
+	bool bg_tile_map_address; //bit3
+	bool obj_size; //bit 2
+	bool obj_enable; //bit 1
+	bool bg_enable; //bit 0
 	uint8_t val;
 
 	void set(uint8_t value);
@@ -94,13 +94,16 @@ struct Sprite {
 
 class PixelProcessingUnit {
 private:
-	uint16_t lcd_clock = 0;
+	uint32_t lcd_clock = 0;
+	uint16_t lcd_clock_vblank = 0;
 	Sdl_Data data;
 	LCD_CONTROL ctrl;
 	LCD_STATUS l_status;
 	uint8_t scy = 0;
 	uint8_t scx = 0;
 	uint8_t ly = 1;
+	uint8_t ly_counter = 0;
+	uint8_t vblank_line = 0;
 	uint8_t lyc = 0;
 	LCD_DMA dma;
 	uint8_t bg_palette = 0;      // 0xFF47 (Non_CGB_Mode)
@@ -115,6 +118,8 @@ private:
 	uint8_t vbank_select = 0;     // 0xFF4F
 	uint8_t wram_bank_select = 0; // 0xFF70
 
+	uint8_t interrupt_signal = 0;
+
 	//Horizontal blanking DMA (HDMA)
 	uint16_t hdma_source = 0;
 	uint16_t hdma_dest = 0;
@@ -124,10 +129,17 @@ private:
 
 	bool window_active = false;
 	uint8_t window_line_active = 0;
-	bool draw_screen = false;
+	bool draw_screen = false; //similar to vblank check?
+	bool drawn_scanline = false;
+	uint8_t pixels_drawn = 0;
+	uint8_t tile_drawn = 0;
+	int16_t screen_off_cycles = 0;
+	uint8_t hide_screen = 0;
 	bool cgb_colors;
 
 	uint32_t framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+	int32_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	std::array<Sprite, 40> sprites; // 0xFE00 - 0xFE9F 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3:
 	                                // Attributes/flags)
 	std::array<uint8_t, 8192> vram[2]{0};
@@ -148,9 +160,17 @@ private:
 
 	Cpu *cpu;
 
+	void handle_hblank(uint16_t &cycle);
+	void handle_vblank(uint16_t &cycle);
+	void handle_oam(uint16_t &cycle);
+	void handle_pixel_drawing(uint16_t &cycle);
+
 	void handle_interrupt(bool val);
 
-	void render_scanline();
+	void render_background(uint8_t line, uint8_t pixel);
+	void render_window(uint8_t line);
+	void render_sprites(uint8_t line);
+	void render_scanline(uint8_t line);
 	void handle_sprites(std::vector<std::reference_wrapper<Sprite>> sprites, uint32_t i, uint8_t tile_data_pos,
 	                    uint32_t *framebuffer_ptr, size_t *spr_index);
 	// Sprite get_sprite(size_t index);
@@ -161,11 +181,16 @@ private:
 	void set_color_palette(bool background, uint8_t val);
 	void update_palette_cgb(bool background, uint8_t val);
 
+	void compare_ly();
+
+	void disable_screen();
+	void enable_screen();
+
 public:
 	PixelProcessingUnit(Cpu *cpu);
 	~PixelProcessingUnit();
 
-	void tick(uint8_t cycle);
+	void tick(uint16_t &cycle);
 	bool init_window();
 	void close();
 	void render_screen();
@@ -194,6 +219,7 @@ public:
 
 	void switch_cgb_dma(uint8_t value);
 	void set_hdma_register(HDMA_Register reg, uint8_t value);
+	uint8_t get_hdma_register(uint8_t reg);
 
 	uint8_t read_cgb_vram(uint16_t addr, bool force);
 	

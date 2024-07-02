@@ -48,6 +48,7 @@ void Cpu::ccf() {
 
 void Cpu::stop() {
 	pc += 1;
+	//TODO for CGB might need to check 0xFF4D
 	set_cycle(1);
 }
 

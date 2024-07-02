@@ -79,21 +79,21 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 			return work_ram[0][uint16_t(addr & 0x0FFF)];
 		} else {
 			if (is_cgb_rom()) { 
-				return work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF];
+				return work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000];
 			}
 			else {
-				return work_ram[1][uint16_t(addr & 0x1FFF) - 0x0FFF];
+				return work_ram[1][uint16_t(addr & 0x1FFF) - 0x1000];
 			}
 		}
 	case 0xE000 ... 0xFDFF:
 		if (addr <= 0xEFFF) {
 			return echo_ram[0][uint16_t(addr & 0x0FFF)];
 		} else {
-			if (is_cgb_rom()) { 
-				return echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF];
+			if (is_cgb_rom()) {
+				return echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000];
 			}
 			else {
-				return echo_ram[1][uint16_t(addr & 0x0FFF) - 0x0FFF];
+				return echo_ram[1][uint16_t(addr & 0x0FFF) - 0x1000];
 			}
 		}
 	case 0xFE00 ... 0xFE9F:
@@ -163,7 +163,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			work_ram[0][uint16_t(addr & 0x0FFF)] = val;
 		} else {
 			if (is_cgb_rom()) {
-				work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF] = val;
+				work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000] = val;
 			}
 			else {
 				work_ram[1][uint16_t(addr & 0x0FFF)] = val;
@@ -175,7 +175,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			echo_ram[0][uint16_t(addr & 0x0FFF)] = val;
 		} else {
 			if (is_cgb_rom()) {
-				echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x0FFF] = val;
+				echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000] = val;
 			}
 			else {
 				echo_ram[1][uint16_t(addr & 0x0FFF)] = val;
@@ -204,10 +204,11 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			cpu->set_timer_modulo(val);
 			break;
 		case 0xFF07:
-			cpu->set_timer_control(val);
+			cpu->set_timer_control(val); //TODO slightly more complex
 			break;
 		case 0xFF0F:
-			cpu->overwrite_interrupt(val);
+			// cpu->overwrite_interrupt(val & 0x1F);
+			cpu->overwrite_interrupt(val); //TODO check
 			break;
 		default:
 			io_registers[addr - 0xFF00] = val;
@@ -223,6 +224,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	case 0xFF50:
 		if (!boot_rom_loaded && (val & 0x01) > 0) {
 			boot_rom_loaded = true;
+			printf("boot rom loaded\n");
 		}
 		io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
 		break;
