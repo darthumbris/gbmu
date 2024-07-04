@@ -5,26 +5,24 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <vector>
 
 class Cpu;
 
-const int SCREEN_WIDTH = 160;
-const int SCREEN_HEIGHT = 144;
+constexpr int SCREEN_WIDTH = 160;
+constexpr int SCREEN_HEIGHT = 144;
+constexpr int SCREEN_PIXELS = SCREEN_WIDTH * SCREEN_HEIGHT;
 
-#define GB_COLOR0 0xFFFFFFFF
-#define GB_COLOR1 0xAAAAAAFF
-#define GB_COLOR2 0x555555FF
-#define GB_COLOR3 0x00000000
+constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
+// constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
+// constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
+// constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
 
-const uint32_t GB_COLORS[4] = {GB_COLOR0, GB_COLOR1, GB_COLOR2, GB_COLOR3};
-
-const uint16_t RED_MASK = {0b0000'0000'0001'1111};
-const uint16_t GREEN_MASK = {0b0000'0011'1110'0000};
-const uint16_t BLUE_MASK = {0b0111'1100'0000'0000};
-const uint8_t AUTO_INC = {0b1000'0000};
-const uint8_t SPEC_INDEX = !AUTO_INC;
-const uint8_t PALETTE_SIZE = 64;
+constexpr uint16_t RED_MASK = {0b0000'0000'0001'1111};
+constexpr uint16_t GREEN_MASK = {0b0000'0011'1110'0000};
+constexpr uint16_t BLUE_MASK = {0b0111'1100'0000'0000};
+constexpr uint8_t AUTO_INC = {0b1000'0000};
+constexpr uint8_t SPEC_INDEX = !AUTO_INC;
+constexpr uint8_t PALETTE_SIZE = 64;
 
 struct Sdl_Data {
 	SDL_Window *window;
@@ -84,6 +82,12 @@ enum HDMA_Register {
 	HDMA_4,
 };
 
+struct RGB_COLOR {
+	uint8_t red;
+	uint8_t green;
+	uint8_t blue;
+};
+
 // TODO instead of the att_flags use 4 bools: (background, y_flip, x_flip, palette)
 struct Sprite {
 	uint8_t y_pos;
@@ -102,7 +106,6 @@ private:
 	uint8_t scy = 0;
 	uint8_t scx = 0;
 	uint8_t ly = 1;
-	uint8_t ly_counter = 0;
 	uint8_t vblank_line = 0;
 	uint8_t lyc = 0;
 	LCD_DMA dma;
@@ -127,7 +130,7 @@ private:
 	bool hdma_enable = false;
 	uint16_t hdma_bytes=0;
 
-	bool window_active = false;
+	bool lcd_enabled = true;
 	uint8_t window_line_active = 0;
 	bool draw_screen = false; //similar to vblank check?
 	bool drawn_scanline = false;
@@ -135,26 +138,22 @@ private:
 	uint8_t tile_drawn = 0;
 	int16_t screen_off_cycles = 0;
 	uint8_t hide_screen = 0;
-	bool cgb_colors;
+	bool is_cgb;
 
-	uint32_t framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+	uint8_t mono_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+	uint16_t r5g6b6_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+	RGB_COLOR rgb_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+
 	int32_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
-	std::array<Sprite, 40> sprites; // 0xFE00 - 0xFE9F 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3:
-	                                // Attributes/flags)
+	uint8_t oam[40][4]; // 0xFE00 - 0xFE9F 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3: Attributes/flags)
 	std::array<uint8_t, 8192> vram[2]{0};
 	uint8_t tile_data[2][384][64];
-
-	uint32_t bg_colors[4];
-	uint8_t cgb_bg_colors[64];
-	uint16_t cgb_bg_colors_other[8][4][2];
-	uint16_t cgb_sprite_colors_other[8][4][2];
-	uint32_t cgb_bg_colors_other_32[8][4];
-	uint32_t cgb_sprite_colors_other_32[8][4];
-	uint32_t obj_0_colors[4];
-	uint32_t obj_1_colors[4];
-
-	// TODO add CGB colors and make constants of some of the colors
+	void set_tile_data(uint16_t addr);
+	
+	uint16_t cgb_bg_colors[8][4][2];
+	uint16_t cgb_obj_colors[8][4][2];
+	
 	// TODO add shader for the rasterize effect
 	// TODO add a way to change palettes (if gb game in CGB mode)
 
@@ -165,19 +164,13 @@ private:
 	void handle_oam(uint16_t &cycle);
 	void handle_pixel_drawing(uint16_t &cycle);
 
-	void handle_interrupt(bool val);
-
 	void render_background(uint8_t line, uint8_t pixel);
 	void render_window(uint8_t line);
 	void render_sprites(uint8_t line);
 	void render_scanline(uint8_t line);
-	void handle_sprites(std::vector<std::reference_wrapper<Sprite>> sprites, uint32_t i, uint8_t tile_data_pos,
-	                    uint32_t *framebuffer_ptr, size_t *spr_index);
-	// Sprite get_sprite(size_t index);
-
-	void set_tile_data(uint16_t addr);
+	
 	void dma_transfer(uint8_t cycle);
-	uint32_t get_cgb_color(uint8_t value1, uint8_t value2);
+	
 	void set_color_palette(bool background, uint8_t val);
 	void update_palette_cgb(bool background, uint8_t val);
 

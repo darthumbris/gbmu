@@ -101,16 +101,13 @@ void PixelProcessingUnit::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&window_x), sizeof(window_x));
 	f.write(reinterpret_cast<const char *>(&vbank_select), sizeof(vbank_select));
 	f.write(reinterpret_cast<const char *>(&wram_bank_select), sizeof(wram_bank_select));
-	f.write(reinterpret_cast<const char *>(&window_active), sizeof(window_active));
+	f.write(reinterpret_cast<const char *>(&lcd_enabled), sizeof(lcd_enabled));
 	f.write(reinterpret_cast<const char *>(&window_line_active), sizeof(window_line_active));
 	f.write(reinterpret_cast<const char *>(&draw_screen), sizeof(draw_screen));
-	f.write(reinterpret_cast<const char *>(&framebuffer), sizeof(framebuffer));
-	f.write(reinterpret_cast<const char *>(&sprites), sizeof(sprites));
+	f.write(reinterpret_cast<const char *>(&r5g6b6_framebuffer), sizeof(r5g6b6_framebuffer));
+	f.write(reinterpret_cast<const char *>(&mono_framebuffer), sizeof(mono_framebuffer));
+	f.write(reinterpret_cast<const char *>(&rgb_framebuffer), sizeof(rgb_framebuffer));
 	f.write(reinterpret_cast<const char *>(&vram), sizeof(vram));
-	f.write(reinterpret_cast<const char *>(&tile_data), sizeof(tile_data));
-	f.write(reinterpret_cast<const char *>(&bg_colors), sizeof(bg_colors));
-	f.write(reinterpret_cast<const char *>(&obj_0_colors), sizeof(obj_0_colors));
-	f.write(reinterpret_cast<const char *>(&obj_1_colors), sizeof(obj_1_colors));
 	std::cout << "done serializing ppu" << std::endl;
 }
 
@@ -130,15 +127,12 @@ void PixelProcessingUnit::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&window_x), sizeof(window_x));
 	f.read(reinterpret_cast<char *>(&vbank_select), sizeof(vbank_select));
 	f.read(reinterpret_cast<char *>(&wram_bank_select), sizeof(wram_bank_select));
-	f.read(reinterpret_cast<char *>(&window_active), sizeof(window_active));
+	f.read(reinterpret_cast<char *>(&lcd_enabled), sizeof(lcd_enabled));
 	f.read(reinterpret_cast<char *>(&window_line_active), sizeof(window_line_active));
 	f.read(reinterpret_cast<char *>(&draw_screen), sizeof(draw_screen));
-	f.read(reinterpret_cast<char *>(&framebuffer), sizeof(framebuffer));
-	f.read(reinterpret_cast<char *>(&sprites), sizeof(sprites));
+	f.read(reinterpret_cast<char *>(&r5g6b6_framebuffer), sizeof(r5g6b6_framebuffer));
+	f.read(reinterpret_cast<char *>(&mono_framebuffer), sizeof(mono_framebuffer));
+	f.read(reinterpret_cast<char *>(&rgb_framebuffer), sizeof(rgb_framebuffer));
 	f.read(reinterpret_cast<char *>(&vram), sizeof(vram));
-	f.read(reinterpret_cast<char *>(&tile_data), sizeof(tile_data));
-	f.read(reinterpret_cast<char *>(&bg_colors), sizeof(bg_colors));
-	f.read(reinterpret_cast<char *>(&obj_0_colors), sizeof(obj_0_colors));
-	f.read(reinterpret_cast<char *>(&obj_1_colors), sizeof(obj_1_colors));
 	std::cout << "done deserializing ppu" << std::endl;
 }

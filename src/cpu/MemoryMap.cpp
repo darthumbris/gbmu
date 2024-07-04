@@ -97,7 +97,7 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 			}
 		}
 	case 0xFE00 ... 0xFE9F:
-		return cpu->get_ppu().read_oam(addr & 0xFF);
+		return cpu->get_ppu().read_oam(addr);
 	case 0xFEA0 ... 0xFEFF:
 		return not_usable[addr - 0xFEA0];
 	case 0xFF00 ... 0xFF3F:
@@ -184,7 +184,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	case 0xFE00 ... 0xFE9F:
-		cpu->get_ppu().write_oam(addr & 0xFF, val);
+		cpu->get_ppu().write_oam(addr, val);
 		break;
 	case 0xFEA0 ... 0xFEFF:
 		not_usable[addr - 0xFEA0] = val;
