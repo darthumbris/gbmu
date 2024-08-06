@@ -4,7 +4,10 @@
 #include "rom/MCB2.hpp"
 #include "rom/MCB3.hpp"
 #include "rom/MCB5.hpp"
+#include "rom/RomHeader.hpp"
 #include "rom/RomOnly.hpp"
+#include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 
@@ -57,19 +60,85 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 
 MemoryMap::~MemoryMap() {}
 
+// TODO check if this is even needed?
+void MemoryMap::init_memory() {
+	const uint8_t *initial_values;
+	if (is_cgb_rom()) {
+		initial_values = InitialIOValuesCGB;
+	} else {
+		initial_values = InitialIOValuesGB;
+	}
+	for (int i = 0; i < 65536; i++) {
+		if ((i >= 0xC000) && (i < 0xE000)) {
+			if ((i & 0x8) ^ ((i & 0x800) >> 8)) {
+				if (is_cgb_rom()) {
+					write_u8(i, 0x00);
+					if (i >= 0xD000) {
+						for (int a = 0; a < 8; a++) {
+							if (a != 2) {
+								work_ram[a][i & 0x0FFF] = read_u8(i - 0x1000);
+								echo_ram[a][i & 0x0FFF] = read_u8(i - 0x1000);
+							} else {
+								work_ram[2][i & 0x0FFF] = 0x00;
+								echo_ram[2][i & 0x0FFF] = 0x00;
+							}
+						}
+					}
+				} else {
+					write_u8(i, 0x0F);
+				}
+			} else {
+				write_u8(i, 0xFF);
+				if (i >= 0xD000) {
+					for (int a = 0; a < 8; a++) {
+						if (a != 2) {
+							work_ram[a][i & 0x0FFF] = read_u8(i - 0x1000);
+							echo_ram[a][i & 0x0FFF] = read_u8(i - 0x1000);
+						} else {
+							work_ram[2][i & 0x0FFF] = 0x00;
+							echo_ram[2][i & 0x0FFF] = 0x00;
+						}
+					}
+				}
+			}
+		} else if (i >= 0xFF00) {
+			switch (i) {
+			case 0xFF0F:
+				cpu->overwrite_interrupt(initial_values[i - 0xFF00]);
+				break;
+			case 0xFF80 ... 0xFFFE:
+				high_ram[i - 0xFF80] = initial_values[i - 0xFF00];
+				break;
+			case 0xFF40 ... 0xFF43:
+			case 0xFF45 ... 0xFF4f:
+			case 0xFF70:
+				cpu->get_ppu().write_u8_ppu(i, initial_values[i - 0xFF00]);
+				break;
+			default:
+				io_registers[i - 0xFF00] = initial_values[i - 0xFF00];
+				break;
+			}
+
+		} else {
+			write_u8(i, 0xFF);
+		}
+	}
+}
+
 uint8_t MemoryMap::read_u8(uint16_t addr) {
 	// printf("trying to read addr: %#06x\n", addr);
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
 		if (!boot_rom_loaded) {
 			if (rom->cgb_mode()) {
-				return cgb_boot_rom[addr];
+				if (((addr < 0x0100) || (addr < 0x0900 && addr > 0x01FF))) {
+					return cgb_boot_rom[addr];
+				}
 			} else if (addr <= 0xFF) {
 				return gb_boot_rom[addr];
 			}
 		}
 		return rom->read_u8(addr);
-		;
 	case 0x8000 ... 0x9FFF:
 		return cpu->get_ppu().read_u8_ppu(addr);
 	case 0xA000 ... 0xBFFF:
@@ -78,10 +147,9 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 		if (addr <= 0xCFFF) {
 			return work_ram[0][uint16_t(addr & 0x0FFF)];
 		} else {
-			if (is_cgb_rom()) { 
+			if (is_cgb_rom()) {
 				return work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000];
-			}
-			else {
+			} else {
 				return work_ram[1][uint16_t(addr & 0x1FFF) - 0x1000];
 			}
 		}
@@ -91,8 +159,7 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 		} else {
 			if (is_cgb_rom()) {
 				return echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000];
-			}
-			else {
+			} else {
 				return echo_ram[1][uint16_t(addr & 0x0FFF) - 0x1000];
 			}
 		}
@@ -120,7 +187,7 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 		case 0xFF07:
 			return cpu->get_timer_control();
 		case 0xFF0F:
-			return cpu->get_interrupt();
+			return cpu->get_interrupt() | 0xE0;
 		default:
 			return io_registers[addr - 0xFF00];
 		}
@@ -164,8 +231,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		} else {
 			if (is_cgb_rom()) {
 				work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000] = val;
-			}
-			else {
+			} else {
 				work_ram[1][uint16_t(addr & 0x0FFF)] = val;
 			}
 		}
@@ -176,11 +242,9 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		} else {
 			if (is_cgb_rom()) {
 				echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000] = val;
-			}
-			else {
+			} else {
 				echo_ram[1][uint16_t(addr & 0x0FFF)] = val;
 			}
-			
 		}
 		break;
 	case 0xFE00 ... 0xFE9F:
@@ -204,11 +268,11 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			cpu->set_timer_modulo(val);
 			break;
 		case 0xFF07:
-			cpu->set_timer_control(val); //TODO slightly more complex
+			cpu->set_timer_control(val); // TODO slightly more complex
 			break;
 		case 0xFF0F:
 			// cpu->overwrite_interrupt(val & 0x1F);
-			cpu->overwrite_interrupt(val); //TODO check
+			cpu->overwrite_interrupt(val); // TODO check
 			break;
 		default:
 			io_registers[addr - 0xFF00] = val;
@@ -226,7 +290,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			boot_rom_loaded = true;
 			printf("boot rom loaded\n");
 		}
-		io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
+		// io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
 		break;
 	case 0xFF80 ... 0xFFFE:
 		high_ram[addr - 0xFF80] = val;
@@ -252,6 +316,7 @@ uint8_t MemoryMap::wram_bank_select() {
 uint8_t MemoryMap::read_io_registers(uint16_t addr) {
 	return io_registers[addr - 0xFF00];
 }
-	void MemoryMap::write_io_registers(uint16_t addr, uint8_t val) {
-		io_registers[addr - 0xFF00] = val;
-	}
+
+void MemoryMap::write_io_registers(uint16_t addr, uint8_t val) {
+	io_registers[addr - 0xFF00] = val;
+}

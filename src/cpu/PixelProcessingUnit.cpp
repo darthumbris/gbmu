@@ -13,7 +13,7 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	data.status = false;
 	ctrl = {0};
 	l_status = {0};
-	l_status.mode = PPU_Modes::Pixel_Drawing;
+	l_status.mode = PPU_Modes::Vertical_Blank;
 	std::memset(mono_framebuffer, 0, sizeof(mono_framebuffer));
 	std::memset(rgb_framebuffer, 0, sizeof(rgb_framebuffer));
 	std::memset(r5g6b6_framebuffer, 0, sizeof(r5g6b6_framebuffer));
@@ -22,10 +22,30 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	std::memset(tile_data, 0, sizeof(tile_data));
 	dma = {0};
 	is_cgb = cpu->get_mmap().is_cgb_rom();
-	printf("is cgb_rom: %u\n", is_cgb);
+	ly = 144;
 }
 
 PixelProcessingUnit::~PixelProcessingUnit() {}
+
+void PixelProcessingUnit::init_hdma() {
+	if (is_cgb) {
+		for (int i = 0; i < 5; i++) {
+			hdma[i] = cpu->get_mmap().read_io_registers(0xFF51 + i);
+		}
+
+		uint8_t hdma1 = hdma[0];
+		uint8_t hdma2 = hdma[1];
+		uint8_t hdma3 = hdma[2];
+		uint8_t hdma4 = hdma[3];
+
+		if (hdma1 > 0x7f && hdma1 < 0xa0)
+			hdma1 = 0;
+
+		hdma_source = (hdma1 << 8) | (hdma2 & 0xF0);
+		hdma_dest = ((hdma3 & 0x1F) << 8) | (hdma4 & 0xF0);
+		hdma_dest |= 0x8000;
+	}
+}
 
 void PixelProcessingUnit::tick(uint16_t &cycle) {
 	lcd_clock += cycle;
@@ -77,6 +97,7 @@ void PixelProcessingUnit::tick(uint16_t &cycle) {
 	}
 }
 
+// TODO change all the hex masks to bit masks (for the interrupt stuff)
 void PixelProcessingUnit::handle_hblank(uint16_t &cycle) {
 	if (lcd_clock >= 204) {
 		lcd_clock -= 204;
@@ -169,7 +190,7 @@ void PixelProcessingUnit::handle_pixel_drawing(uint16_t &cycle) {
 		tile_drawn += cycle;
 		if (lcd_enabled && ctrl.lcd_enable) {
 			while (tile_drawn >= 3) {
-				//TODO check if this is needed
+				// TODO check if this is needed
 				render_background(ly, pixels_drawn);
 				pixels_drawn += 4;
 				tile_drawn -= 3;
@@ -241,13 +262,14 @@ void PixelProcessingUnit::dma_transfer(uint8_t cycle) {
 	}
 }
 
-//TODO clean this up and optimize it more
+// TODO clean this up and optimize it more
 void PixelProcessingUnit::render_background(uint8_t line, uint8_t pixel) {
 	int line_width = line * 160;
 	uint8_t y = 0;
 	if (is_cgb || ctrl.bg_enable) {
+		int pixels_to_render = 4;
 		int offset_x_init = pixel & 0x7;
-		int offset_x_end = offset_x_init + 160;
+		int offset_x_end = offset_x_init + pixels_to_render;
 		int screen_tile = pixel >> 3;
 		int tile_start_addr = ctrl.bg_window_tile_data ? 0x8000 : 0x8800;
 		int map_start_addr = ctrl.bg_tile_map_address ? 0x9C00 : 0x9800;
@@ -265,52 +287,65 @@ void PixelProcessingUnit::render_background(uint8_t line, uint8_t pixel) {
 			uint16_t map_tile_addr = map_start_addr + line_scrolled_32 + map_tile_x;
 			int map_tile = 0;
 
-			if (!ctrl.bg_window_tile_data) {
-				map_tile = static_cast<int8_t>(read_u8_ppu(map_tile_addr));
+			if (tile_start_addr == 0x8800) {
+				map_tile = static_cast<int8_t>(vram[0][map_tile_addr & 0x1FFF]);
 				map_tile += 128;
 			} else {
-				map_tile = read_u8_ppu(map_tile_addr);
+				map_tile = vram[0][map_tile_addr & 0x1FFF];
 			}
 			uint8_t cgb_tile_attr = is_cgb ? vram[1][map_tile_addr & 0x1FFF] : 0;
 			uint8_t cgb_tile_pal = is_cgb ? (cgb_tile_attr & 0x07) : 0;
-			bool cgb_tile_bank = is_cgb ? (cgb_tile_attr & mask3) : false;
-			bool cgb_tile_xflip = is_cgb ? (cgb_tile_attr & mask5) : false;
-			bool cgb_tile_yflip = is_cgb ? (cgb_tile_attr & mask6) : false;
+			bool cgb_tile_bank = is_cgb ? IsSetBit(cgb_tile_attr, 3) : false;
+			bool cgb_tile_xflip = is_cgb ? IsSetBit(cgb_tile_attr, 5) : false;
+			bool cgb_tile_yflip = is_cgb ? IsSetBit(cgb_tile_attr, 6) : false;
 			int map_tile_16 = map_tile << 4;
+			uint8_t byte1 = 0;
+			uint8_t byte2 = 0;
+
 			int final_pixely_2 = cgb_tile_yflip ? tile_pixel_y_flip_2 : tile_pixel_y_2;
 			int tile_address = tile_start_addr + map_tile_16 + final_pixely_2;
+
+			if (cgb_tile_bank) {
+				byte1 = vram[1][tile_address - 0x8000];
+				byte2 = vram[1][tile_address - 0x8000 + 1];
+			} else {
+				byte1 = vram[0][tile_address & 0x1FFF];
+				byte2 = vram[0][(tile_address + 1) & 0x1FFF];
+			}
 
 			int pixel_x_in_tile = map_tile_offset_x;
 
 			if (cgb_tile_xflip) {
 				pixel_x_in_tile = 7 - pixel_x_in_tile;
 			}
+			int pixel_x_in_tile_bit = 0x1 << (7 - pixel_x_in_tile);
+			int pixel_data = (byte1 & pixel_x_in_tile_bit) ? 1 : 0;
+			pixel_data |= (byte2 & pixel_x_in_tile_bit) ? 2 : 0;
 
 			int index = line_width + screen_pixel_x;
-			uint16_t addr = tile_address;
-			addr &= 0x1FFE;
-			y = (addr >> 1) & 7;
-			if (cgb_tile_yflip) {
-				y = 7 - y;
-			}
-			uint8_t tile_dat;
-			int tile_index = (addr >> 4) & 0x1FF;
-			if (cgb_tile_bank) {
-				tile_dat = tile_data[1][tile_index][y * 8 + pixel_x_in_tile];
-			} else {
-				tile_dat = tile_data[vbank_select][tile_index][y * 8 + pixel_x_in_tile];
-			}
-
-			color_cache_buffer[index] = tile_dat & 0x03;
+			// uint16_t addr = tile_address;
+			// addr &= 0x1FFE;
+			// y = (addr >> 1) & 7;
+			// if (cgb_tile_yflip) {
+			// 	y = 7 - y;
+			// }
+			// uint8_t tile_dat;
+			// int tile_index = (addr >> 4) & 0x1FF;
+			// if (cgb_tile_bank) {
+			// 	tile_dat = tile_data[1][tile_index][y * 8 + pixel_x_in_tile];
+			// } else {
+			// 	tile_dat = tile_data[vbank_select][tile_index][y * 8 + pixel_x_in_tile];
+			// }
+			color_cache_buffer[index] = pixel_data & 0x03;
 
 			if (is_cgb) {
-				bool cgb_tile_priority = (cgb_tile_attr & mask7) && ctrl.bg_enable;
-				if (cgb_tile_priority && tile_dat) {
+				bool cgb_tile_priority = IsSetBit(cgb_tile_attr, 7) && ctrl.bg_enable;
+				if (cgb_tile_priority && (pixel_data != 0)) {
 					color_cache_buffer[index] |= mask2;
 				}
-				r5g6b6_framebuffer[index] = cgb_bg_colors[cgb_tile_pal][tile_dat][1];
+				r5g6b6_framebuffer[index] = cgb_bg_colors[cgb_tile_pal][pixel_data][1];
 			} else {
-				uint8_t color = (bg_palette >> (tile_dat << 1)) & 0x03;
+				uint8_t color = (bg_palette >> (pixel_data << 1)) & 0x03;
 				r5g6b6_framebuffer[index] = mono_framebuffer[index] = color;
 			}
 		}
@@ -323,7 +358,7 @@ void PixelProcessingUnit::render_background(uint8_t line, uint8_t pixel) {
 	}
 }
 
-//TODO clean this up and optimize it more
+// TODO clean this up and optimize it more
 void PixelProcessingUnit::render_window(uint8_t line) {
 	if (window_line_active > 143) {
 		return;
@@ -353,10 +388,10 @@ void PixelProcessingUnit::render_window(uint8_t line) {
 		int tile = 0;
 
 		if (tiles == 0x8800) {
-			tile = static_cast<int8_t>(read_u8_ppu(map + y_32 + x));
+			tile = static_cast<int8_t>(vram[0][(map + y_32 + x) & 0x1FFF]);
 			tile += 128;
 		} else {
-			tile = read_u8_ppu(map + y_32 + x);
+			tile = vram[0][(map + y_32 + x) & 0x1FFF];
 		}
 
 		uint8_t cgb_tile_attr = is_cgb ? read_cgb_vram(map + y_32 + x, true) : 0;
@@ -369,14 +404,25 @@ void PixelProcessingUnit::render_window(uint8_t line) {
 		int final_pixely_2 = (is_cgb && cgb_tile_yflip) ? pixely_2_flip : pixely_2;
 		int tile_address = tiles + tile_16 + final_pixely_2;
 
-		uint16_t addr = tile_address;
-		addr &= 0x1FFE;
-		y = (addr >> 1) & 7;
-		if (cgb_tile_yflip) {
-			y = 7 - y;
+		uint8_t byte1 = 0;
+		uint8_t byte2 = 0;
+
+		if (is_cgb && cgb_tile_bank) {
+			byte1 = vram[1][tile_address - 0x8000];
+			byte2 = vram[1][tile_address - 0x8000 + 1];
+		} else {
+			byte1 = vram[0][tile_address & 0x1FFF];
+			byte2 = vram[0][(tile_address + 1) & 0x1FFF];
 		}
-		uint8_t tile_dat;
-		int tile_index = (addr >> 4) & 0x1FF;
+
+		// uint16_t addr = tile_address;
+		// addr &= 0x1FFE;
+		// y = (addr >> 1) & 7;
+		// if (cgb_tile_yflip) {
+		// 	y = 7 - y;
+		// }
+		// uint8_t tile_dat;
+		// int tile_index = (addr >> 4) & 0x1FF;
 
 		for (int pixelx = 0; pixelx < 8; pixelx++) {
 			int bufferX = (mapOffsetX + pixelx + wx);
@@ -390,22 +436,25 @@ void PixelProcessingUnit::render_window(uint8_t line) {
 				pixelx_pos = 7 - pixelx_pos;
 			}
 
-			if (cgb_tile_bank) {
-				tile_dat = tile_data[1][tile_index][y * 8 + pixelx_pos];
-			} else {
-				tile_dat = tile_data[vbank_select][tile_index][y * 8 + pixelx_pos];
-			}
+			int pixel = (byte1 & (0x1 << (7 - pixelx_pos))) ? 1 : 0;
+			pixel |= (byte2 & (0x1 << (7 - pixelx_pos))) ? 2 : 0;
+
+			// if (cgb_tile_bank) {
+			// 	tile_dat = tile_data[1][tile_index][y * 8 + pixelx_pos];
+			// } else {
+			// 	tile_dat = tile_data[vbank_select][tile_index][y * 8 + pixelx_pos];
+			// }
 
 			int position = line_width + bufferX;
-			color_cache_buffer[position] = tile_dat & 0x03;
+			color_cache_buffer[position] = pixel & 0x03;
 			if (is_cgb) {
 				bool cgb_tile_priority = (cgb_tile_attr & mask7) && ctrl.bg_enable;
-				if (cgb_tile_priority && tile_dat) {
+				if (cgb_tile_priority && (pixel != 0)) {
 					color_cache_buffer[position] |= mask2;
 				}
-				r5g6b6_framebuffer[position] = cgb_bg_colors[cgb_tile_pal][tile_dat][1];
+				r5g6b6_framebuffer[position] = cgb_bg_colors[cgb_tile_pal][pixel][1];
 			} else {
-				uint8_t color = (bg_palette >> (tile_dat << 1)) & 0x03;
+				uint8_t color = (bg_palette >> (pixel << 1)) & 0x03;
 				r5g6b6_framebuffer[position] = mono_framebuffer[position] = color;
 			}
 		}
@@ -413,8 +462,8 @@ void PixelProcessingUnit::render_window(uint8_t line) {
 	window_line_active++;
 }
 
-//TODO clean this up and optimize it more
-//TODO maybe bring back the sprites instead of the oam stuff?
+// TODO clean this up and optimize it more
+// TODO maybe bring back the sprites instead of the oam stuff?
 void PixelProcessingUnit::render_sprites(uint8_t line) {
 	if (!ctrl.obj_enable)
 		return;
@@ -479,25 +528,27 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 			byte1 = read_cgb_vram(tile_address, true);
 			byte2 = read_cgb_vram(tile_address + 1, true);
 		} else {
-			byte1 = read_u8_ppu(tile_address);
-			byte2 = read_u8_ppu(tile_address + 1);
+			byte1 = vram[0][tile_address & 0x1FFF];
+			byte2 = vram[0][(tile_address + 1) & 0x1FFF];
 		}
 
-		uint16_t addr = tile_address;
-		addr &= 0x1FFE;
-		y = (addr >> 1) & 7;
-		if (yflip) {
-			y = 7 - y;
-		}
-		uint8_t tile_dat;
-		int tile_index = (addr >> 4) & 0x1FF;
+		// uint16_t addr = tile_address;
+		// addr &= 0x1FFE;
+		// y = (addr >> 1) & 7;
+		// if (yflip) {
+		// 	y = 7 - y;
+		// }
+		// uint8_t tile_dat;
+		// int tile_index = (addr >> 4) & 0x1FF;
 		for (int pixelx = 0; pixelx < 8; pixelx++) {
-			if (cgb_tile_bank) {
-				tile_dat = tile_data[1][tile_index][y * 8 + (!xflip ? pixelx : 7 - pixelx)];
-			} else {
-				tile_dat = tile_data[vbank_select][tile_index][y * 8 + (!xflip ? pixelx : 7 - pixelx)];
-			}
-			if (tile_dat == 0)
+			int pixel = (byte1 & (0x01 << (xflip ? pixelx : 7 - pixelx))) ? 1 : 0;
+			pixel |= (byte2 & (0x01 << (xflip ? pixelx : 7 - pixelx))) ? 2 : 0;
+			// if (cgb_tile_bank) {
+			// 	tile_dat = tile_data[1][tile_index][y * 8 + (!xflip ? pixelx : 7 - pixelx)];
+			// } else {
+			// 	tile_dat = tile_data[vbank_select][tile_index][y * 8 + (!xflip ? pixelx : 7 - pixelx)];
+			// }
+			if (pixel == 0)
 				continue;
 
 			int bufferX = (sprite_x + pixelx);
@@ -523,9 +574,9 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 			color_cache_buffer[position] = (color_cache & mask3);
 			sprite_cache_buffer[position] = sprite_x;
 			if (is_cgb) {
-				r5g6b6_framebuffer[position] = cgb_obj_colors[cgb_tile_pal][tile_dat][1];
+				r5g6b6_framebuffer[position] = cgb_obj_colors[cgb_tile_pal][pixel][1];
 			} else {
-				uint8_t color = (palette >> (tile_dat << 1)) & 0x03;
+				uint8_t color = (palette >> (pixel << 1)) & 0x03;
 				r5g6b6_framebuffer[position] = mono_framebuffer[position] = color;
 			}
 		}
@@ -534,7 +585,8 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 
 void PixelProcessingUnit::render_scanline(uint8_t line) {
 	if (lcd_enabled && ctrl.lcd_enable) {
-		render_background(line, 0);
+		// TODO check if doing render_background here helps in performance?
+		//  render_background(line, 0);
 		render_window(line);
 		render_sprites(line);
 	} else {
@@ -615,7 +667,6 @@ void PixelProcessingUnit::close() {
 }
 
 void PixelProcessingUnit::set_tile_data(uint16_t addr) {
-	// printf("setting tile_data for tile_address: %#06x\n", addr);
 	addr &= 0x1FFE;
 
 	int tile_index = (addr >> 4) & 0x1FF;
@@ -633,7 +684,6 @@ void PixelProcessingUnit::set_tile_data(uint16_t addr) {
 uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
 	switch (addr) {
 	case 0x8000 ... 0x9FFF:
-		// printf("trying to read addr: %u\n", addr);
 		return vram[vbank_select][addr & 0x1FFF];
 	case 0xFF40:
 		return ctrl.val;
@@ -772,21 +822,12 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		break;
 	case 0xFF47:
 		bg_palette = val;
-		// for (int i = 0; i < 4; i++) {
-		// 	bg_colors[i] = GB_COLORS_ORIGNAL[(val >> (i * 2)) & 3];
-		// }
 		break;
 	case 0xFF48:
 		obj_palette_0 = val;
-		// for (int i = 0; i < 4; i++) {
-		// 	obj_0_colors[i] = GB_COLORS_ORIGNAL[(val >> (i * 2)) & 3];
-		// }
 		break;
 	case 0xFF49:
 		obj_palette_1 = val;
-		// for (int i = 0; i < 4; i++) {
-		// 	obj_1_colors[i] = GB_COLORS_ORIGNAL[(val >> (i * 2)) & 3];
-		// }
 		break;
 	case 0xFF4A:
 		window_y = val;
@@ -796,7 +837,6 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		break;
 	case 0xFF4F:
 		if (is_cgb) {
-			printf("setting vbank select to: %u val: %u\n", val & 1, val);
 			vbank_select = val & 0x01;
 		}
 		cpu->get_mmap().write_io_registers(addr, val);
@@ -888,7 +928,6 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 
 void PixelProcessingUnit::write_oam(uint16_t addr, uint8_t val) {
 	uint16_t sprite_addr = addr & 0xFF;
-	// printf("sprite addr: %#06x or: %u\n", sprite_addr, sprite_addr);
 	oam[sprite_addr / 4][sprite_addr % 4] = val;
 	// switch (sprite_addr & 3) {
 	// case 0:
@@ -907,7 +946,6 @@ void PixelProcessingUnit::write_oam(uint16_t addr, uint8_t val) {
 }
 
 uint8_t PixelProcessingUnit::read_oam(uint16_t addr) {
-	// printf("reading oam at addr: %#06x\n", addr);
 	uint16_t sprite_addr = addr & 0xFF;
 	return oam[sprite_addr / 4][sprite_addr % 4];
 	// switch (sprite_addr & 3) {
@@ -928,8 +966,7 @@ uint8_t PixelProcessingUnit::read_cgb_vram(uint16_t addr, bool force) {
 	if (force || (vbank_select == 1)) {
 		return vram[1][addr - 0x8000];
 	} else {
-		printf("reading cgb_vram: %#06x\n", addr);
-		return read_u8_ppu(addr);
+		return vram[0][addr - 0x8000];
 	}
 }
 
@@ -968,19 +1005,12 @@ void PixelProcessingUnit::set_color_palette(bool background, uint8_t val) {
 
 	uint16_t *pa_gbc = background ? &cgb_bg_colors[pal][index][0] : &cgb_obj_colors[pal][index][0];
 	uint16_t *pa_final = background ? &cgb_bg_colors[pal][index][1] : &cgb_obj_colors[pal][index][1];
-	// uint32_t *pa_32 = background ? &cgb_bg_colors_other_32[pal][index] : &cgb_sprite_colors_other_32[pal][index];
 	*pa_gbc = hl ? (*pa_gbc & 0x00FF) | (val << 8) : (*pa_gbc & 0xFF00) | val;
 	uint8_t red_5bit = *pa_gbc & 0x1F;
 	uint8_t blue_5bit = (*pa_gbc >> 10) & 0x1F;
 	uint8_t green_5bit = (*pa_gbc >> 5) & 0x1F;
-	// *pa_final = 0x8000 | (red_5bit << 10) | (green_5bit << 5) | blue_5bit;
 	uint8_t green_6bit = (*pa_gbc >> 4) & 0x3E;
-	*pa_final = (blue_5bit << 11) | (green_6bit << 5) | red_5bit;
-	// uint8_t red = static_cast<uint8_t>(static_cast<float>(red_5bit) * 255.0 / 31.0);
-	// uint8_t green = static_cast<uint8_t>(static_cast<float>(green_5bit) * 255.0 / 31.0);
-	// uint8_t green = static_cast<uint8_t>(static_cast<float>(green_6bit) * 255.0 / 63.0);
-	// uint8_t blue = static_cast<uint8_t>(static_cast<float>(blue_5bit) * 255.0 / 31.0);
-	// *pa_32 = red << 24 | green << 16 | blue << 8 | 0xFF;
+	*pa_final = (red_5bit << 11) | (green_6bit << 5) | blue_5bit;
 }
 
 // void PixelProcessingUnit::set_tile_data(uint16_t addr) {

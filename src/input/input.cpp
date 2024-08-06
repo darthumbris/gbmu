@@ -1,4 +1,5 @@
 #include "Cpu.hpp"
+#include <cstdio>
 
 void Cpu::handle_input(SDL_Event &e) {
 	SDL_Keymod modstate = SDL_GetModState();
@@ -8,6 +9,7 @@ void Cpu::handle_input(SDL_Event &e) {
 		switch (e.key.keysym.sym) {
 		case SDLK_ESCAPE:
 			set_status(true);
+			printf("breakpoint: %zu\n", debug_count);
 			break;
 		case SDLK_F1:
 			if (modstate & KMOD_SHIFT) {

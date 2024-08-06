@@ -12,6 +12,8 @@ Cpu::Cpu(Decoder dec, const std::string path) : decoder(dec), mmap(path, this), 
 	debug_count = 0;
 	m_cycle = 0;
 	t_cycle = 0;
+	mmap.init_memory();
+	ppu.init_hdma();
 	set_instructions();
 }
 
@@ -61,6 +63,19 @@ void Cpu::tick() {
 		}
 
 		execute_instruction();
+		// printf("register AF %u BC %u DE %u HL %u SP %u PC: %u\n", get_16bitregister(Registers::AF),
+		//        get_16bitregister(Registers::BC), get_16bitregister(Registers::DE), get_16bitregister(Registers::HL),
+		//        sp, pc);
+		// printf("interrupt: %u\n", mmap.read_u8(0xFF0F));
+		// if (debug_count % 1000 == 0) {
+		// 	std::cout << "vram: " << std::endl;
+		// 	for (int i = 0; i < 2; i++) {
+		// 		for (auto v = 0; v < 8192; v++) {
+		// 			printf("%u ", ppu.read_vram_remove(v, i));
+		// 		}
+		// 		std::cout << std::endl;
+		// 	}
+		// }
 
 		ppu.tick(t_cycle);
 		d_cycle += t_cycle;
@@ -150,17 +165,16 @@ void Cpu::debug_print(bool prefix) {
 void Cpu::prefix() {
 	opcode = mmap.read_u8(pc);
 #ifdef DEBUG_MODE
+	// printf("opcode: 0x%02X\n", opcode);
+	// printf("register AF %u BC %u DE %u HL %u SP %u PC: %u\n", get_16bitregister(Registers::AF),
+	// get_16bitregister(Registers::BC), get_16bitregister(Registers::DE), get_16bitregister(Registers::HL), sp, pc);
 	if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
 		// debug_print(true);
-		// std::cout << debug_count << " opcode: 0xCB" << std::hex << std::setfill('0') << std::setw(2) <<
-		// (uint16_t)opcode
-		//           << std::dec << std::endl;
-		// std::cout << debug_count << " PC: 0x" << std::hex << std::setfill('0') << std::setw(4) << pc << std::dec
-		//           << std::endl;
-		printf("debug_count: %lu opcode CB: %#04x pc: %u\n", debug_count, opcode, pc);
-		printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
-		       u8_registers[Registers::F], get_16bitregister(Registers::HL), sp);
-		printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D], u8_registers[Registers::E]);
+		// printf("debug_count: %lu opcode CB: %#04x pc: %u\n", debug_count, opcode, pc);
+		// printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
+		//        u8_registers[Registers::F], get_16bitregister(Registers::HL), sp);
+		// printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
+		// u8_registers[Registers::E]);
 	}
 #endif
 	pc += 1;
@@ -174,22 +188,82 @@ void Cpu::execute_instruction() {
 		return;
 	}
 	opcode = mmap.read_u8(pc);
+
 #ifdef DEBUG_MODE
+	// printf("opcode: 0x%02X\n", opcode);
 	if (opcode != 0xCB) {
-		if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
-			// debug_print(false);
-			// std::cout << debug_count << " opcode: 0x" << std::hex << std::setfill('0') << std::setw(2)
-			//           << (uint16_t)opcode << std::dec << std::endl;
-			// std::cout << debug_count << " PC: 0x" << std::hex << std::setfill('0') << std::setw(4) << pc << std::dec
-			//           << std::endl;
-			printf("debug_count: %lu opcode: %#04x pc: %u\n", debug_count, opcode, pc);
-			printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
-			       u8_registers[Registers::F], get_16bitregister(Registers::HL), sp);
-			printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D], u8_registers[Registers::E]);
-		}
+		// if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
+		// debug_print(false);
+		// 	printf("debug_count: %lu opcode: %#04x pc: %u\n", debug_count, opcode, pc);
+		// 	printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
+		// 	       u8_registers[Registers::F], get_16bitregister(Registers::HL), sp);
+		// 	printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
+		// u8_registers[Registers::E]);
+		// }
 	}
 #endif
+
 	pc += 1;
+
+	// Testing
 	auto op = unprefixed_instructions[opcode];
 	(this->*op)();
+	return;
+	// Testing
+
+	// const uint8_t *accurateOPcodes;
+	// const uint8_t *machineCycles;
+	// OpsFn *opcodeTable;
+	// bool isCB = (opcode == 0xCB);
+
+	// if (isCB) {
+	// 	accurateOPcodes = PrefixedAccurate;
+	// 	machineCycles = PrefixedMachineCycles;
+	// 	opcodeTable = prefixed_instructions;
+	// 	opcode = mmap.read_u8(pc);
+	// 	pc += 1;
+	// } else {
+	// 	accurateOPcodes = UnprefixedAccurate;
+	// 	machineCycles = UnprefixedMachineCycles;
+	// 	opcodeTable = unprefixed_instructions;
+	// }
+
+	// if ((accurateOPcodes[opcode] != 0) && (accurate_opcode_state == 0)) {
+	// 	int left_cycles = (accurateOPcodes[opcode] < 3 ? 2 : 3);
+	// 	set_cycle((machineCycles[opcode] - left_cycles));
+	// 	accurate_opcode_state = 1;
+	// 	pc -= 1;
+	// 	if (isCB) {
+	// 		pc -= 1;
+	// 	}
+	// } else {
+	// 	(this->*opcodeTable[opcode])();
+
+	// 	if (branched) {
+	// 		branched = false;
+	// 		set_cycle((BranchedMachineCycles[opcode]));
+	// 	} else {
+	// 		switch (accurate_opcode_state) {
+	// 		case 0:
+	// 			set_cycle((machineCycles[opcode]));
+	// 			break;
+	// 		case 1:
+	// 			if (accurateOPcodes[opcode] == 3) {
+	// 				set_cycle(1);
+	// 				accurate_opcode_state = 2;
+	// 				pc -= 1;
+	// 				if (isCB)
+	// 					pc -= 1;
+	// 			} else {
+	// 				set_cycle(2);
+	// 				accurate_opcode_state = 0;
+	// 			}
+	// 			break;
+	// 		case 2:
+	// 			set_cycle(2);
+	// 			accurate_opcode_state = 0;
+	// 			break;
+	// 		}
+	// 	}
+	// }
 }

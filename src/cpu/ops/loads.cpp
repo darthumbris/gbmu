@@ -33,9 +33,6 @@ void Cpu::ld_hl_sp_imm8() {
 	int8_t e8 = mmap.read_u8(pc);
 	pc += 1;
 	uint16_t val = get_16bitregister(Registers::SP);
-	// if (static_cast<uint16_t>(e8 + val) == 57595) {
-	// 	printf("val sp: %u val pc: %u val memory: %u\n", val, pc - 1, e8); 
-	// }
 	set_16bitregister(Registers::HL, static_cast<uint16_t>(e8 + val));
 	set_flag(FlagRegisters::z, 0);
 	set_flag(FlagRegisters::n, 0);
@@ -47,9 +44,6 @@ void Cpu::ld_hl_sp_imm8() {
 void Cpu::ldh_a_imm8() {
 	uint8_t addr = mmap.read_u8(pc);
 	pc += 1;
-	if (debug_count == 2385878 || debug_count == 2385877) {
-        printf("val: %u addr: %#06x\n", mmap.read_u8(0xFF00 + static_cast<uint16_t>(addr)), 0xFF00 + static_cast<uint16_t>(addr));
-    }
 	set_register(Registers::A, mmap.read_u8(0xFF00 + static_cast<uint16_t>(addr)));
 	set_cycle(3);
 }

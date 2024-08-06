@@ -3,10 +3,13 @@
 
 #include "Decoder.hpp"
 #include "MemoryMap.hpp"
+#include "OpcodeTiming.hpp"
 #include "Operand.hpp"
 #include "PixelProcessingUnit.hpp"
 #include <array>
 #include <cstdint>
+#include <cstdio>
+#include <iostream>
 #include <math.h>
 
 using namespace Dict;
@@ -62,21 +65,23 @@ private:
 	uint16_t d_cycle = 0;
 	bool process_interrupts = false;
 	uint8_t opcode = 0;
+	uint8_t accurate_opcode_state = 0;
+	bool branched = false;
 
 	uint8_t timer_divider = 0;      // 0xFF04
 	uint8_t timer_counter = 0;      // 0xFF05
 	uint8_t timer_modulo = 0;       // 0xFF06
 	bool timer_enable = false;      // 0xFF07
 	uint8_t timer_clock_select = 0; // 0xFF07
-	
+
 	bool cgb_speed = false;
-	
+
 	std::string rom_path;
 
 	using OpsFn = void (Cpu::*)();
 
-	std::array<OpsFn, 256> unprefixed_instructions;
-	std::array<OpsFn, 256> prefixed_instructions;
+	OpsFn unprefixed_instructions[256];
+	OpsFn prefixed_instructions[256];
 	void set_instructions();
 
 	void prefix();
@@ -238,6 +243,7 @@ private:
 		uint8_t val;
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
+			// printf("reading memory at addr: %u val: %u\n", get_16bitregister(Registers::HL), val);
 			set_cycle(3);
 		} else {
 			val = get_register(src);
@@ -321,6 +327,7 @@ private:
 			set_cycle(3);
 			return;
 		}
+		branched = true;
 		sp -= 2;
 		mmap.write_u16(sp, pc);
 		pc = mmap.read_u16(pc - 2);
@@ -390,6 +397,7 @@ private:
 		bool offset = false;
 		uint8_t val = mmap.read_u8(pc);
 		pc += 1;
+		// std::cout << "zero flag: " << (uint16_t)get_flag(FlagRegisters::z) << std::endl;
 		switch (condition) {
 		case Condition::NotZeroFlag:
 			offset = get_flag(FlagRegisters::z) == 0;
@@ -407,6 +415,7 @@ private:
 			break;
 		}
 		if (offset) {
+			branched = true;
 			if (val > 127) {
 				pc -= (uint16_t)(255 - val + 1);
 			} else {
@@ -441,6 +450,7 @@ private:
 			break;
 		}
 		if (offset) {
+			branched = true;
 			pc = val;
 			set_cycle(4);
 		} else {
@@ -459,6 +469,9 @@ private:
 		if (rec == Registers::HL) {
 			mmap.write_u8(get_16bitregister(Registers::HL), val);
 		} else {
+			if (opcode == 0x7E) {
+				// printf("setting register A to val: %u from address: %u\n", val, get_16bitregister(Registers::HL));
+			}
 			set_register(rec, val);
 		}
 		set_cycle(1);
@@ -477,6 +490,7 @@ private:
 	template <Registers src>
 	void ld_a_r16() {
 		uint16_t address = get_16bitregister(src);
+		// printf("setting A register to value: %u read from address: %u\n", mmap.read_u8(address), address);
 		set_register(Registers::A, mmap.read_u8(address));
 		set_cycle(2);
 	}
@@ -605,6 +619,7 @@ private:
 			set_cycle(2);
 			return;
 		}
+		branched = true;
 		set_cycle(1);
 		ret();
 	}
@@ -865,16 +880,26 @@ public:
 		t_cycle += c * 4;
 	}
 
-	inline bool is_halted() const {return halted;}
+	inline bool is_halted() const {
+		return halted;
+	}
 	inline bool interrupt_ready() const {
 		return (interrupt & interrupt_enable_register & 0x1F) != 0;
 	}
 
-	inline bool get_cgb_speed() const {return cgb_speed;}
+	inline bool get_cgb_speed() const {
+		return cgb_speed;
+	}
 
 	void serialize(const std::string &file);
 	void deserialize(const std::string &file);
 };
+
+//TODO change the naming
+inline bool IsSetBit(const uint8_t value, const uint8_t bit)
+{
+    return (value & (0x01 << bit)) != 0;
+}
 
 #endif
 

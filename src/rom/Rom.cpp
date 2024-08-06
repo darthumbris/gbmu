@@ -1,4 +1,5 @@
 #include "rom/Rom.hpp"
+#include <cstdio>
 #include <fstream>
 
 Rom::Rom(const std::string rom_path, RomHeader rheader) : header(rheader) {

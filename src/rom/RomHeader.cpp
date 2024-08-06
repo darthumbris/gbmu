@@ -1,5 +1,6 @@
 #include "rom/RomHeader.hpp"
 #include <cstdint>
+#include <cstdio>
 #include <fstream>
 
 template <typename IntegerType>
@@ -34,7 +35,7 @@ CGB_FLAGS get_cgb_flag(uint8_t flag) {
 
 CartridgeType RomHeader::get_cartridge_type(uint8_t type, uint8_t rom_size) {
 	if ((type != 0xEA) && (rom_size == 0))
-        return ROM_ONLY;
+		return ROM_ONLY;
 	switch (type) {
 	case 0x00:
 		return ROM_ONLY;
@@ -129,7 +130,6 @@ uint16_t get_rom_size(uint8_t s) {
 }
 
 uint8_t get_ram_size(uint8_t s) {
-	printf("ram_size: %u\n", s);
 	switch (s) {
 	case 0x00:
 		return 0;

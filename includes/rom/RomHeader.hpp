@@ -62,6 +62,7 @@ private:
 	uint16_t _global_checksum;     // 0x14E-0x14F
 
 	CartridgeType get_cartridge_type(uint8_t type, uint8_t rom_size);
+
 public:
 	RomHeader(const std::string rom_path);
 	~RomHeader();
@@ -79,7 +80,7 @@ public:
 	inline uint8_t ram_size() const {
 		return _ram_size;
 	}
-	inline uint8_t rom_size() const {
+	inline uint16_t rom_size() const {
 		return _rom_size;
 	}
 	bool has_battery() const;

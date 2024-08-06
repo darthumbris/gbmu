@@ -34,26 +34,26 @@ struct Sdl_Data {
 enum PPU_Modes { Horizontal_Blank, Vertical_Blank, OAM_Scan, Pixel_Drawing };
 
 struct LCD_STATUS {
-	bool ly_interrupt; //bit 6
-	bool mode_2_oam_interrupt; //bit 5
-	bool mode_1_vblank_interrupt; //bit 4
-	bool mode_0_hblank_interrupt; //bit 3
-	bool ly_flag; //bit2
-	uint8_t mode; //bit 0-1
+	bool ly_interrupt;            // bit 6
+	bool mode_2_oam_interrupt;    // bit 5
+	bool mode_1_vblank_interrupt; // bit 4
+	bool mode_0_hblank_interrupt; // bit 3
+	bool ly_flag;                 // bit2
+	uint8_t mode;                 // bit 0-1
 	uint8_t val;
 
 	void set(uint8_t value);
 };
 
 struct LCD_CONTROL {
-	bool lcd_enable; //bit7
-	bool window_tile_map_address; //bit6
-	bool window_enable; //bit5
-	bool bg_window_tile_data; //bit4
-	bool bg_tile_map_address; //bit3
-	bool obj_size; //bit 2
-	bool obj_enable; //bit 1
-	bool bg_enable; //bit 0
+	bool lcd_enable;              // bit7
+	bool window_tile_map_address; // bit6
+	bool window_enable;           // bit5
+	bool bg_window_tile_data;     // bit4
+	bool bg_tile_map_address;     // bit3
+	bool obj_size;                // bit 2
+	bool obj_enable;              // bit 1
+	bool bg_enable;               // bit 0
 	uint8_t val;
 
 	void set(uint8_t value);
@@ -105,7 +105,7 @@ private:
 	LCD_STATUS l_status;
 	uint8_t scy = 0;
 	uint8_t scx = 0;
-	uint8_t ly = 1;
+	uint8_t ly = 0;
 	uint8_t vblank_line = 0;
 	uint8_t lyc = 0;
 	LCD_DMA dma;
@@ -123,16 +123,16 @@ private:
 
 	uint8_t interrupt_signal = 0;
 
-	//Horizontal blanking DMA (HDMA)
+	// Horizontal blanking DMA (HDMA)
 	uint16_t hdma_source = 0;
 	uint16_t hdma_dest = 0;
 	uint8_t hdma[5];
 	bool hdma_enable = false;
-	uint16_t hdma_bytes=0;
+	uint16_t hdma_bytes = 0;
 
 	bool lcd_enabled = true;
 	uint8_t window_line_active = 0;
-	bool draw_screen = false; //similar to vblank check?
+	bool draw_screen = false; // similar to vblank check?
 	bool drawn_scanline = false;
 	uint8_t pixels_drawn = 0;
 	uint8_t tile_drawn = 0;
@@ -146,14 +146,15 @@ private:
 
 	int32_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
-	uint8_t oam[40][4]; // 0xFE00 - 0xFE9F 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3: Attributes/flags)
+	uint8_t oam[40][4]; // 0xFE00 - 0xFE9F 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3:
+	                    // Attributes/flags)
 	std::array<uint8_t, 8192> vram[2]{0};
 	uint8_t tile_data[2][384][64];
 	void set_tile_data(uint16_t addr);
-	
+
 	uint16_t cgb_bg_colors[8][4][2];
 	uint16_t cgb_obj_colors[8][4][2];
-	
+
 	// TODO add shader for the rasterize effect
 	// TODO add a way to change palettes (if gb game in CGB mode)
 
@@ -168,9 +169,9 @@ private:
 	void render_window(uint8_t line);
 	void render_sprites(uint8_t line);
 	void render_scanline(uint8_t line);
-	
+
 	void dma_transfer(uint8_t cycle);
-	
+
 	void set_color_palette(bool background, uint8_t val);
 	void update_palette_cgb(bool background, uint8_t val);
 
@@ -185,6 +186,7 @@ public:
 
 	void tick(uint16_t &cycle);
 	bool init_window();
+	void init_hdma();
 	void close();
 	void render_screen();
 	inline bool status() {
@@ -215,11 +217,17 @@ public:
 	uint8_t get_hdma_register(uint8_t reg);
 
 	uint8_t read_cgb_vram(uint16_t addr, bool force);
-	
+
+	inline uint8_t read_vram_remove(uint16_t addr, uint8_t bank) {
+		return vram[bank][addr];
+	}
+
 	uint8_t perform_hdma();
 	void perform_gdma(uint8_t value);
 
-	inline uint8_t get_wram_bank_select() const {return wram_bank_select;}
+	inline uint8_t get_wram_bank_select() const {
+		return wram_bank_select;
+	}
 
 	void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);
