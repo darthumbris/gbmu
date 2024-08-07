@@ -226,9 +226,6 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		rom->write_u8(addr, val);
 		break;
 	case 0xC000 ... 0xDFFF:
-		// if (addr == 0xD81B) {
-		// 	printf("writing to 0xD81B: %u\n", val);
-		// }
 		if (addr <= 0xCFFF) {
 			work_ram[0][uint16_t(addr & 0x0FFF)] = val;
 		} else {
@@ -274,14 +271,18 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			cpu->interrupt().set_timer_control(val); // TODO slightly more complex
 			break;
 		case 0xFF0F:
+#ifdef DEBUG_MODE
 			printf("changing interrupt: %u\n", val & 0x1F);
+#endif
 			cpu->interrupt().overwrite_interrupt(val & 0x1F);
 			// cpu->overwrite_interrupt(val); // TODO check
 			break;
 		default:
+#ifdef DEBUG_MODE
 			if (addr == 0xFF26) {
 				printf("writing to audio channel at 0xFF26: %u\n", val);
 			}
+#endif
 			io_registers[addr - 0xFF00] = val;
 			break;
 		}
@@ -295,7 +296,9 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	case 0xFF50:
 		if (!boot_rom_loaded && (val & 0x01) > 0) {
 			boot_rom_loaded = true;
+#ifdef DEBUG_MODE
 			printf("boot_rom loaded\n");
+#endif
 		}
 		// io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
 		break;

@@ -1130,8 +1130,6 @@ void PixelProcessingUnit::perform_gdma(uint8_t value) {
 		clock_cycles = 2 + 16 * ((value & 0x7f) + 1);
 	else
 		clock_cycles = 1 + 8 * ((value & 0x7f) + 1);
-
-	std::cout << "ppu cycles added: " << clock_cycles << std::endl;
 	cpu->set_cycle_16(clock_cycles);
 }
 

@@ -82,14 +82,18 @@ private:
 
 	template <uint8_t op>
 	void unimplemented() {
+		#ifdef DEBUG_MODE
 		printf("Unimplemented opcode: %#04x\n", op);
+		#endif
 	}
 
 	//$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
 	template <uint8_t op>
 	void lockup() {
 		locked = true;
+		#ifdef DEBUG_MODE
 		printf("Illegal instruction. Hard-Locks the Cpu. opcode: %#04x\n", op);
+		#endif
 	}
 
 	inline bool zero() const {
@@ -170,7 +174,6 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			printf("checking and with val: %u from addr: %#06X and val: %u\n",val , get_16bitregister(Registers::HL), a_val);
 			//set_cycle(2);
 		} else {
 			val = get_register(src);
@@ -238,7 +241,6 @@ private:
 		uint8_t val;
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			// printf("reading memory at addr: %u val: %u\n", get_16bitregister(Registers::HL), val);
 			//set_cycle(3);
 		} else {
 			val = get_register(src);
@@ -268,9 +270,6 @@ private:
 		//set_cycle(4);
 		uint8_t bit_loc = ((opcode - 0x80) >> 3);
 		read_cache &= ~(1 << bit_loc);
-		// if (opcode == 0x86) {
-		// 	printf("writing val: %u to address: %#06x\n", read_cache, get_16bitregister(Registers::HL));
-		// }
 		mmap.write_u8(get_16bitregister(Registers::HL), read_cache);
 	}
 
@@ -416,7 +415,6 @@ private:
 		pc += 1;
 		switch (condition) {
 		case Condition::NotZeroFlag:
-			std::cout << "zero flag: " << (uint16_t)get_flag(FlagRegisters::z) << std::endl;
 			offset = get_flag(FlagRegisters::z) == 0;
 			break;
 		case Condition::ZeroFlag:
@@ -432,7 +430,6 @@ private:
 			break;
 		}
 		if (offset) {
-			// printf("set branched to true\n");
 			branched = true;
 			if (val > 127) {
 				pc -= (uint16_t)(255 - val + 1);
@@ -484,9 +481,6 @@ private:
 		} else {
 			val = get_register(src);
 		}
-		if (opcode == 0x6E) {
-			// printf("setting register L to val: %u from address: %#06X\n", val, get_16bitregister(Registers::HL));
-		}
 		if (rec == Registers::HL) {
 			mmap.write_u8(get_16bitregister(Registers::HL), val);
 		} else {
@@ -508,7 +502,6 @@ private:
 	template <Registers src>
 	void ld_a_r16() {
 		uint16_t address = get_16bitregister(src);
-		// printf("setting A register to value: %u read from address: %u\n", mmap.read_u8(address), address);
 		set_register(Registers::A, mmap.read_u8(address));
 		//set_cycle(2);
 	}
@@ -886,7 +879,6 @@ public:
 	inline void set_cycle(uint8_t c) {
 		m_cycle += c;
 		if (speed_multiplier) {
-			// printf("speed multiplier is set\n");
 			t_cycle += (c * 4) >> 1;
 		} else {
 			t_cycle += c * 4;
@@ -894,10 +886,8 @@ public:
 	}
 
 	inline void set_cycle_16(uint16_t c) {
-		// printf("ppu setting clock cycles\n");
 		m_cycle += c;
 		if (speed_multiplier) {
-			// printf("speed multiplier is set\n");
 			t_cycle += (c * 4) >> 1;
 		} else {
 			t_cycle += c * 4;
@@ -916,9 +906,14 @@ public:
 		halted = false;
 	}
 
+	// void handle_prefixed_instruction();
+	// void handle_unprefixed_instruction();
+
 	inline bool get_cgb_speed() const {
 		return cgb_speed;
 	}
+
+	void handle_halt();
 
 	void serialize(const std::string &file);
 	void deserialize(const std::string &file);

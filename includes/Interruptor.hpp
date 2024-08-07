@@ -27,7 +27,8 @@ class Interruptor {
 private:
 	uint8_t interrupt_enable_register = 0; // 0xFFFF
 	uint8_t interrupt = 0;                 // 0xFF0F
-	bool process_interrupts = false; // Interrupt Master Enable (IME)
+	bool process_interrupts = false;       // Interrupt Master Enable (IME)
+	bool interrupt_occured = false;
 	int16_t ime_cycles = 0;
 	int16_t delay_cycles = 0;
 	bool halt_bug_triggered = false;
@@ -46,7 +47,7 @@ private:
 	uint16_t serial_cycle = 0; // for 0xFF01 and 0xFF02
 	int16_t serial_count = 0;  // for 0xFF02
 
-	//TODO check the interrupt delay cycles thing
+	// TODO check the interrupt delay cycles thing
 
 	Cpu *cpu;
 
@@ -56,7 +57,7 @@ public:
 
 	void timer_tick(uint8_t cycle);
 	void serial_tick(uint8_t cycle);
-	void handle_interrupt();
+	bool handle_interrupt(uint8_t state);
 	void process_interrupt(InterruptType i);
 	void enable_processing();
 	void disable_processing();
@@ -64,7 +65,7 @@ public:
 	void set_interrupt(InterruptType i);
 	void overwrite_interrupt(uint8_t val);
 	uint8_t get_interrupt() const;
-	InterruptType pending() const; 
+	InterruptType pending() const;
 	void set_interrupt_enable(uint8_t val);
 	uint8_t get_interrupt_enable();
 	uint8_t get_timer_divider();
@@ -77,16 +78,18 @@ public:
 	void set_timer_control(uint8_t val);
 	bool interrupt_ready() const;
 	bool get_ime() const;
-	bool interrupt_occured(uint8_t state);
+	// bool interrupt_occured(uint8_t state);
+	void check_cycles(uint16_t cycle, uint8_t state);
 
 	int16_t get_ime_cycles();
 	int16_t get_delay_cycles();
 	void set_delay_cycles(uint16_t cycle);
-	void decrease_delay_cycles(uint16_t cycle);
+	// void decrease_delay_cycles(uint16_t cycle);
 	void reset_ime_cycles();
 	void set_ime_cycles(int16_t cycle);
-	void decrease_ime_cycles(int16_t cycle);
+	// void decrease_ime_cycles(int16_t cycle);
 	void check_halt_bug();
+	void reset_interrupt();
 
 	void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);

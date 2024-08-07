@@ -9,7 +9,9 @@ void Cpu::handle_input(SDL_Event &e) {
 		switch (e.key.keysym.sym) {
 		case SDLK_ESCAPE:
 			set_status(true);
+#ifdef DEBUG_MODE
 			printf("breakpoint: %zu\n", debug_count);
+#endif
 			break;
 		case SDLK_F1:
 			if (modstate & KMOD_SHIFT) {

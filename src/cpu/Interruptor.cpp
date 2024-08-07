@@ -71,10 +71,31 @@ void Interruptor::serial_tick(uint8_t cycle) {
 	}
 }
 
-void Interruptor::handle_interrupt() {
+void Interruptor::check_cycles(uint16_t cycle, uint8_t state) {
+	if (!interrupt_occured && delay_cycles > 0) {
+		delay_cycles -= cycle;
+		// interruptor.decrease_delay_cycles(t_cycle);
+	}
+	if (!interrupt_occured && state == StateReady && ime_cycles > 0) {
+		ime_cycles -= cycle;
+		if (ime_cycles <= 0) {
+			ime_cycles = 0;
+			process_interrupts = true;
+		}
+	}
+}
+
+bool Interruptor::handle_interrupt(uint8_t state) {
+	interrupt_occured = false;
+	if (!(state == StateReady && pending() != NoInterrupt && process_interrupts)) {
+		return false;
+	}
+	interrupt_occured = true;
 	uint8_t masked = interrupt_enable_register & interrupt;
-	if (!masked)
-		return;
+	if (!masked) {
+		printf("should not happen right?\n");
+		return true;
+	}
 	if (cpu->is_halted()) {
 		cpu->unhalt_cpu();
 	}
@@ -84,8 +105,7 @@ void Interruptor::handle_interrupt() {
 		if (masked & InterruptType::Vblank) {
 			delay_cycles = 0;
 			process_interrupt(InterruptType::Vblank);
-		}
-		else if (masked & InterruptType::Stat)
+		} else if (masked & InterruptType::Stat)
 			process_interrupt(InterruptType::Stat);
 		else if (masked & InterruptType::Timer)
 			process_interrupt(InterruptType::Timer);
@@ -94,18 +114,23 @@ void Interruptor::handle_interrupt() {
 		else if (masked & InterruptType::Joypad)
 			process_interrupt(InterruptType::Joypad);
 	}
+	return true;
 }
 
 void Interruptor::process_interrupt(InterruptType i) {
 	cpu->process_interrupt(i);
 	process_interrupts = false;
 	interrupt &= ~i;
+	#ifdef DEBUG_MODE
 	printf("changing interrupt: %u\n", interrupt);
+		#endif
 }
 
 void Interruptor::set_interrupt(InterruptType i) {
 	interrupt |= static_cast<uint8_t>(i);
+	#ifdef DEBUG_MODE
 	printf("changing interrupt: %u\n", interrupt);
+		#endif
 }
 
 void Interruptor::overwrite_interrupt(uint8_t val) {
@@ -116,41 +141,28 @@ uint8_t Interruptor::get_interrupt() const {
 	return interrupt;
 }
 
-bool Interruptor::get_ime() const {return process_interrupts;}
+bool Interruptor::get_ime() const {
+	return process_interrupts;
+}
 
 InterruptType Interruptor::pending() const {
 	uint8_t masked = interrupt_enable_register & interrupt;
-    
-    if ((masked & 0x1F) == 0)
-    {
-        return NoInterrupt;
-    }
-    else if ((masked & 0x01) && (delay_cycles <= 0))
-    {
-        return Vblank;
-    }
-    else if (masked & 0x02)
-    {
-        return Stat;
-    }
-    else if (masked & 0x04)
-    {
-        return Timer;
-    }
-    else if (masked & 0x08)
-    {
-        return Serial;
-    }
-    else if (masked & 0x10)
-    {
-        return Joypad;
-    }
-    
-    return NoInterrupt;
-}
 
-bool Interruptor::interrupt_occured(uint8_t state) {
-	return state == 0 && pending() != NoInterrupt && process_interrupts;
+	if ((masked & 0x1F) == 0) {
+		return NoInterrupt;
+	} else if ((masked & 0x01) && (delay_cycles <= 0)) {
+		return Vblank;
+	} else if (masked & 0x02) {
+		return Stat;
+	} else if (masked & 0x04) {
+		return Timer;
+	} else if (masked & 0x08) {
+		return Serial;
+	} else if (masked & 0x10) {
+		return Joypad;
+	}
+
+	return NoInterrupt;
 }
 
 void Interruptor::set_interrupt_enable(uint8_t val) {
@@ -222,14 +234,6 @@ void Interruptor::set_ime_cycles(int16_t cycle) {
 	ime_cycles = cycle;
 }
 
-void Interruptor::decrease_ime_cycles(int16_t cycle) {
-	ime_cycles -= cycle;
-	if (ime_cycles <= 0) {
-		ime_cycles = 0;
-		process_interrupts = true;
-	}
-}
-
 void Interruptor::check_halt_bug() {
 	if (cpu->get_mmap().is_cgb_rom() && !process_interrupts && (interrupt & interrupt_enable_register & 0x1F)) {
 		halt_bug_triggered = true;
@@ -244,6 +248,6 @@ void Interruptor::set_delay_cycles(uint16_t cycle) {
 	delay_cycles = cycle;
 }
 
-void Interruptor::decrease_delay_cycles(uint16_t cycle) {
-	delay_cycles -= cycle;
+void Interruptor::reset_interrupt() {
+	interrupt_occured = false;
 }

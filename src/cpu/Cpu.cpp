@@ -59,8 +59,10 @@ void Cpu::tick() {
 	if (!locked) {
 		while (ppu.screen_ready())
 			;
+		#ifdef DEBUG_MODE
 		// std::cout << debug_count << " opcode: 0x" << std::hex
 		//             << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
+		#endif
 		execute_instruction();
 		uint16_t t_cycle_u8 = (uint8_t)t_cycle;
 		ppu.tick(t_cycle_u8);
@@ -97,6 +99,7 @@ void Cpu::process_interrupt(InterruptType i) {
 	set_cycle(5);
 }
 
+#ifdef DEBUG_MODE
 void Cpu::debug_print(bool prefix) {
 	std::cout << "[0x" << std::setfill('0') << std::setw(4) << std::hex << pc;
 	std::cout << "] 0x" << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << "\t";
@@ -107,6 +110,7 @@ void Cpu::debug_print(bool prefix) {
 		decoder.instructions[opcode].print_instruction();
 	}
 }
+#endif
 
 void Cpu::prefix() {
 	opcode = mmap.read_u8(pc);
@@ -128,128 +132,120 @@ void Cpu::prefix() {
 	(this->*op)();
 }
 
+void Cpu::handle_halt() {
+	if (accurate_opcode_state == StateReady && halted) {
+		set_cycle(1);
+
+		if (halt_cycle > 0) {
+			halt_cycle -= t_cycle;
+
+			if (halt_cycle <= 0) {
+				halt_cycle = 0;
+				halted = false;
+			}
+		}
+
+		if (halted && interruptor.pending() != NoInterrupt && halt_cycle == 0) {
+			halt_cycle = cycle_speed(12);
+		}
+	}
+}
+
 void Cpu::execute_instruction() {
 	uint8_t executed_cycles = 0;
 
 	while (executed_cycles < 1) {
+		interruptor.reset_interrupt();
 		t_cycle = 0;
 		m_cycle = 0;
+		handle_halt();
 
-		if (accurate_opcode_state == StateReady && halted) {
-			set_cycle(1);
-
-			if (halt_cycle > 0) {
-				halt_cycle -= t_cycle;
-
-				if (halt_cycle <= 0) {
-					halt_cycle = 0;
-					halted = false;
-				}
-			}
-
-			if (halted && interruptor.pending() != NoInterrupt && halt_cycle == 0) {
-				halt_cycle = cycle_speed(12);
-			}
-		}
-
-		bool interrupt_occured = false;
+		#ifdef DEBUG_MODE
 		printf("interrupt: %u state: %u ime: %u\n", interruptor.pending(), accurate_opcode_state,
 		       interruptor.get_ime());
-		if (!halted) {
-			if (interruptor.interrupt_occured(accurate_opcode_state)) {
-				interruptor.handle_interrupt();
-				interrupt_occured = true;
-			}
-			else {
+		#endif
+		if (!halted && !interruptor.handle_interrupt(accurate_opcode_state)) {
+			const uint8_t *accurateOPcodes = UnprefixedAccurate;
+			const uint8_t *in_accurateOPcodes = UnprefixedInAccurate;
+			const uint8_t *machineCycles = UnprefixedMachineCycles;
+			OpsFn *opcodeTable = unprefixed_instructions;
 
-				opcode = mmap.read_u8(pc);
-				pc += 1;
+			opcode = mmap.read_u8(pc);
+			pc += 1;
+			bool isCB = (opcode == 0xCB);
 #ifdef DEBUG_MODE
-				printf("opcode: 0x%02X\n", opcode);
-				if (opcode != 0xCB) {
-					// if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
-					// debug_print(false);
-					// 	printf("debug_count: %lu opcode: %#04x pc: %u\n", debug_count, opcode, pc);
-					// 	printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A],
-					// u8_registers[Registers::B], 	       u8_registers[Registers::F], get_16bitregister(Registers::HL),
-					// sp); 	printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
-					// u8_registers[Registers::E]);
-					// }
-				}
+			printf("opcode: 0x%02X\n", opcode);
+			if (opcode != 0xCB) {
+				// if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
+				// debug_print(false);
+				// 	printf("debug_count: %lu opcode: %#04x pc: %u\n", debug_count, opcode, pc);
+				// 	printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A],
+				// u8_registers[Registers::B], 	       u8_registers[Registers::F], get_16bitregister(Registers::HL),
+				// sp); 	printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
+				// u8_registers[Registers::E]);
+				// }
+			}
 #endif
 
-				const uint8_t *accurateOPcodes;
-				const uint8_t *in_accurateOPcodes;
-				const uint8_t *machineCycles;
-				OpsFn *opcodeTable;
-				bool isCB = (opcode == 0xCB);
-
+			if (isCB) {
+				accurateOPcodes = PrefixedAccurate;
+				in_accurateOPcodes = PrefixedInAccurate;
+				machineCycles = PrefixedMachineCycles;
+				opcodeTable = prefixed_instructions;
+				opcode = mmap.read_u8(pc);
+				#ifdef DEBUG_MODE
+				printf("opcode: 0x%02X\n", opcode);
+				#endif
+				pc += 1;
+			}
+			if ((accurateOPcodes[opcode] != 0) && (accurate_opcode_state == StateReady)) {
+				int left_cycles = (accurateOPcodes[opcode] < 3 ? 2 : 3);
+				set_cycle((machineCycles[opcode] - left_cycles));
+				accurate_opcode_state = StateReadingWord;
+				pc -= 1;
 				if (isCB) {
-					accurateOPcodes = PrefixedAccurate;
-					in_accurateOPcodes = PrefixedInAccurate;
-					machineCycles = PrefixedMachineCycles;
-					opcodeTable = prefixed_instructions;
-					opcode = mmap.read_u8(pc);
-					printf("opcode: 0x%02X\n", opcode);
-					pc += 1;
-				} else {
-					accurateOPcodes = UnprefixedAccurate;
-					in_accurateOPcodes = UnprefixedInAccurate;
-					machineCycles = UnprefixedMachineCycles;
-					opcodeTable = unprefixed_instructions;
-				}
-				if ((accurateOPcodes[opcode] != 0) && (accurate_opcode_state == StateReady)) {
-					int left_cycles = (accurateOPcodes[opcode] < 3 ? 2 : 3);
-					set_cycle((machineCycles[opcode] - left_cycles));
-					accurate_opcode_state = StateReadingWord;
 					pc -= 1;
-					if (isCB) {
-						pc -= 1;
-					}
+				}
+			} else {
+				(this->*opcodeTable[opcode])();
+				if (branched) {
+					branched = false;
+					set_cycle((BranchedMachineCycles[opcode]));
 				} else {
-					(this->*opcodeTable[opcode])();
-					if (branched) {
-						branched = false;
-						set_cycle((BranchedMachineCycles[opcode]));
-					} else {
-						switch (accurate_opcode_state) {
-						case StateReady:
-							set_cycle((machineCycles[opcode]));
-							break;
-						case StateReadingWord:
-							if (accurateOPcodes[opcode] == 3) {
-								set_cycle(1);
-								accurate_opcode_state = StateReadingByte;
+					switch (accurate_opcode_state) {
+					case StateReady:
+						set_cycle((machineCycles[opcode]));
+						break;
+					case StateReadingWord:
+						if (accurateOPcodes[opcode] == 3) {
+							set_cycle(1);
+							accurate_opcode_state = StateReadingByte;
+							pc -= 1;
+							if (isCB) {
 								pc -= 1;
-								if (isCB) {
-									pc -= 1;
-								}
-							} else {
-								set_cycle(2);
-								accurate_opcode_state = StateReady;
 							}
-							break;
-						case StateReadingByte:
+						} else {
 							set_cycle(2);
 							accurate_opcode_state = StateReady;
-							break;
 						}
+						break;
+					case StateReadingByte:
+						set_cycle(2);
+						accurate_opcode_state = StateReady;
+						break;
 					}
 				}
 			}
 		}
-		if (!interrupt_occured && interruptor.get_delay_cycles() > 0) {
-			interruptor.decrease_delay_cycles(t_cycle);
-		}
-		if (!interrupt_occured && accurate_opcode_state == StateReady && interruptor.get_ime_cycles() > 0) {
-			interruptor.decrease_ime_cycles(t_cycle);
-		}
-
+		interruptor.check_cycles(t_cycle, accurate_opcode_state);
+		#ifdef DEBUG_MODE
 		printf("register AF %u BC %u DE %u HL %u SP %u PC: %u interrupt: %u\n", get_16bitregister(Registers::AF),
 		       get_16bitregister(Registers::BC), get_16bitregister(Registers::DE), get_16bitregister(Registers::HL), sp,
 		       pc, mmap.read_u8(0xFF0F));
-
+		#endif
 		executed_cycles += t_cycle;
 	}
+	#ifdef DEBUG_MODE
 	printf("clockycle: %u\n", executed_cycles);
+	#endif
 }
