@@ -1,7 +1,8 @@
 #include "Cpu.hpp"
+#include <cstdint>
 
 void Cpu::nop() {
-	set_cycle(1);
+	//set_cycle(1);
 }
 
 void Cpu::daa() {
@@ -22,47 +23,81 @@ void Cpu::daa() {
 	set_flag(FlagRegisters::z, a_val == 0);
 	set_flag(FlagRegisters::h, 0);
 	set_register(Registers::A, a_val);
-	set_cycle(1);
+	//set_cycle(1);
 }
 
 void Cpu::cpl() {
 	set_register(Registers::A, ~get_register(Registers::A));
 	set_flag(FlagRegisters::n, 1);
 	set_flag(FlagRegisters::h, 1);
-	set_cycle(1);
+	//set_cycle(1);
 }
 
 void Cpu::scf() {
 	set_flag(FlagRegisters::n, 0);
 	set_flag(FlagRegisters::h, 0);
 	set_flag(FlagRegisters::c, 1);
-	set_cycle(1);
+	//set_cycle(1);
 }
 
 void Cpu::ccf() {
 	set_flag(FlagRegisters::n, 0);
 	set_flag(FlagRegisters::h, 0);
 	set_flag(FlagRegisters::c, !get_flag(FlagRegisters::c));
-	set_cycle(1);
+	//set_cycle(1);
 }
 
 void Cpu::stop() {
 	pc += 1;
-	//TODO for CGB might need to check 0xFF4D
-	set_cycle(1);
+	if (mmap.is_cgb_rom())
+    {
+        uint8_t key1 = mmap.read_io_registers(0xFF4D);
+
+        if (IsSetBit(key1, 0))
+        {
+            cgb_speed = !cgb_speed;
+
+            if (cgb_speed)
+            {
+                speed_multiplier = 1;
+				mmap.write_io_registers(0xFF4D, 0x80);
+            }
+            else
+            {
+                speed_multiplier = 0;
+				mmap.write_io_registers(0xFF4D, 0x00);
+            }
+        }
+    }
+	//set_cycle(1);
 }
 
 void Cpu::halt() {
-	halted = true;
-	set_cycle(1);
+	// halted = true;
+
+	if (interruptor.get_ime_cycles() > 0)
+    {
+        interruptor.reset_ime_cycles();
+        pc -= 1;
+	}
+    else
+    {
+		halted = true;
+		interruptor.check_halt_bug();
+    }
+
+	//set_cycle(1);
 }
 
 void Cpu::di() {
-	process_interrupts = false;
-	set_cycle(1);
+	interruptor.reset_ime_cycles();
+	interruptor.disable_processing();
+	//set_cycle(1);
 }
 
 void Cpu::ei() {
-	process_interrupts = true;
-	set_cycle(1);
+	// interruptor.enable_processing();
+	int16_t cycles = UnprefixedMachineCycles[0xFB] * cycle_speed(4);
+	interruptor.set_ime_cycles(cycles + 1);
+	//set_cycle(1);
 }

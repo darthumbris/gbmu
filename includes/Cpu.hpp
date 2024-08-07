@@ -2,8 +2,8 @@
 #define CPU_HPP
 
 #include "Decoder.hpp"
+#include "Interruptor.hpp"
 #include "MemoryMap.hpp"
-#include "OpcodeTiming.hpp"
 #include "Operand.hpp"
 #include "PixelProcessingUnit.hpp"
 #include <array>
@@ -11,6 +11,8 @@
 #include <cstdio>
 #include <iostream>
 #include <math.h>
+#include <bitset>
+#include "OpcodeTiming.hpp"
 
 using namespace Dict;
 
@@ -23,15 +25,13 @@ enum Condition {
 	CarryFlag,
 };
 
-enum InterruptType {
-	Vblank = 1 << 0, // 0x40 Vblank interrupt
-	Stat = 1 << 1,   // 0x48 STAT interrupt
-	Timer = 1 << 2,  // 0x50 Timer interrupt //TODO check when this needs to be done
-	Serial = 1 << 3, // 0x58 Serial interrupt //TODO check when this needs to be done
-	Joypad = 1 << 4  // 0x60 Joypad interrupt
+enum InstructionState {
+	StateReady,
+	StateReadingWord,
+	StateReadingByte,
 };
 
-// TODO handle CGB freq etc
+// TODO handle Audio (is needed for proper interrupt times etc)
 
 class Cpu {
 private:
@@ -56,25 +56,19 @@ private:
 	Decoder decoder;
 	MemoryMap mmap;
 	PixelProcessingUnit ppu;
+	Interruptor interruptor;
 	bool halted = false;
 	bool locked = false;
-	uint8_t interrupt_enable_register = 0; // 0xFFFF
-	uint8_t interrupt = 0;                 // 0xFF0F
 	uint16_t m_cycle;
 	uint16_t t_cycle;
-	uint16_t d_cycle = 0;
-	bool process_interrupts = false;
+	int16_t halt_cycle = 0;
 	uint8_t opcode = 0;
 	uint8_t accurate_opcode_state = 0;
+	uint8_t read_cache = 0;
 	bool branched = false;
 
-	uint8_t timer_divider = 0;      // 0xFF04
-	uint8_t timer_counter = 0;      // 0xFF05
-	uint8_t timer_modulo = 0;       // 0xFF06
-	bool timer_enable = false;      // 0xFF07
-	uint8_t timer_clock_select = 0; // 0xFF07
-
 	bool cgb_speed = false;
+	uint16_t speed_multiplier = 0;
 
 	std::string rom_path;
 
@@ -121,10 +115,10 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(2);
+			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			set_cycle(1);
+			//set_cycle(1);
 		}
 		uint16_t sum = a_val + val;
 		set_register(Registers::A, static_cast<uint8_t>(sum));
@@ -142,7 +136,7 @@ private:
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::h, (val & 0xfff) + (hl_val & 0xfff) > 0xfff);
 		set_flag(FlagRegisters::c, (val + hl_val) >> 16);
-		set_cycle(2);
+		//set_cycle(2);
 	}
 
 	template <Registers src>
@@ -151,10 +145,10 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(2);
+			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			set_cycle(1);
+			//set_cycle(1);
 		}
 		uint8_t carry = get_flag(FlagRegisters::c);
 		uint16_t sum = a_val + val + carry;
@@ -176,10 +170,11 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(2);
+			printf("checking and with val: %u from addr: %#06X and val: %u\n",val , get_16bitregister(Registers::HL), a_val);
+			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			set_cycle(1);
+			//set_cycle(1);
 		}
 		set_register(Registers::A, a_val & val);
 		set_flag(FlagRegisters::z, (a_val & val) == 0);
@@ -194,10 +189,10 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(2);
+			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			set_cycle(1);
+			//set_cycle(1);
 		}
 		a_val ^= val;
 		set_register(Registers::A, a_val);
@@ -211,10 +206,10 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(2);
+			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			set_cycle(1);
+			//set_cycle(1);
 		}
 		set_register(Registers::A, a_val | val);
 		set_register(Registers::F, 0);
@@ -227,10 +222,10 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(2);
+			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			set_cycle(1);
+			//set_cycle(1);
 		}
 		set_flag(FlagRegisters::z, (a_val == val));
 		set_flag(FlagRegisters::n, 1);
@@ -244,10 +239,10 @@ private:
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
 			// printf("reading memory at addr: %u val: %u\n", get_16bitregister(Registers::HL), val);
-			set_cycle(3);
+			//set_cycle(3);
 		} else {
 			val = get_register(src);
-			set_cycle(2);
+			//set_cycle(2);
 		}
 		uint8_t bit_loc = (opcode >> 3) & 0x7;
 		set_flag(FlagRegisters::h, 1);
@@ -257,40 +252,47 @@ private:
 
 	template <uint8_t opcode, Registers src>
 	void res_b3_r8() {
-		uint8_t val;
-		if (src == Registers::HL) {
-			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(4);
-		} else {
-			val = get_register(src);
-			set_cycle(2);
-		}
+		uint8_t val = get_register(src);
+		//set_cycle(2);
 		uint8_t bit_loc = ((opcode - 0x80) >> 3);
 		val &= ~(1 << bit_loc);
-		if (src == Registers::HL) {
-			mmap.write_u8(get_16bitregister(Registers::HL), val);
-		} else {
-			set_register(src, val);
+		set_register(src, val);
+	}
+
+	template <uint8_t opcode>
+	void res_b3_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
 		}
+		//set_cycle(4);
+		uint8_t bit_loc = ((opcode - 0x80) >> 3);
+		read_cache &= ~(1 << bit_loc);
+		// if (opcode == 0x86) {
+		// 	printf("writing val: %u to address: %#06x\n", read_cache, get_16bitregister(Registers::HL));
+		// }
+		mmap.write_u8(get_16bitregister(Registers::HL), read_cache);
 	}
 
 	template <uint8_t opcode, Registers src>
 	void set_b3_r8() {
-		uint8_t val;
-		if (src == Registers::HL) {
-			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(4);
-		} else {
-			val = get_register(src);
-			set_cycle(2);
-		}
+		uint8_t val = get_register(src);
+		//set_cycle(2);
 		uint8_t bit_loc = (opcode >> 3) & 0x7;
 		val |= (1 << bit_loc);
-		if (src == Registers::HL) {
-			mmap.write_u8(get_16bitregister(Registers::HL), val);
-		} else {
-			set_register(src, val);
+		set_register(src, val);
+	}
+
+	template <uint8_t opcode>
+	void set_b3_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
 		}
+		//set_cycle(4);
+		uint8_t bit_loc = (opcode >> 3) & 0x7;
+		read_cache |= (1 << bit_loc);
+		mmap.write_u8(get_16bitregister(Registers::HL), read_cache);
 	}
 
 	void call_imm16();
@@ -324,68 +326,83 @@ private:
 			break;
 		}
 		if (cond) {
-			set_cycle(3);
+			//set_cycle(3);
 			return;
 		}
 		branched = true;
 		sp -= 2;
 		mmap.write_u16(sp, pc);
 		pc = mmap.read_u16(pc - 2);
-		set_cycle(6);
+		//set_cycle(6);
 	}
 
 	template <Registers rec>
 	void dec_r16() {
 		set_16bitregister(rec, get_16bitregister(rec) - 1);
-		set_cycle(2);
+		//set_cycle(2);
 	}
 
 	template <Registers rec>
 	void dec_r8() {
 		uint8_t val;
 		uint16_t res;
-		if (rec == Registers::HL) {
-			uint16_t addr = get_16bitregister(Registers::HL);
-			val = mmap.read_u8(addr);
-			res = val - 1;
-			mmap.write_u8(addr, static_cast<uint8_t>(res));
-			set_cycle(3);
-		} else {
-			val = get_register(rec);
-			res = val - 1;
-			set_register(rec, static_cast<uint8_t>(res));
-			set_cycle(1);
-		}
+		val = get_register(rec);
+		res = val - 1;
+		set_register(rec, static_cast<uint8_t>(res));
+		//set_cycle(1);
 		set_flag(FlagRegisters::z, static_cast<uint8_t>(res) == 0);
 		set_flag(FlagRegisters::n, 1);
 		set_flag(FlagRegisters::h, (val & 0xf) < (1 & 0xf));
 	}
 
+	void dec_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL)) - 1;
+			return;
+		}
+		mmap.write_u8(get_16bitregister(Registers::HL), static_cast<uint8_t>(read_cache));
+		//set_cycle(3);
+		set_flag(FlagRegisters::z, static_cast<uint8_t>(read_cache) == 0);
+		set_flag(FlagRegisters::n, 1);
+		if ((read_cache & 0x0F) == 0x0F)
+		{
+			set_flag(FlagRegisters::h, !get_flag(FlagRegisters::h));
+		}
+	}
+
 	template <Registers rec>
 	void inc_r16() {
 		set_16bitregister(rec, get_16bitregister(rec) + 1);
-		set_cycle(2);
+		//set_cycle(2);
 	}
 
 	template <Registers rec>
 	void inc_r8() {
 		uint8_t val;
 		uint16_t res;
-		if (rec == Registers::HL) {
-			uint16_t addr = get_16bitregister(Registers::HL);
-			val = mmap.read_u8(addr);
-			res = val + 1;
-			mmap.write_u8(addr, static_cast<uint8_t>(res));
-			set_cycle(3);
-		} else {
-			val = get_register(rec);
-			res = val + 1;
-			set_register(rec, static_cast<uint8_t>(res));
-			set_cycle(1);
-		}
+		val = get_register(rec);
+		res = val + 1;
+		set_register(rec, static_cast<uint8_t>(res));
+		//set_cycle(1);
 		set_flag(FlagRegisters::z, static_cast<uint8_t>(res) == 0);
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::h, ((val & 0xF) + (1 & 0xF)) > 0xF);
+	}
+
+	void inc_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			uint8_t val;
+			uint16_t res;
+			val = mmap.read_u8(get_16bitregister(Registers::HL));
+			res = val + 1;
+			read_cache = res;
+			return;
+		}
+		mmap.write_u8(get_16bitregister(Registers::HL), static_cast<uint8_t>(read_cache));
+		//set_cycle(3);
+		set_flag(FlagRegisters::z, static_cast<uint8_t>(read_cache) == 0);
+		set_flag(FlagRegisters::n, 0);
+		set_flag(FlagRegisters::h, ((read_cache & 0xF) + (1 & 0xF)) > 0xF);
 	}
 
 	void jr_imm8();
@@ -397,9 +414,9 @@ private:
 		bool offset = false;
 		uint8_t val = mmap.read_u8(pc);
 		pc += 1;
-		// std::cout << "zero flag: " << (uint16_t)get_flag(FlagRegisters::z) << std::endl;
 		switch (condition) {
 		case Condition::NotZeroFlag:
+			std::cout << "zero flag: " << (uint16_t)get_flag(FlagRegisters::z) << std::endl;
 			offset = get_flag(FlagRegisters::z) == 0;
 			break;
 		case Condition::ZeroFlag:
@@ -415,15 +432,16 @@ private:
 			break;
 		}
 		if (offset) {
+			// printf("set branched to true\n");
 			branched = true;
 			if (val > 127) {
 				pc -= (uint16_t)(255 - val + 1);
 			} else {
 				pc += (uint16_t)val;
 			}
-			set_cycle(3);
+			//set_cycle(3);
 		} else {
-			set_cycle(2);
+			//set_cycle(2);
 		}
 	}
 
@@ -452,9 +470,9 @@ private:
 		if (offset) {
 			branched = true;
 			pc = val;
-			set_cycle(4);
+			//set_cycle(4);
 		} else {
-			set_cycle(3);
+			//set_cycle(3);
 		}
 	}
 
@@ -466,17 +484,17 @@ private:
 		} else {
 			val = get_register(src);
 		}
+		if (opcode == 0x6E) {
+			// printf("setting register L to val: %u from address: %#06X\n", val, get_16bitregister(Registers::HL));
+		}
 		if (rec == Registers::HL) {
 			mmap.write_u8(get_16bitregister(Registers::HL), val);
 		} else {
-			if (opcode == 0x7E) {
-				// printf("setting register A to val: %u from address: %u\n", val, get_16bitregister(Registers::HL));
-			}
 			set_register(rec, val);
 		}
-		set_cycle(1);
+		//set_cycle(1);
 		if (src == Registers::HL || rec == Registers::HL) {
-			set_cycle(1);
+			//set_cycle(1);
 		}
 	}
 
@@ -484,7 +502,7 @@ private:
 	void ld_r16_a() {
 		uint16_t address = get_16bitregister(rec);
 		mmap.write_u8(address, get_register(Registers::A));
-		set_cycle(2);
+		//set_cycle(2);
 	}
 
 	template <Registers src>
@@ -492,7 +510,7 @@ private:
 		uint16_t address = get_16bitregister(src);
 		// printf("setting A register to value: %u read from address: %u\n", mmap.read_u8(address), address);
 		set_register(Registers::A, mmap.read_u8(address));
-		set_cycle(2);
+		//set_cycle(2);
 	}
 
 	template <Registers rec>
@@ -500,7 +518,7 @@ private:
 		uint8_t val = mmap.read_u8(pc);
 		pc += 1;
 		set_register(rec, val);
-		set_cycle(2);
+		//set_cycle(2);
 	}
 
 	template <Registers rec>
@@ -508,7 +526,7 @@ private:
 		uint16_t val = mmap.read_u16(pc);
 		pc += 2;
 		set_16bitregister(rec, val);
-		set_cycle(3);
+		//set_cycle(3);
 	}
 
 	template <Registers rec>
@@ -519,7 +537,7 @@ private:
 		}
 		set_16bitregister(rec, val);
 		sp += 2;
-		set_cycle(3);
+		//set_cycle(3);
 	}
 
 	template <Registers src>
@@ -527,7 +545,7 @@ private:
 		uint16_t val = get_16bitregister(src);
 		sp -= 2;
 		mmap.write_u16(sp, val);
-		set_cycle(4);
+		//set_cycle(4);
 	}
 
 	void ld_hl_imm8();
@@ -548,19 +566,26 @@ private:
 	template <Registers rec>
 	void swap_r8() {
 		uint8_t val;
-		if (rec == Registers::HL) {
-			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			mmap.write_u8(get_16bitregister(Registers::HL), (val & 0xF) << 4);
-			mmap.write_u8(get_16bitregister(Registers::HL),
-			              mmap.read_u8(get_16bitregister(Registers::HL)) | ((val & 0xF0) >> 4));
-			set_cycle(4);
-		} else {
-			val = get_register(rec);
-			set_register(rec, (val & 0xF) << 4);
-			set_register(rec, get_register(rec) | ((val & 0xF0) >> 4));
-			set_cycle(2);
-		}
+		val = get_register(rec);
+		set_register(rec, (val & 0xF) << 4);
+		set_register(rec, get_register(rec) | ((val & 0xF0) >> 4));
+		//set_cycle(2);
 		set_flag(FlagRegisters::z, val == 0);
+		set_flag(FlagRegisters::n, 0);
+		set_flag(FlagRegisters::c, 0);
+		set_flag(FlagRegisters::h, 0);
+	}
+
+	void swap_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
+		}
+		mmap.write_u8(get_16bitregister(Registers::HL), (read_cache & 0xF) << 4);
+		mmap.write_u8(get_16bitregister(Registers::HL),
+						mmap.read_u8(get_16bitregister(Registers::HL)) | ((read_cache & 0xF0) >> 4));
+		set_flag(FlagRegisters::z, read_cache == 0);
+		//set_cycle(4);
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::c, 0);
 		set_flag(FlagRegisters::h, 0);
@@ -582,7 +607,7 @@ private:
 		mmap.write_u16(sp, pc);
 
 		pc = value;
-		set_cycle(4);
+		//set_cycle(4);
 	}
 
 	void ret();
@@ -616,11 +641,11 @@ private:
 			break;
 		}
 		if (cond) {
-			set_cycle(2);
+			//set_cycle(2);
 			return;
 		}
 		branched = true;
-		set_cycle(1);
+		//set_cycle(1);
 		ret();
 	}
 
@@ -635,112 +660,139 @@ private:
 
 	template <Registers rec>
 	void rlc_r8() {
-		if (rec == Registers::HL) {
-			mmap.write_u8(get_16bitregister(Registers::HL), get_rlc(mmap.read_u8(get_16bitregister(Registers::HL))));
-			set_cycle(4);
-		} else {
-			set_register(rec, get_rlc(get_register(rec)));
-			set_cycle(2);
+		set_register(rec, get_rlc(get_register(rec)));
+		//set_cycle(2);
+	}
+
+	void rlc_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
 		}
+		mmap.write_u8(get_16bitregister(Registers::HL), get_rlc(read_cache));
+		//set_cycle(4);
 	}
 
 	template <Registers rec>
 	void rl_r8() {
-		if (rec == Registers::HL) {
-			mmap.write_u8(get_16bitregister(Registers::HL), get_rl(mmap.read_u8(get_16bitregister(Registers::HL))));
-			set_cycle(4);
-		} else {
-			set_register(rec, get_rl(get_register(rec)));
-			set_cycle(2);
+		set_register(rec, get_rl(get_register(rec)));
+		//set_cycle(2);
+	}
+
+	void rl_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
 		}
+		mmap.write_u8(get_16bitregister(Registers::HL), get_rl(read_cache));
+		//set_cycle(4);
 	}
 
 	template <Registers rec>
 	void rrc_r8() {
-		if (rec == Registers::HL) {
-			mmap.write_u8(get_16bitregister(Registers::HL), get_rrc(mmap.read_u8(get_16bitregister(Registers::HL))));
-			set_cycle(4);
-		} else {
-			set_register(rec, get_rrc(get_register(rec)));
-			set_cycle(2);
+		set_register(rec, get_rrc(get_register(rec)));
+		//set_cycle(2);
+	}
+
+	void rrc_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
 		}
+		mmap.write_u8(get_16bitregister(Registers::HL), get_rrc(read_cache));
+		//set_cycle(4);
 	}
 
 	template <Registers rec>
 	void rr_r8() {
-		if (rec == Registers::HL) {
-			mmap.write_u8(get_16bitregister(Registers::HL), get_rr(mmap.read_u8(get_16bitregister(Registers::HL))));
-			set_cycle(4);
-		} else {
-			set_register(rec, get_rr(get_register(rec)));
-			set_cycle(2);
+		set_register(rec, get_rr(get_register(rec)));
+		//set_cycle(2);
+	}
+
+	void rr_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
 		}
+		mmap.write_u8(get_16bitregister(Registers::HL), get_rr(read_cache));
+		//set_cycle(4);
 	}
 
 	template <Registers rec>
 	void sla_r8() {
-		uint8_t val;
-		if (rec == Registers::HL) {
-			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(4);
-		} else {
-			val = get_register(rec);
-			set_cycle(2);
-		}
+		uint8_t val = get_register(rec);
+		//set_cycle(2);
 		set_flag(FlagRegisters::c, (val >> 7) & 0x01);
 		val <<= 1;
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::h, 0);
 		set_flag(FlagRegisters::z, val == 0);
-		if (rec == Registers::HL) {
-			mmap.write_u8(get_16bitregister(Registers::HL), val);
-		} else {
-			set_register(rec, val);
+		set_register(rec, val);
+	}
+
+	void sla_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
 		}
+		//set_cycle(4);
+		set_flag(FlagRegisters::c, (read_cache >> 7) & 0x01);
+		read_cache <<= 1;
+		set_flag(FlagRegisters::n, 0);
+		set_flag(FlagRegisters::h, 0);
+		set_flag(FlagRegisters::z, read_cache == 0);
+		mmap.write_u8(get_16bitregister(Registers::HL), read_cache);
 	}
 
 	template <Registers rec>
 	void sra_r8() {
-		uint8_t val;
-		if (rec == Registers::HL) {
-			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(4);
-		} else {
-			val = get_register(rec);
-			set_cycle(2);
-		}
+		uint8_t val = get_register(rec);
+		//set_cycle(2);
 		set_flag(FlagRegisters::c, (val >> 0) & 1);
 		val = (val >> 1) | (val & 0x80);
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::h, 0);
 		set_flag(FlagRegisters::z, val == 0);
-		if (rec == Registers::HL) {
-			mmap.write_u8(get_16bitregister(Registers::HL), val);
-		} else {
-			set_register(rec, val);
+		set_register(rec, val);
+	}
+
+	void sra_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
 		}
+		set_flag(FlagRegisters::c, (read_cache >> 0) & 1);
+		read_cache = (read_cache >> 1) | (read_cache & 0x80);
+		set_flag(FlagRegisters::n, 0);
+		set_flag(FlagRegisters::h, 0);
+		set_flag(FlagRegisters::z, read_cache == 0);
+		mmap.write_u8(get_16bitregister(Registers::HL), read_cache);
 	}
 
 	template <Registers rec>
 	void srl_r8() {
 		uint8_t val;
-		if (rec == Registers::HL) {
-			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(4);
-		} else {
-			val = get_register(rec);
-			set_cycle(2);
-		}
+		val = get_register(rec);
+		//set_cycle(2);
 		set_flag(FlagRegisters::c, val & 0x01);
 		val >>= 1;
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::h, 0);
 		set_flag(FlagRegisters::z, val == 0);
-		if (rec == Registers::HL) {
-			mmap.write_u8(get_16bitregister(Registers::HL), val);
-		} else {
-			set_register(rec, val);
+		set_register(rec, val);
+	}
+
+	void srl_r8_hl() {
+		if (accurate_opcode_state == StateReadingWord) {
+			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
+			return;
 		}
+		set_flag(FlagRegisters::c, read_cache & 0x01);
+		read_cache >>= 1;
+		set_flag(FlagRegisters::n, 0);
+		set_flag(FlagRegisters::h, 0);
+		set_flag(FlagRegisters::z, read_cache == 0);
+		mmap.write_u8(get_16bitregister(Registers::HL), read_cache);
 	}
 
 	void sub_a_imm8();
@@ -752,10 +804,10 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(2);
+			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			set_cycle(1);
+			//set_cycle(1);
 		}
 		uint16_t sub = a_val - val;
 		set_register(Registers::A, static_cast<uint8_t>(sub));
@@ -771,10 +823,10 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			set_cycle(2);
+			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			set_cycle(1);
+			//set_cycle(1);
 		}
 		uint8_t carry = get_flag(FlagRegisters::c);
 		uint16_t sbc = a_val - val - carry;
@@ -789,8 +841,7 @@ private:
 
 	void debug_print(bool prefix);
 
-	void handle_interrupt();
-	void process_interrupt(InterruptType i);
+	// void handle_interrupt();
 
 public:
 	uint64_t debug_count;
@@ -811,6 +862,8 @@ public:
 		return mmap;
 	}
 
+	uint16_t cycle_speed(uint16_t cycle);
+
 	void tick();
 	void event_handler();
 	void handle_input(SDL_Event &e);
@@ -823,68 +876,44 @@ public:
 	inline void close() {
 		ppu.close();
 	}
-	inline void set_interrupt(InterruptType i) {
-		interrupt |= static_cast<uint8_t>(i);
-	}
-	inline void overwrite_interrupt(uint8_t val) {
-		interrupt = val;
-	}
-	inline uint8_t get_interrupt() const {
-		return interrupt;
-	}
-	inline void set_interrupt_enable(uint8_t val) {
-		interrupt_enable_register = val;
-	}
-	inline uint8_t get_interrupt_enable() {
-		return interrupt_enable_register;
-	}
-	inline uint8_t get_timer_divider() {
-		return timer_divider;
-	}
-	inline void reset_timer_divider() {
-		timer_divider = 0;
-	}
 
-	inline uint8_t get_timer_counter() {
-		return timer_counter;
-	}
-	inline void set_timer_counter(uint8_t val) {
-		timer_counter = val;
-	}
+	void process_interrupt(InterruptType i);
 
-	inline uint8_t get_timer_module() {
-		return timer_modulo;
-	}
-	inline void set_timer_modulo(uint8_t val) {
-		timer_modulo = val;
-	}
-
-	inline uint8_t get_timer_control() {
-		return (timer_enable << 2 | timer_clock_select << 0);
-	}
-	inline void set_timer_control(uint8_t val) {
-		timer_enable = (val >> 2) & 1;
-		if (!timer_enable) {
-			t_cycle = 0;
-		}
-		timer_clock_select = (val >> 0) & 3;
+	inline Interruptor &interrupt() {
+		return interruptor;
 	}
 
 	inline void set_cycle(uint8_t c) {
 		m_cycle += c;
-		t_cycle += c * 4;
+		if (speed_multiplier) {
+			// printf("speed multiplier is set\n");
+			t_cycle += (c * 4) >> 1;
+		} else {
+			t_cycle += c * 4;
+		}
 	}
 
 	inline void set_cycle_16(uint16_t c) {
+		// printf("ppu setting clock cycles\n");
 		m_cycle += c;
-		t_cycle += c * 4;
+		if (speed_multiplier) {
+			// printf("speed multiplier is set\n");
+			t_cycle += (c * 4) >> 1;
+		} else {
+			t_cycle += c * 4;
+		}
 	}
 
 	inline bool is_halted() const {
 		return halted;
 	}
-	inline bool interrupt_ready() const {
-		return (interrupt & interrupt_enable_register & 0x1F) != 0;
+
+	void halt_cpu() {
+		halted = true;
+	}
+
+	void unhalt_cpu() {
+		halted = false;
 	}
 
 	inline bool get_cgb_speed() const {
@@ -895,10 +924,9 @@ public:
 	void deserialize(const std::string &file);
 };
 
-//TODO change the naming
-inline bool IsSetBit(const uint8_t value, const uint8_t bit)
-{
-    return (value & (0x01 << bit)) != 0;
+// TODO change the naming
+inline bool IsSetBit(const uint8_t value, const uint8_t bit) {
+	return (value & (0x01 << bit)) != 0;
 }
 
 #endif

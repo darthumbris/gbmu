@@ -29,6 +29,7 @@ SRC =	main.cpp \
         cpu/PixelProcessingUnit.cpp \
         cpu/instruction_table.cpp \
         cpu/Serialization.cpp \
+        cpu/Interruptor.cpp \
         cpu/ops/add.cpp \
         cpu/ops/alu.cpp \
         cpu/ops/call.cpp \

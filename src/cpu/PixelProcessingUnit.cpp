@@ -85,7 +85,7 @@ void PixelProcessingUnit::tick(uint16_t &cycle) {
 				ly = 0;
 				interrupt_signal = 0;
 				if (l_status.mode_2_oam_interrupt) {
-					cpu->set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(InterruptType::Stat);
 					interrupt_signal |= mask2;
 				}
 				compare_ly();
@@ -103,7 +103,7 @@ void PixelProcessingUnit::handle_hblank(uint16_t &cycle) {
 		lcd_clock -= 204;
 		ly++;
 		compare_ly();
-		if (is_cgb && hdma_enable && (!cpu->is_halted() || cpu->interrupt_ready())) {
+		if (is_cgb && hdma_enable && (!cpu->is_halted() || cpu->interrupt().interrupt_ready())) {
 			uint16_t hcycles = perform_hdma();
 			lcd_clock += hcycles;
 			cycle += hcycles;
@@ -114,12 +114,12 @@ void PixelProcessingUnit::handle_hblank(uint16_t &cycle) {
 			vblank_line = 0;
 			lcd_clock_vblank = lcd_clock;
 
-			cpu->set_interrupt(InterruptType::Vblank);
+			cpu->interrupt().set_interrupt(InterruptType::Vblank);
 			interrupt_signal &= 0x09;
 
 			if (l_status.mode_1_vblank_interrupt) {
 				if (!(interrupt_signal & mask0) && !(interrupt_signal & mask3)) {
-					cpu->set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(InterruptType::Stat);
 				}
 				interrupt_signal |= mask1;
 			}
@@ -137,7 +137,7 @@ void PixelProcessingUnit::handle_hblank(uint16_t &cycle) {
 			interrupt_signal &= 0x09;
 			if (l_status.mode_2_oam_interrupt) {
 				if (interrupt_signal == 0) {
-					cpu->set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(InterruptType::Stat);
 				}
 				interrupt_signal |= mask2;
 			}
@@ -168,7 +168,7 @@ void PixelProcessingUnit::handle_vblank(uint16_t &cycle) {
 
 		if (l_status.mode_2_oam_interrupt) {
 			if (interrupt_signal == 0) {
-				cpu->set_interrupt(InterruptType::Stat);
+				cpu->interrupt().set_interrupt(InterruptType::Stat);
 			}
 			interrupt_signal |= mask2;
 		}
@@ -215,7 +215,7 @@ void PixelProcessingUnit::handle_pixel_drawing(uint16_t &cycle) {
 
 		if (l_status.mode_0_hblank_interrupt) {
 			if (!(interrupt_signal & mask3)) {
-				cpu->set_interrupt(InterruptType::Stat);
+				cpu->interrupt().set_interrupt(InterruptType::Stat);
 			}
 			interrupt_signal |= mask0;
 		}
@@ -775,19 +775,19 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		if (ctrl.lcd_enable) {
 			if (l_status.mode_0_hblank_interrupt && current_mode == 0) {
 				if (signal == 0) {
-					cpu->set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(InterruptType::Stat);
 				}
 				signal |= mask0;
 			}
 			if ((new_stat & mask4) && (current_mode == 1)) {
 				if (signal == 0) {
-					cpu->set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(InterruptType::Stat);
 				}
 				signal |= mask1;
 			}
 			if ((new_stat & mask5) && (current_mode == 2)) {
 				if (signal == 0) {
-					cpu->set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(InterruptType::Stat);
 				}
 			}
 			compare_ly();
@@ -1131,6 +1131,7 @@ void PixelProcessingUnit::perform_gdma(uint8_t value) {
 	else
 		clock_cycles = 1 + 8 * ((value & 0x7f) + 1);
 
+	std::cout << "ppu cycles added: " << clock_cycles << std::endl;
 	cpu->set_cycle_16(clock_cycles);
 }
 
@@ -1140,7 +1141,7 @@ void PixelProcessingUnit::compare_ly() {
 			l_status.ly_flag = true;
 			if (l_status.ly_interrupt) {
 				if (interrupt_signal == 0) {
-					cpu->set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(InterruptType::Stat);
 				}
 				interrupt_signal |= mask3;
 			}

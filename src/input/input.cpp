@@ -70,7 +70,7 @@ void MemoryMap::handle_keydown(SDL_Keycode key) {
 	}
 
 	if (old_key != read_u8(0xFF00)) {
-		cpu->set_interrupt(InterruptType::Joypad);
+		cpu->interrupt().set_interrupt(InterruptType::Joypad);
 	}
 }
 

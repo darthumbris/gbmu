@@ -104,7 +104,7 @@ void MemoryMap::init_memory() {
 		} else if (i >= 0xFF00) {
 			switch (i) {
 			case 0xFF0F:
-				cpu->overwrite_interrupt(initial_values[i - 0xFF00]);
+				cpu->interrupt().overwrite_interrupt(initial_values[i - 0xFF00]);
 				break;
 			case 0xFF80 ... 0xFFFE:
 				high_ram[i - 0xFF80] = initial_values[i - 0xFF00];
@@ -179,15 +179,15 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 				return 0xFF;
 			}
 		case 0xFF04:
-			return cpu->get_timer_divider();
+			return cpu->interrupt().get_timer_divider();
 		case 0xFF05:
-			return cpu->get_timer_counter();
+			return cpu->interrupt().get_timer_counter();
 		case 0xFF06:
-			return cpu->get_timer_module();
+			return cpu->interrupt().get_timer_module();
 		case 0xFF07:
-			return cpu->get_timer_control();
+			return cpu->interrupt().get_timer_control();
 		case 0xFF0F:
-			return cpu->get_interrupt() | 0xE0;
+			return cpu->interrupt().get_interrupt() | 0xE0;
 		default:
 			return io_registers[addr - 0xFF00];
 		}
@@ -200,7 +200,7 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 	case 0xFF80 ... 0xFFFE:
 		return high_ram[addr - 0xFF80];
 	case 0xFFFF:
-		return cpu->get_interrupt_enable();
+		return cpu->interrupt().get_interrupt_enable();
 
 	default:
 		return 0;
@@ -226,6 +226,9 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		rom->write_u8(addr, val);
 		break;
 	case 0xC000 ... 0xDFFF:
+		// if (addr == 0xD81B) {
+		// 	printf("writing to 0xD81B: %u\n", val);
+		// }
 		if (addr <= 0xCFFF) {
 			work_ram[0][uint16_t(addr & 0x0FFF)] = val;
 		} else {
@@ -259,22 +262,26 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			joypad = (val >> 4) & 3;
 			break;
 		case 0xFF04:
-			cpu->reset_timer_divider();
+			cpu->interrupt().reset_timer_divider();
 			break;
 		case 0xFF05:
-			cpu->set_timer_counter(val);
+			cpu->interrupt().set_timer_counter(val);
 			break;
 		case 0xFF06:
-			cpu->set_timer_modulo(val);
+			cpu->interrupt().set_timer_modulo(val);
 			break;
 		case 0xFF07:
-			cpu->set_timer_control(val); // TODO slightly more complex
+			cpu->interrupt().set_timer_control(val); // TODO slightly more complex
 			break;
 		case 0xFF0F:
-			// cpu->overwrite_interrupt(val & 0x1F);
-			cpu->overwrite_interrupt(val); // TODO check
+			printf("changing interrupt: %u\n", val & 0x1F);
+			cpu->interrupt().overwrite_interrupt(val & 0x1F);
+			// cpu->overwrite_interrupt(val); // TODO check
 			break;
 		default:
+			if (addr == 0xFF26) {
+				printf("writing to audio channel at 0xFF26: %u\n", val);
+			}
 			io_registers[addr - 0xFF00] = val;
 			break;
 		}
@@ -288,7 +295,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	case 0xFF50:
 		if (!boot_rom_loaded && (val & 0x01) > 0) {
 			boot_rom_loaded = true;
-			printf("boot rom loaded\n");
+			printf("boot_rom loaded\n");
 		}
 		// io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
 		break;
@@ -296,7 +303,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		high_ram[addr - 0xFF80] = val;
 		break;
 	case 0xFFFF:
-		cpu->set_interrupt_enable(val);
+		cpu->interrupt().set_interrupt_enable(val);
 		break;
 
 	default:
