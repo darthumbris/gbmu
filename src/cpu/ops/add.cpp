@@ -48,16 +48,16 @@ void Cpu::adc_a_imm8() {
 }
 
 void Cpu::adc_a_r8_hl() {
-		uint8_t a_val = get_register(Registers::A);
-		uint8_t val = mmap.read_u8(get_16bitregister(Registers::HL));
-		uint8_t carry = get_flag(FlagRegisters::c);
-		uint16_t sum = a_val + val + carry;
-		set_flag(FlagRegisters::z, static_cast<uint8_t>(sum) == 0);
-		set_flag(FlagRegisters::n, 0);
-		set_flag(FlagRegisters::h, ((a_val & 0xF) + (val & 0xF)) + carry > 0xF);
-		set_flag(FlagRegisters::c, (sum >> 8) != 0);
-		set_register(Registers::A, sum);
-	}
+	uint8_t a_val = get_register(Registers::A);
+	uint8_t val = mmap.read_u8(get_16bitregister(Registers::HL));
+	uint8_t carry = get_flag(FlagRegisters::c);
+	uint16_t sum = a_val + val + carry;
+	set_flag(FlagRegisters::z, static_cast<uint8_t>(sum) == 0);
+	set_flag(FlagRegisters::n, 0);
+	set_flag(FlagRegisters::h, ((a_val & 0xF) + (val & 0xF)) + carry > 0xF);
+	set_flag(FlagRegisters::c, (sum >> 8) != 0);
+	set_register(Registers::A, sum);
+}
 
 void Cpu::inc_r8_hl() {
 	if (accurate_opcode_state == StateReadingWord) {

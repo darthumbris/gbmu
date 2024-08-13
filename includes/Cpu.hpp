@@ -261,42 +261,11 @@ private:
 
 	void call_imm16();
 
-	template <Condition condition>
-	void call_cond_imm16() {
-		pc += 2;
-		bool cond = false;
-		switch (condition) {
-		case Condition::NotZeroFlag:
-			if (get_flag(FlagRegisters::z)) {
-				cond = true;
-			}
-			break;
-		case Condition::ZeroFlag:
-			if (!get_flag(FlagRegisters::z)) {
-				cond = true;
-			}
-			break;
-		case Condition::NotCarryFlag:
-			if (get_flag(FlagRegisters::c)) {
-				cond = true;
-			}
-			break;
-		case Condition::CarryFlag:
-			if (!get_flag(FlagRegisters::c)) {
-				cond = true;
-			}
-			break;
-		default:
-			break;
-		}
-		if (cond) {
-			return;
-		}
-		branched = true;
-		sp -= 2;
-		mmap.write_u16(sp, pc);
-		pc = mmap.read_u16(pc - 2);
-	}
+	void call_cond_nz();
+	void call_cond_z();
+	void call_cond_nc();
+	void call_cond_c();
+	void call_cond_imm16(Condition condition);
 
 	template <Registers rec>
 	void dec_r16() {
@@ -374,34 +343,11 @@ private:
 		}
 	}
 
-	template <Condition condition>
-	void jp_cond_imm16() {
-		bool offset = false;
-		uint16_t val;
-		pc += 2;
-		val = mmap.read_u16(pc - 2);
-		switch (condition) {
-		case Condition::NotZeroFlag:
-			offset = get_flag(FlagRegisters::z) == 0;
-			break;
-		case Condition::ZeroFlag:
-			offset = get_flag(FlagRegisters::z) == 1;
-			break;
-		case Condition::NotCarryFlag:
-			offset = get_flag(FlagRegisters::c) == 0;
-			break;
-		case Condition::CarryFlag:
-			offset = get_flag(FlagRegisters::c) == 1;
-			break;
-		default:
-			break;
-		}
-		if (offset) {
-			branched = true;
-			pc = val;
-		} else {
-		}
-	}
+	void jp_cond_nz();
+	void jp_cond_z();
+	void jp_cond_nc();
+	void jp_cond_c();
+	void jp_cond_imm16(Condition condition);
 
 	template <Registers rec, Registers src>
 	void ld_r8_r8() {
@@ -503,49 +449,25 @@ private:
 	void di();
 	void ei();
 
-	template <uint16_t value>
-	void rst_tg3() {
-		sp -= 2;
-		mmap.write_u16(sp, pc);
-		pc = value;
-	}
+	void rst_00();
+	void rst_08();
+	void rst_10();
+	void rst_18();
+	void rst_20();
+	void rst_28();
+	void rst_30();
+	void rst_38();
+	void rst_tg3(uint16_t value);
 
 	void ret();
 	void reti();
 
-	template <Condition condition>
-	void ret_cond() {
-		bool cond = false;
-		switch (condition) {
-		case Condition::NotZeroFlag:
-			if (get_flag(FlagRegisters::z)) {
-				cond = true;
-			}
-			break;
-		case Condition::ZeroFlag:
-			if (!get_flag(FlagRegisters::z)) {
-				cond = true;
-			}
-			break;
-		case Condition::NotCarryFlag:
-			if (get_flag(FlagRegisters::c)) {
-				cond = true;
-			}
-			break;
-		case Condition::CarryFlag:
-			if (!get_flag(FlagRegisters::c)) {
-				cond = true;
-			}
-			break;
-		default:
-			break;
-		}
-		if (cond) {
-			return;
-		}
-		branched = true;
-		ret();
-	}
+	void ret_nz();
+	void ret_z();
+	void ret_nc();
+	void ret_c();
+
+	void ret_cond(Condition condition);
 
 	uint8_t get_rlc(uint8_t val, bool reset = false);
 	uint8_t get_rrc(uint8_t val, bool reset = false);
