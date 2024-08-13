@@ -45,5 +45,6 @@ protected:
 };
 
 // TODO handle MCB1, MCB2, MCB3, MCB5
+// TODO handle loading of the ram (so that saving etc actually works)
 
 #endif

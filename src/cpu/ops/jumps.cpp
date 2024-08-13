@@ -8,7 +8,6 @@ void Cpu::jr_imm8() {
 	} else {
 		pc += (uint16_t)val;
 	}
-	//set_cycle(3);
 }
 
 void Cpu::jp_imm16() {
@@ -16,12 +15,10 @@ void Cpu::jp_imm16() {
 	pc += 2;
 	val = mmap.read_u16(pc - 2);
 	pc = val;
-	//set_cycle(4);
 }
 
 void Cpu::jp_hl() {
 	uint16_t val;
 	val = (get_16bitregister(Registers::HL));
 	pc = val;
-	//set_cycle(1);
 }

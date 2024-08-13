@@ -38,7 +38,7 @@ void MCB3::write_u8(uint16_t addr, uint8_t val) {
 
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable) {
-			printf("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
+			DEBUG_MSG("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
 			ram_banks[ram_bank][addr - 0xA000] = val;
 		}
 		break;

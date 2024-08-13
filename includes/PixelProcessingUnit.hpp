@@ -43,6 +43,7 @@ struct LCD_STATUS {
 	uint8_t val;
 
 	void set(uint8_t value);
+	uint8_t get();
 };
 
 struct LCD_CONTROL {
@@ -57,6 +58,7 @@ struct LCD_CONTROL {
 	uint8_t val;
 
 	void set(uint8_t value);
+	uint8_t get();
 };
 
 struct LCD_DMA {
@@ -186,6 +188,7 @@ public:
 
 	void tick(uint16_t &cycle);
 	bool init_window();
+	void init_ppu_mem();
 	void init_hdma();
 	void close();
 	void render_screen();
@@ -222,7 +225,7 @@ public:
 		return vram[bank][addr];
 	}
 
-	uint8_t perform_hdma();
+	uint16_t perform_hdma();
 	void perform_gdma(uint8_t value);
 
 	inline uint8_t get_wram_bank_select() const {

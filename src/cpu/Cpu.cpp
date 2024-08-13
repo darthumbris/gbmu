@@ -18,6 +18,7 @@ Cpu::Cpu(Decoder dec, const std::string path)
 	t_cycle = 0;
 	mmap.init_memory();
 	ppu.init_hdma();
+	ppu.init_ppu_mem();
 	set_instructions();
 }
 
@@ -59,15 +60,16 @@ void Cpu::tick() {
 	if (!locked) {
 		while (ppu.screen_ready())
 			;
-		#ifdef DEBUG_MODE
-		// std::cout << debug_count << " opcode: 0x" << std::hex
-		//             << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
-		#endif
+#ifdef DEBUG_MODE
+// std::cout << debug_count << " opcode: 0x" << std::hex
+//             << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
+#endif
 		execute_instruction();
 		uint16_t t_cycle_u8 = (uint8_t)t_cycle;
-		ppu.tick(t_cycle_u8);
 		interruptor.timer_tick(t_cycle_u8);
 		interruptor.serial_tick(t_cycle_u8);
+		ppu.tick(t_cycle_u8);
+		interruptor.input_tick(t_cycle_u8);
 		m_cycle = 0;
 		t_cycle = 0;
 	}
@@ -115,15 +117,15 @@ void Cpu::debug_print(bool prefix) {
 void Cpu::prefix() {
 	opcode = mmap.read_u8(pc);
 #ifdef DEBUG_MODE
-	printf("opcode: 0x%02X\n", opcode);
-	// printf("register AF %u BC %u DE %u HL %u SP %u PC: %u\n", get_16bitregister(Registers::AF),
+	DEBUG_MSG("opcode: 0x%02X\n", opcode);
+	// DEBUG_MSG("register AF %u BC %u DE %u HL %u SP %u PC: %u\n", get_16bitregister(Registers::AF),
 	// get_16bitregister(Registers::BC), get_16bitregister(Registers::DE), get_16bitregister(Registers::HL), sp, pc);
 	if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
 		// debug_print(true);
-		// printf("debug_count: %lu opcode CB: %#04x pc: %u\n", debug_count, opcode, pc);
-		// printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
+		// DEBUG_MSG("debug_count: %lu opcode CB: %#04x pc: %u\n", debug_count, opcode, pc);
+		// DEBUG_MSG("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
 		//        u8_registers[Registers::F], get_16bitregister(Registers::HL), sp);
-		// printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
+		// DEBUG_MSG("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
 		// u8_registers[Registers::E]);
 	}
 #endif
@@ -160,13 +162,13 @@ void Cpu::execute_instruction() {
 		m_cycle = 0;
 		handle_halt();
 
-		#ifdef DEBUG_MODE
-		printf("interrupt: %u state: %u ime: %u\n", interruptor.pending(), accurate_opcode_state,
-		       interruptor.get_ime());
-		#endif
+#ifdef DEBUG_MODE
+		if (!halted) {
+			DEBUG_MSG("i %u s %u m %u p %u\n", interruptor.pending(), accurate_opcode_state, interruptor.get_ime(), pc);
+		}
+#endif
 		if (!halted && !interruptor.handle_interrupt(accurate_opcode_state)) {
 			const uint8_t *accurateOPcodes = UnprefixedAccurate;
-			const uint8_t *in_accurateOPcodes = UnprefixedInAccurate;
 			const uint8_t *machineCycles = UnprefixedMachineCycles;
 			OpsFn *opcodeTable = unprefixed_instructions;
 
@@ -174,14 +176,14 @@ void Cpu::execute_instruction() {
 			pc += 1;
 			bool isCB = (opcode == 0xCB);
 #ifdef DEBUG_MODE
-			printf("opcode: 0x%02X\n", opcode);
+			DEBUG_MSG("op 0x%02X state: %u c %u\n", opcode, accurate_opcode_state, t_cycle);
 			if (opcode != 0xCB) {
 				// if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
 				// debug_print(false);
-				// 	printf("debug_count: %lu opcode: %#04x pc: %u\n", debug_count, opcode, pc);
-				// 	printf("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A],
+				// 	DEBUG_MSG("debug_count: %lu opcode: %#04x pc: %u\n", debug_count, opcode, pc);
+				// 	DEBUG_MSG("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A],
 				// u8_registers[Registers::B], 	       u8_registers[Registers::F], get_16bitregister(Registers::HL),
-				// sp); 	printf("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
+				// sp); 	DEBUG_MSG("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
 				// u8_registers[Registers::E]);
 				// }
 			}
@@ -189,13 +191,10 @@ void Cpu::execute_instruction() {
 
 			if (isCB) {
 				accurateOPcodes = PrefixedAccurate;
-				in_accurateOPcodes = PrefixedInAccurate;
 				machineCycles = PrefixedMachineCycles;
 				opcodeTable = prefixed_instructions;
 				opcode = mmap.read_u8(pc);
-				#ifdef DEBUG_MODE
-				printf("opcode: 0x%02X\n", opcode);
-				#endif
+				DEBUG_MSG("op 0x%02X\n", opcode);
 				pc += 1;
 			}
 			if ((accurateOPcodes[opcode] != 0) && (accurate_opcode_state == StateReady)) {
@@ -238,14 +237,10 @@ void Cpu::execute_instruction() {
 			}
 		}
 		interruptor.check_cycles(t_cycle, accurate_opcode_state);
-		#ifdef DEBUG_MODE
-		printf("register AF %u BC %u DE %u HL %u SP %u PC: %u interrupt: %u\n", get_16bitregister(Registers::AF),
-		       get_16bitregister(Registers::BC), get_16bitregister(Registers::DE), get_16bitregister(Registers::HL), sp,
-		       pc, mmap.read_u8(0xFF0F));
-		#endif
+		DEBUG_MSG("AF %u BC %u DE %u HL %u SP %u PC %u i %u c %u\n", get_16bitregister(Registers::AF),
+		          get_16bitregister(Registers::BC), get_16bitregister(Registers::DE), get_16bitregister(Registers::HL),
+		          sp, pc, mmap.read_u8(0xFF0F), t_cycle);
 		executed_cycles += t_cycle;
 	}
-	#ifdef DEBUG_MODE
-	printf("clockycle: %u\n", executed_cycles);
-	#endif
+	// DEBUG_MSG("clockycle: %u speed: %u state: %u\n", executed_cycles, speed_multiplier, accurate_opcode_state);
 }

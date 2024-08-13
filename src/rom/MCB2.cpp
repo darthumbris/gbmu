@@ -10,7 +10,7 @@ uint8_t MCB2::read_u8(uint16_t addr) {
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable) {
-			// printf("ram_bank: %u rom_ram_mode %u addr: %#06x\n", ram_bank, rom_ram_mode, addr);
+			// DEBUG_MSG("ram_bank: %u rom_ram_mode %u addr: %#06x\n", ram_bank, rom_ram_mode, addr);
 			return ram_banks[0][addr - 0xA000];
 		}
 	default:
@@ -35,7 +35,6 @@ void MCB2::write_u8(uint16_t addr, uint8_t val) {
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable) {
 			ram_banks[0][addr - 0xA000] = val;
-			// TODO this only has 512 bytes of ram and repeats echoes of it
 		}
 		break;
 	default:

@@ -55,20 +55,16 @@ uint8_t Cpu::get_rl(uint8_t val, bool reset) {
 
 void Cpu::rlca() {
 	set_register(Registers::A, get_rlc(get_register(Registers::A), true));
-	//set_cycle(1);
 }
 
 void Cpu::rla() {
 	set_register(Registers::A, get_rl(get_register(Registers::A), true));
-	//set_cycle(1);
 }
 
 void Cpu::rrca() {
 	set_register(Registers::A, get_rrc(get_register(Registers::A), true));
-	//set_cycle(1);
 }
 
 void Cpu::rra() {
 	set_register(Registers::A, get_rr(get_register(Registers::A), true));
-	//set_cycle(1);
 }

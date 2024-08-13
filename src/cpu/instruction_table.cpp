@@ -1,5 +1,7 @@
 #include "Cpu.hpp"
 
+//TODO functions with an if statement for HL make seperate function for them
+
 void Cpu::set_instructions() {
 #define u unprefixed_instructions
 	u[0x00] = &Cpu::nop;

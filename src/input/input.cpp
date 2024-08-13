@@ -9,9 +9,7 @@ void Cpu::handle_input(SDL_Event &e) {
 		switch (e.key.keysym.sym) {
 		case SDLK_ESCAPE:
 			set_status(true);
-#ifdef DEBUG_MODE
-			printf("breakpoint: %zu\n", debug_count);
-#endif
+			DEBUG_MSG("breakpoint: %zu\n", debug_count);
 			break;
 		case SDLK_F1:
 			if (modstate & KMOD_SHIFT) {
@@ -45,34 +43,38 @@ void MemoryMap::handle_keydown(SDL_Keycode key) {
 	switch (key) {
 	case SDLK_z: // A
 		joypad_buttons &= ~(0x1);
+		joypad_pressed &= (~(0x1 << 4));
 		break;
 	case SDLK_x: // B
 		joypad_buttons &= ~(0x2);
+		joypad_pressed &= (~(0x1 << 5));
 		break;
 	case SDLK_SPACE: // Select
 		joypad_buttons &= ~(0x4);
+		joypad_pressed &= (~(0x1 << 6));
 		break;
 	case SDLK_RETURN: // Start
 		joypad_buttons &= ~(0x8);
+		joypad_pressed &= (~(0x1 << 7));
 		break;
 	case SDLK_RIGHT: // >
 		joypad_dpad &= ~(0x1);
+		joypad_pressed &= (~(0x1 << 0));
 		break;
 	case SDLK_LEFT: // <
 		joypad_dpad &= ~(0x2);
+		joypad_pressed &= (~(0x1 << 1));
 		break;
 	case SDLK_UP: // ^
 		joypad_dpad &= ~(0x4);
+		joypad_pressed &= (~(0x1 << 2));
 		break;
 	case SDLK_DOWN: // v
 		joypad_dpad &= ~(0x8);
+		joypad_pressed &= (~(0x1 << 3));
 		break;
 	default:
 		break;
-	}
-
-	if (old_key != read_u8(0xFF00)) {
-		cpu->interrupt().set_interrupt(InterruptType::Joypad);
 	}
 }
 
@@ -80,27 +82,35 @@ void MemoryMap::handle_keyup(SDL_Keycode key) {
 	switch (key) {
 	case SDLK_z: // A
 		joypad_buttons |= (0x1);
+		joypad_pressed |= ((0x1 << 4));
 		break;
 	case SDLK_x: // B
 		joypad_buttons |= (0x2);
+		joypad_pressed |= ((0x1 << 5));
 		break;
 	case SDLK_SPACE: // Select
 		joypad_buttons |= (0x4);
+		joypad_pressed |= ((0x1 << 6));
 		break;
 	case SDLK_RETURN: // Start
 		joypad_buttons |= (0x8);
+		joypad_pressed |= ((0x1 << 7));
 		break;
 	case SDLK_RIGHT: // >
 		joypad_dpad |= (0x1);
+		joypad_pressed |= ((0x1 << 0));
 		break;
 	case SDLK_LEFT: // <
 		joypad_dpad |= (0x2);
+		joypad_pressed |= ((0x1 << 1));
 		break;
 	case SDLK_UP: // ^
 		joypad_dpad |= (0x4);
+		joypad_pressed |= ((0x1 << 2));
 		break;
 	case SDLK_DOWN: // v
 		joypad_dpad |= (0x8);
+		joypad_pressed |= ((0x1 << 3));
 		break;
 	default:
 		break;

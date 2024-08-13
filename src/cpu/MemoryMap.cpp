@@ -60,7 +60,6 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 
 MemoryMap::~MemoryMap() {}
 
-// TODO check if this is even needed?
 void MemoryMap::init_memory() {
 	const uint8_t *initial_values;
 	if (is_cgb_rom()) {
@@ -109,24 +108,19 @@ void MemoryMap::init_memory() {
 			case 0xFF80 ... 0xFFFE:
 				high_ram[i - 0xFF80] = initial_values[i - 0xFF00];
 				break;
-			case 0xFF40 ... 0xFF43:
-			case 0xFF45 ... 0xFF4f:
-			case 0xFF70:
-				cpu->get_ppu().write_u8_ppu(i, initial_values[i - 0xFF00]);
-				break;
 			default:
 				io_registers[i - 0xFF00] = initial_values[i - 0xFF00];
 				break;
 			}
 
-		} else {
+		} else if (i < 0XA000 || i > 0xBFFF) {
 			write_u8(i, 0xFF);
 		}
 	}
 }
 
 uint8_t MemoryMap::read_u8(uint16_t addr) {
-	// printf("trying to read addr: %#06x\n", addr);
+	// DEBUG_MSG("trying to read addr: %#06x\n", addr);
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
 		if (!boot_rom_loaded) {
@@ -170,14 +164,7 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 	case 0xFF00 ... 0xFF3F:
 		switch (addr) {
 		case 0xFF00:
-			switch (joypad) {
-			case 1:
-				return joypad_buttons;
-			case 2:
-				return joypad_dpad;
-			default:
-				return 0xFF;
-			}
+			return joypad_register;
 		case 0xFF04:
 			return cpu->interrupt().get_timer_divider();
 		case 0xFF05:
@@ -188,6 +175,10 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 			return cpu->interrupt().get_timer_control();
 		case 0xFF0F:
 			return cpu->interrupt().get_interrupt() | 0xE0;
+		case 0xFF02:
+			return cpu->interrupt().get_serial_transfer_control();
+		case 0xFF01:
+			return cpu->interrupt().get_serial_transfer_data();
 		default:
 			return io_registers[addr - 0xFF00];
 		}
@@ -212,7 +203,7 @@ uint16_t MemoryMap::read_u16(uint16_t addr) {
 }
 
 void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
-	// printf("trying to write to addr: %#06x with val: %u\n", addr, val);
+	// DEBUG_MSG("trying to write to addr: %#06x with val: %u\n", addr, val);
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
 		if (boot_rom_loaded) {
@@ -256,7 +247,11 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	case 0xFF00 ... 0xFF3F:
 		switch (addr) {
 		case 0xFF00:
+			DEBUG_MSG("writing to 0xFF00: %u\t", val);
+			joypad_register = (joypad_register & 0xCF) | (val & 0x30);
 			joypad = (val >> 4) & 3;
+			update_joypad();
+			DEBUG_MSG("after writing to 0xFF00: %u\n", read_u8(0xFF00));
 			break;
 		case 0xFF04:
 			cpu->interrupt().reset_timer_divider();
@@ -268,19 +263,22 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			cpu->interrupt().set_timer_modulo(val);
 			break;
 		case 0xFF07:
-			cpu->interrupt().set_timer_control(val); // TODO slightly more complex
+			cpu->interrupt().set_timer_control(val);
+			break;
+		case 0xFF02:
+			cpu->interrupt().set_serial_transfer_control(val);
+			break;
+		case 0xFF01:
+			cpu->interrupt().set_serial_transfer_data(val);
 			break;
 		case 0xFF0F:
-#ifdef DEBUG_MODE
-			printf("changing interrupt: %u\n", val & 0x1F);
-#endif
+			DEBUG_MSG("changing interrupt write: %u\n", val & 0x1F);
 			cpu->interrupt().overwrite_interrupt(val & 0x1F);
-			// cpu->overwrite_interrupt(val); // TODO check
 			break;
 		default:
 #ifdef DEBUG_MODE
 			if (addr == 0xFF26) {
-				printf("writing to audio channel at 0xFF26: %u\n", val);
+				DEBUG_MSG("writing to audio channel at 0xFF26: %u\n", val);
 			}
 #endif
 			io_registers[addr - 0xFF00] = val;
@@ -296,11 +294,8 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	case 0xFF50:
 		if (!boot_rom_loaded && (val & 0x01) > 0) {
 			boot_rom_loaded = true;
-#ifdef DEBUG_MODE
-			printf("boot_rom loaded\n");
-#endif
+			DEBUG_MSG("boot_rom loaded\n");
 		}
-		// io_registers[(std::size_t)(0xFF50 - 0xFF00)] = val;
 		break;
 	case 0xFF80 ... 0xFFFE:
 		high_ram[addr - 0xFF80] = val;
@@ -329,4 +324,30 @@ uint8_t MemoryMap::read_io_registers(uint16_t addr) {
 
 void MemoryMap::write_io_registers(uint16_t addr, uint8_t val) {
 	io_registers[addr - 0xFF00] = val;
+}
+
+void MemoryMap::update_joypad() {
+	uint8_t current = joypad_register & 0xF0;
+
+	switch (current & 0x30) {
+	case 0x10: {
+		uint8_t topJoypad = (joypad_pressed >> 4) & 0x0F;
+		current |= topJoypad;
+		break;
+	}
+	case 0x20: {
+		uint8_t bottomJoypad = joypad_pressed & 0x0F;
+		current |= bottomJoypad;
+		break;
+	}
+	case 0x30:
+		current |= 0x0F;
+		break;
+	}
+
+	if ((joypad_register & ~current & 0x0F) != 0) {
+		cpu->interrupt().set_interrupt(InterruptType::Joypad);
+	}
+
+	joypad_register = current;
 }

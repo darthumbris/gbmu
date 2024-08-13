@@ -10,7 +10,6 @@ void Cpu::add_a_imm8() {
 	set_flag(FlagRegisters::n, 0);
 	set_flag(FlagRegisters::h, ((a_val & 0xF) + (val & 0xF)) > 0xF);
 	set_flag(FlagRegisters::c, (sum >> 8) != 0);
-	//set_cycle(2);
 }
 
 void Cpu::add_sp_imm8() {
@@ -22,7 +21,6 @@ void Cpu::add_sp_imm8() {
 	set_flag(FlagRegisters::h, ((e8 & 0xf) + (sp_val & 0xf)) > 0xf);
 	set_flag(FlagRegisters::c, ((e8 & 0xff) + (sp_val & 0xff)) > 0xff);
 	sp = static_cast<uint16_t>(e8 + sp_val);
-	//set_cycle(4);
 }
 
 void Cpu::adc_a_imm8() {
@@ -36,5 +34,4 @@ void Cpu::adc_a_imm8() {
 	set_flag(FlagRegisters::h, ((a_val & 0xF) + (val & 0xF)) + carry > 0xF);
 	set_flag(FlagRegisters::c, (sum >> 8) != 0);
 	set_register(Registers::A, sum);
-	//set_cycle(2);
 }

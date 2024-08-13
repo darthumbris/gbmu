@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 
+// TODO check if everything is being serialized!!!!
 void Cpu::serialize(const std::string &file) {
 	std::ofstream f(file, std::ios::binary);
 	if (!f.is_open()) {
@@ -50,10 +51,10 @@ void Interruptor::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&interrupt_enable_register), sizeof(interrupt_enable_register));
 	f.write(reinterpret_cast<const char *>(&interrupt), sizeof(interrupt));
 	f.write(reinterpret_cast<const char *>(&process_interrupts), sizeof(process_interrupts));
-	
+
 	f.write(reinterpret_cast<const char *>(&serial_transfer_data), sizeof(serial_transfer_data));
 	f.write(reinterpret_cast<const char *>(&serial_transfer_control), sizeof(serial_transfer_control));
-	
+
 	f.write(reinterpret_cast<const char *>(&timer_divider), sizeof(timer_divider));
 	f.write(reinterpret_cast<const char *>(&timer_counter), sizeof(timer_counter));
 	f.write(reinterpret_cast<const char *>(&timer_modulo), sizeof(timer_modulo));
@@ -62,7 +63,7 @@ void Interruptor::serialize(std::ofstream &f) {
 
 	f.write(reinterpret_cast<const char *>(&div_cycle), sizeof(div_cycle));
 	f.write(reinterpret_cast<const char *>(&tima_cycle), sizeof(tima_cycle));
-	
+
 	f.write(reinterpret_cast<const char *>(&serial_cycle), sizeof(serial_cycle));
 	f.write(reinterpret_cast<const char *>(&serial_count), sizeof(serial_count));
 }
@@ -70,10 +71,10 @@ void Interruptor::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&interrupt_enable_register), sizeof(interrupt_enable_register));
 	f.read(reinterpret_cast<char *>(&interrupt), sizeof(interrupt));
 	f.read(reinterpret_cast<char *>(&process_interrupts), sizeof(process_interrupts));
-	
+
 	f.read(reinterpret_cast<char *>(&serial_transfer_data), sizeof(serial_transfer_data));
 	f.read(reinterpret_cast<char *>(&serial_transfer_control), sizeof(serial_transfer_control));
-	
+
 	f.read(reinterpret_cast<char *>(&timer_divider), sizeof(timer_divider));
 	f.read(reinterpret_cast<char *>(&timer_counter), sizeof(timer_counter));
 	f.read(reinterpret_cast<char *>(&timer_modulo), sizeof(timer_modulo));
@@ -82,7 +83,7 @@ void Interruptor::deserialize(std::ifstream &f) {
 
 	f.read(reinterpret_cast<char *>(&div_cycle), sizeof(div_cycle));
 	f.read(reinterpret_cast<char *>(&tima_cycle), sizeof(tima_cycle));
-	
+
 	f.read(reinterpret_cast<char *>(&serial_cycle), sizeof(serial_cycle));
 	f.read(reinterpret_cast<char *>(&serial_count), sizeof(serial_count));
 }

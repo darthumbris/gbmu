@@ -2,8 +2,7 @@
 #define INTERRUPTOR_HPP
 
 #include <cstdint>
-#include <stdio.h>
-#include <string>
+#include <fstream>
 
 class Cpu;
 
@@ -45,7 +44,9 @@ private:
 	uint16_t tima_cycle = 0; // For 0xFF05
 
 	uint16_t serial_cycle = 0; // for 0xFF01 and 0xFF02
-	int16_t serial_count = 0;  // for 0xFF02
+	int32_t serial_count = 0;  // for 0xFF02
+
+	uint16_t input_cycles = 0;
 
 	// TODO check the interrupt delay cycles thing
 
@@ -57,11 +58,16 @@ public:
 
 	void timer_tick(uint8_t cycle);
 	void serial_tick(uint8_t cycle);
+	void input_tick(uint8_t cycle);
 	bool handle_interrupt(uint8_t state);
 	void process_interrupt(InterruptType i);
 	void enable_processing();
 	void disable_processing();
 
+	void set_serial_transfer_control(uint8_t val);
+	void set_serial_transfer_data(uint8_t val);
+	uint8_t get_serial_transfer_control();
+	uint8_t get_serial_transfer_data();
 	void set_interrupt(InterruptType i);
 	void overwrite_interrupt(uint8_t val);
 	uint8_t get_interrupt() const;
@@ -78,16 +84,13 @@ public:
 	void set_timer_control(uint8_t val);
 	bool interrupt_ready() const;
 	bool get_ime() const;
-	// bool interrupt_occured(uint8_t state);
 	void check_cycles(uint16_t cycle, uint8_t state);
 
 	int16_t get_ime_cycles();
 	int16_t get_delay_cycles();
 	void set_delay_cycles(uint16_t cycle);
-	// void decrease_delay_cycles(uint16_t cycle);
 	void reset_ime_cycles();
 	void set_ime_cycles(int16_t cycle);
-	// void decrease_ime_cycles(int16_t cycle);
 	void check_halt_bug();
 	void reset_interrupt();
 

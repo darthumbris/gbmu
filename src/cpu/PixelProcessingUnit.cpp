@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <iostream>
 
 PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	lcd_clock = 0;
@@ -47,8 +46,39 @@ void PixelProcessingUnit::init_hdma() {
 	}
 }
 
+void PixelProcessingUnit::init_ppu_mem() {
+	const uint8_t *initial_values;
+	if (is_cgb) {
+		initial_values = InitialIOValuesCGB;
+	} else {
+		initial_values = InitialIOValuesGB;
+	}
+	for (int i = 0xFF00; i < 65536; i++) {
+		switch (i) {
+		case 0xFF40:
+		case 0xFF42 ... 0xFF43:
+		case 0xFF45 ... 0xFF4f:
+		case 0xFF70:
+			cpu->get_ppu().write_u8_ppu(i, initial_values[i - 0xFF00]);
+			break;
+		case 0xFF41:
+			// DEBUG_MSG("initial value 0xFF41: %u\n", initial_values[i - 0xFF00] | 0x80);
+			l_status.set(initial_values[i - 0xFF00]);
+			l_status.mode = PPU_Modes::Vertical_Blank;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 void PixelProcessingUnit::tick(uint16_t &cycle) {
 	lcd_clock += cycle;
+#ifdef DEBUG_MODE
+	DEBUG_MSG("cycle: %u ", cycle);
+	DEBUG_MSG("%u %u %u %u %u %u %u %u %u %u %u\n", scx, scy, ly, vblank_line, lyc, window_x, window_y, lcd_clock,
+	          lcd_enabled, l_status.mode, l_status.get());
+#endif
 	if (lcd_enabled) {
 
 		switch (l_status.mode) {
@@ -143,6 +173,9 @@ void PixelProcessingUnit::handle_hblank(uint16_t &cycle) {
 			}
 			interrupt_signal &= 0x0E;
 		}
+		uint8_t stat = l_status.get();
+		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
+		DEBUG_MSG("setting lstat: %u\n", (stat & 0xFC) | (l_status.mode & 0x3));
 	}
 }
 
@@ -163,6 +196,10 @@ void PixelProcessingUnit::handle_vblank(uint16_t &cycle) {
 	if (lcd_clock >= 4560) {
 		lcd_clock -= 4560;
 		l_status.mode = PPU_Modes::OAM_Scan;
+		uint8_t stat = l_status.get();
+		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
+		DEBUG_MSG("setting lstat: %u\n", (stat & 0xFC) | (l_status.mode & 0x3));
+
 		interrupt_signal &= 0x07;
 		interrupt_signal &= 0x0A;
 
@@ -182,6 +219,9 @@ void PixelProcessingUnit::handle_oam(uint16_t &cycle) {
 		lcd_clock -= 80;
 		drawn_scanline = false;
 		interrupt_signal &= 0x08;
+		uint8_t stat = l_status.get();
+		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
+		DEBUG_MSG("setting lstat: %u\n", (stat & 0xFC) | (l_status.mode & 0x3));
 	}
 }
 
@@ -212,6 +252,9 @@ void PixelProcessingUnit::handle_pixel_drawing(uint16_t &cycle) {
 		tile_drawn = 0;
 		l_status.mode = PPU_Modes::Horizontal_Blank;
 		interrupt_signal &= 0x08;
+		uint8_t stat = l_status.get();
+		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
+		DEBUG_MSG("setting lstat: %u\n", (stat & 0xFC) | (l_status.mode & 0x3));
 
 		if (l_status.mode_0_hblank_interrupt) {
 			if (!(interrupt_signal & mask3)) {
@@ -231,6 +274,8 @@ void PixelProcessingUnit::disable_screen() {
 	lcd_enabled = false;
 	ly = 0;
 	l_status.mode = 0;
+	l_status.set(l_status.val & 0x7c);
+	DEBUG_MSG("setting lstat: %u\n", l_status.get());
 	lcd_clock = 0;
 	lcd_clock_vblank = 0;
 	interrupt_signal = 0;
@@ -688,7 +733,7 @@ uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
 	case 0xFF40:
 		return ctrl.val;
 	case 0xFF41:
-		return l_status.val;
+		return l_status.get() | 0x80;
 	case 0xFF42:
 		return scy;
 	case 0xFF43:
@@ -771,7 +816,8 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		uint8_t signal = interrupt_signal;
 		signal &= ((new_stat >> 3) & 0x0F);
 		interrupt_signal = signal;
-		l_status.set(val);
+		l_status.set(new_stat);
+		DEBUG_MSG("changing lcd stat write: %u\n", l_status.get());
 		if (ctrl.lcd_enable) {
 			if (l_status.mode_0_hblank_interrupt && current_mode == 0) {
 				if (signal == 0) {
@@ -804,7 +850,6 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		if ((ly & mask7) && !(val & mask7)) {
 			disable_screen();
 		}
-		ly = val; // TODO check if this needs to be enabled?
 		break;
 	case 0xFF45:
 		if (lyc != val) {
@@ -813,10 +858,9 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 				compare_ly();
 			}
 		}
-		// lyc = val; // TODO check if this needs to be enabled?
 		break;
 	case 0xFF46:
-		dma.set(val); // TODO do this
+		dma.set(val);
 		dma_transfer(val);
 		cpu->get_mmap().write_io_registers(addr, val);
 		break;
@@ -1044,7 +1088,7 @@ void PixelProcessingUnit::switch_cgb_dma(uint8_t value) {
 			hdma_enable = true;
 			hdma[4] = value & 0x7F;
 			if (l_status.mode == PPU_Modes::Horizontal_Blank) {
-				cpu->set_cycle(perform_hdma());
+				cpu->set_cycle_16(perform_hdma());
 			}
 		} else {
 			perform_gdma(value);
@@ -1080,7 +1124,7 @@ uint8_t PixelProcessingUnit::get_hdma_register(uint8_t reg) {
 }
 
 // This is the gameboy color Horizontal Blanking DMA
-uint8_t PixelProcessingUnit::perform_hdma() {
+uint16_t PixelProcessingUnit::perform_hdma() {
 	uint16_t source = hdma_source & 0xFFF0;
 	uint16_t destination = (hdma_dest & 0x1FF0) | 0x8000;
 
@@ -1106,7 +1150,7 @@ uint8_t PixelProcessingUnit::perform_hdma() {
 	if (hdma[4] == 0xFF)
 		hdma_enable = false;
 
-	return (cpu->get_cgb_speed() ? 17 : 9);
+	return (cpu->get_cgb_speed() ? 17 : 9) * 4;
 }
 
 // This is the gameboy color general purpose DMA
@@ -1130,11 +1174,12 @@ void PixelProcessingUnit::perform_gdma(uint8_t value) {
 		clock_cycles = 2 + 16 * ((value & 0x7f) + 1);
 	else
 		clock_cycles = 1 + 8 * ((value & 0x7f) + 1);
-	cpu->set_cycle_16(clock_cycles);
+	cpu->set_cycle_16(clock_cycles * 4);
 }
 
 void PixelProcessingUnit::compare_ly() {
 	if (lcd_enabled) {
+		DEBUG_MSG("before lstat compare: %u\n", l_status.get());
 		if (lyc == ly) {
 			l_status.ly_flag = true;
 			if (l_status.ly_interrupt) {
@@ -1147,6 +1192,7 @@ void PixelProcessingUnit::compare_ly() {
 			l_status.ly_flag = false;
 			interrupt_signal &= ~mask3;
 		}
+		DEBUG_MSG("setting lstat compare: %u\n", l_status.get());
 	}
 }
 
@@ -1167,12 +1213,20 @@ void LCD_STATUS::set(uint8_t value) {
 	mode_2_oam_interrupt = (value & 0x20) != 0;    // bit 5
 	mode_1_vblank_interrupt = (value & 0x10) != 0; // bit 4
 	mode_0_hblank_interrupt = (value & 0x08) != 0; // bit 3
+	ly_flag = (value & 0x04) != 0;
 	val = value;
+}
+
+uint8_t LCD_STATUS::get() {
+	// DEBUG_MSG("val: %u get: %u\n", val, (ly_interrupt << 6 | mode_2_oam_interrupt << 5 | mode_1_vblank_interrupt << 4
+	// | mode_0_hblank_interrupt << 3 | ly_flag << 2 | mode));
+	return (ly_interrupt << 6 | mode_2_oam_interrupt << 5 | mode_1_vblank_interrupt << 4 |
+	        mode_0_hblank_interrupt << 3 | ly_flag << 2 | val & 0x80 | val & 0x3);
 }
 
 void LCD_DMA::set(uint8_t value) {
 	val = value;
-	cycles = 640; // TODO 160 M-cycles: 640 dots (1.4 lines) in normal speed, or 320 dots
+	cycles = 640; // 160 M-cycles: 640 dots (1.4 lines) in normal speed, or 320 dots
 	offset = 0;
 }
 

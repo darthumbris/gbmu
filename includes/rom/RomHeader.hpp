@@ -1,6 +1,7 @@
 #ifndef ROM_HEADER_HPP
 #define ROM_HEADER_HPP
 
+#include "debug.hpp"
 #include <array>
 #include <cstdint>
 #include <string>

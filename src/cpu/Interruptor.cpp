@@ -45,6 +45,7 @@ void Interruptor::timer_tick(uint8_t cycle) {
 
 void Interruptor::serial_tick(uint8_t cycle) {
 	if (IsSetBit(serial_transfer_control, 7) && IsSetBit(serial_transfer_control, 0)) {
+		DEBUG_MSG("serial cycle: %u serial count: %d\n", serial_cycle, serial_count);
 		serial_cycle += cycle;
 
 		if (serial_count < 0) {
@@ -58,23 +59,35 @@ void Interruptor::serial_tick(uint8_t cycle) {
 		if (serial_cycle >= serial_cycles_max) {
 			if (serial_count > 7) {
 				serial_transfer_control &= 0x7F;
+				DEBUG_MSG("setting 0xFF02: %u\n", serial_transfer_control);
 				set_interrupt(Serial);
-				serial_count -= 1;
+				serial_count = -1;
 				return;
 			}
 
-			serial_transfer_data <<= 1;
-			serial_transfer_data |= 0x01;
+			uint8_t sb = serial_transfer_data;
+			sb <<= 1;
+			sb |= 0x01;
+			serial_transfer_data = sb;
+			DEBUG_MSG("setting 0xFF01: %u\n", sb);
 			serial_cycle -= serial_cycles_max;
 			serial_count += 1;
 		}
 	}
 }
 
+void Interruptor::input_tick(uint8_t cycle) {
+	input_cycles += cycle;
+
+	if (input_cycles >= 1000) {
+		input_cycles -= 1000;
+		cpu->get_mmap().update_joypad();
+	}
+}
+
 void Interruptor::check_cycles(uint16_t cycle, uint8_t state) {
 	if (!interrupt_occured && delay_cycles > 0) {
 		delay_cycles -= cycle;
-		// interruptor.decrease_delay_cycles(t_cycle);
 	}
 	if (!interrupt_occured && state == StateReady && ime_cycles > 0) {
 		ime_cycles -= cycle;
@@ -92,10 +105,6 @@ bool Interruptor::handle_interrupt(uint8_t state) {
 	}
 	interrupt_occured = true;
 	uint8_t masked = interrupt_enable_register & interrupt;
-	if (!masked) {
-		printf("should not happen right?\n");
-		return true;
-	}
 	if (cpu->is_halted()) {
 		cpu->unhalt_cpu();
 	}
@@ -121,16 +130,13 @@ void Interruptor::process_interrupt(InterruptType i) {
 	cpu->process_interrupt(i);
 	process_interrupts = false;
 	interrupt &= ~i;
-	#ifdef DEBUG_MODE
-	printf("changing interrupt: %u\n", interrupt);
-		#endif
+	DEBUG_MSG("changing interrupt process: %u\n", interrupt);
 }
 
 void Interruptor::set_interrupt(InterruptType i) {
 	interrupt |= static_cast<uint8_t>(i);
-	#ifdef DEBUG_MODE
-	printf("changing interrupt: %u\n", interrupt);
-		#endif
+	DEBUG_MSG("changing interrupt set: %u\n", interrupt);
+	DEBUG_MSG("interrupt requested: %u\n", i);
 }
 
 void Interruptor::overwrite_interrupt(uint8_t val) {
@@ -163,6 +169,24 @@ InterruptType Interruptor::pending() const {
 	}
 
 	return NoInterrupt;
+}
+
+void Interruptor::set_serial_transfer_control(uint8_t val) {
+	DEBUG_MSG("setting 0xFF02: %u\n", val);
+	serial_transfer_control = val;
+}
+
+void Interruptor::set_serial_transfer_data(uint8_t val) {
+	DEBUG_MSG("setting 0xFF01: %u\n", val);
+	serial_transfer_data = val;
+}
+
+uint8_t Interruptor::get_serial_transfer_control() {
+	return serial_transfer_control;
+}
+
+uint8_t Interruptor::get_serial_transfer_data() {
+	return serial_transfer_data;
 }
 
 void Interruptor::set_interrupt_enable(uint8_t val) {

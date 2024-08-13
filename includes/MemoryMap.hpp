@@ -1,6 +1,7 @@
 #ifndef MEMORYMAP_HPP
 #define MEMORYMAP_HPP
 
+#include <SDL2/SDL_stdinc.h>
 class Cpu;
 
 #include "rom/Rom.hpp"
@@ -89,6 +90,8 @@ private:
 	uint8_t joypad = 0;
 	uint8_t joypad_dpad = 0x0F;
 	uint8_t joypad_buttons = 0x0F;
+	uint8_t joypad_register = 0xFF;
+	uint8_t joypad_pressed = 0xFF;
 	bool boot_rom_loaded = false;
 
 	std::array<uint8_t, 256> gb_boot_rom = {
@@ -126,7 +129,7 @@ public:
 	inline bool is_boot_rom_enabled() {
 		return boot_rom_loaded;
 	}
-	uint8_t wram_bank_select(); // TODO only bits 0-2 should be used (and if in DMG should return 0 or 1)
+	uint8_t wram_bank_select();
 
 	inline void set_interrupt(uint8_t i) {
 		interrupt |= i;
@@ -148,6 +151,7 @@ public:
 
 	uint8_t read_io_registers(uint16_t addr);
 	void write_io_registers(uint16_t addr, uint8_t val);
+	void update_joypad();
 };
 
 // From Gambatte emulator

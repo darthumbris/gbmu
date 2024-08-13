@@ -6,3 +6,4 @@ gbmu
 *.state
 *.gb
 *.gbc
+/test*

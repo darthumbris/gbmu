@@ -10,7 +10,6 @@ void Cpu::sub_a_imm8() {
 	set_flag(FlagRegisters::h, (a_val & 0xf) < (val & 0xf));
 	set_flag(FlagRegisters::c, val > a_val);
 	set_register(Registers::A, static_cast<uint8_t>(sub));
-	//set_cycle(2);
 }
 
 void Cpu::sbc_a_imm8() {
@@ -25,5 +24,4 @@ void Cpu::sbc_a_imm8() {
 	set_register(Registers::A, static_cast<uint8_t>(sbc));
 	set_flag(FlagRegisters::z, static_cast<uint8_t>(sbc) == 0);
 	set_flag(FlagRegisters::h, (a_val & 0xF) < (val & 0xF) + carry);
-	//set_cycle(2);
 }

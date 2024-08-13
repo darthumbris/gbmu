@@ -4,15 +4,16 @@
 #include "Decoder.hpp"
 #include "Interruptor.hpp"
 #include "MemoryMap.hpp"
+#include "OpcodeTiming.hpp"
 #include "Operand.hpp"
 #include "PixelProcessingUnit.hpp"
+#include "debug.hpp"
 #include <array>
+#include <bitset>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
 #include <math.h>
-#include <bitset>
-#include "OpcodeTiming.hpp"
 
 using namespace Dict;
 
@@ -82,18 +83,14 @@ private:
 
 	template <uint8_t op>
 	void unimplemented() {
-		#ifdef DEBUG_MODE
-		printf("Unimplemented opcode: %#04x\n", op);
-		#endif
+		DEBUG_MSG("Unimplemented opcode: %#04x\n", op);
 	}
 
 	//$D3, $DB, $DD, $E3, $E4, $EB, $EC, $ED, $F4, $FC, and $FD
 	template <uint8_t op>
 	void lockup() {
 		locked = true;
-		#ifdef DEBUG_MODE
-		printf("Illegal instruction. Hard-Locks the Cpu. opcode: %#04x\n", op);
-		#endif
+		DEBUG_MSG("Illegal instruction. Hard-Locks the Cpu. opcode: %#04x\n", op);
 	}
 
 	inline bool zero() const {
@@ -119,10 +116,8 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			//set_cycle(1);
 		}
 		uint16_t sum = a_val + val;
 		set_register(Registers::A, static_cast<uint8_t>(sum));
@@ -140,7 +135,6 @@ private:
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::h, (val & 0xfff) + (hl_val & 0xfff) > 0xfff);
 		set_flag(FlagRegisters::c, (val + hl_val) >> 16);
-		//set_cycle(2);
 	}
 
 	template <Registers src>
@@ -149,10 +143,8 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			//set_cycle(1);
 		}
 		uint8_t carry = get_flag(FlagRegisters::c);
 		uint16_t sum = a_val + val + carry;
@@ -174,10 +166,10 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			//set_cycle(2);
+			DEBUG_MSG("checking and with val: %u from addr: %#06X and val: %u\n", val, get_16bitregister(Registers::HL),
+			          a_val);
 		} else {
 			val = get_register(src);
-			//set_cycle(1);
 		}
 		set_register(Registers::A, a_val & val);
 		set_flag(FlagRegisters::z, (a_val & val) == 0);
@@ -192,10 +184,8 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			//set_cycle(1);
 		}
 		a_val ^= val;
 		set_register(Registers::A, a_val);
@@ -209,10 +199,8 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			//set_cycle(1);
 		}
 		set_register(Registers::A, a_val | val);
 		set_register(Registers::F, 0);
@@ -224,11 +212,11 @@ private:
 		uint8_t val;
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
+			DEBUG_MSG("comparing val: %u from address %#06X to val: %u\n",
+			          mmap.read_u8(get_16bitregister(Registers::HL)), get_16bitregister(Registers::HL), a_val);
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			//set_cycle(1);
 		}
 		set_flag(FlagRegisters::z, (a_val == val));
 		set_flag(FlagRegisters::n, 1);
@@ -241,10 +229,8 @@ private:
 		uint8_t val;
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			//set_cycle(3);
 		} else {
 			val = get_register(src);
-			//set_cycle(2);
 		}
 		uint8_t bit_loc = (opcode >> 3) & 0x7;
 		set_flag(FlagRegisters::h, 1);
@@ -255,7 +241,6 @@ private:
 	template <uint8_t opcode, Registers src>
 	void res_b3_r8() {
 		uint8_t val = get_register(src);
-		//set_cycle(2);
 		uint8_t bit_loc = ((opcode - 0x80) >> 3);
 		val &= ~(1 << bit_loc);
 		set_register(src, val);
@@ -267,8 +252,10 @@ private:
 			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
 			return;
 		}
-		//set_cycle(4);
 		uint8_t bit_loc = ((opcode - 0x80) >> 3);
+		if (opcode == 0x86) {
+			DEBUG_MSG("address writing to: %#06X val: %u\n", get_16bitregister(Registers::HL), read_cache);
+		}
 		read_cache &= ~(1 << bit_loc);
 		mmap.write_u8(get_16bitregister(Registers::HL), read_cache);
 	}
@@ -276,7 +263,6 @@ private:
 	template <uint8_t opcode, Registers src>
 	void set_b3_r8() {
 		uint8_t val = get_register(src);
-		//set_cycle(2);
 		uint8_t bit_loc = (opcode >> 3) & 0x7;
 		val |= (1 << bit_loc);
 		set_register(src, val);
@@ -288,7 +274,6 @@ private:
 			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
 			return;
 		}
-		//set_cycle(4);
 		uint8_t bit_loc = (opcode >> 3) & 0x7;
 		read_cache |= (1 << bit_loc);
 		mmap.write_u8(get_16bitregister(Registers::HL), read_cache);
@@ -325,20 +310,17 @@ private:
 			break;
 		}
 		if (cond) {
-			//set_cycle(3);
 			return;
 		}
 		branched = true;
 		sp -= 2;
 		mmap.write_u16(sp, pc);
 		pc = mmap.read_u16(pc - 2);
-		//set_cycle(6);
 	}
 
 	template <Registers rec>
 	void dec_r16() {
 		set_16bitregister(rec, get_16bitregister(rec) - 1);
-		//set_cycle(2);
 	}
 
 	template <Registers rec>
@@ -348,7 +330,6 @@ private:
 		val = get_register(rec);
 		res = val - 1;
 		set_register(rec, static_cast<uint8_t>(res));
-		//set_cycle(1);
 		set_flag(FlagRegisters::z, static_cast<uint8_t>(res) == 0);
 		set_flag(FlagRegisters::n, 1);
 		set_flag(FlagRegisters::h, (val & 0xf) < (1 & 0xf));
@@ -360,19 +341,16 @@ private:
 			return;
 		}
 		mmap.write_u8(get_16bitregister(Registers::HL), static_cast<uint8_t>(read_cache));
-		//set_cycle(3);
+		uint8_t before_flag = get_register(Registers::F);
+		get_flag(FlagRegisters::c) ? set_register(Registers::F, 1U << FlagRegisters::c) : set_register(Registers::F, 0);
 		set_flag(FlagRegisters::z, static_cast<uint8_t>(read_cache) == 0);
 		set_flag(FlagRegisters::n, 1);
-		if ((read_cache & 0x0F) == 0x0F)
-		{
-			set_flag(FlagRegisters::h, !get_flag(FlagRegisters::h));
-		}
+		set_flag(FlagRegisters::h, (read_cache & 0x0F) == 0x0F);
 	}
 
 	template <Registers rec>
 	void inc_r16() {
 		set_16bitregister(rec, get_16bitregister(rec) + 1);
-		//set_cycle(2);
 	}
 
 	template <Registers rec>
@@ -382,7 +360,6 @@ private:
 		val = get_register(rec);
 		res = val + 1;
 		set_register(rec, static_cast<uint8_t>(res));
-		//set_cycle(1);
 		set_flag(FlagRegisters::z, static_cast<uint8_t>(res) == 0);
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::h, ((val & 0xF) + (1 & 0xF)) > 0xF);
@@ -397,11 +374,12 @@ private:
 			read_cache = res;
 			return;
 		}
+		uint8_t before_flag = get_register(Registers::F);
 		mmap.write_u8(get_16bitregister(Registers::HL), static_cast<uint8_t>(read_cache));
-		//set_cycle(3);
+		get_flag(FlagRegisters::c) ? set_register(Registers::F, 1U << FlagRegisters::c) : set_register(Registers::F, 0);
 		set_flag(FlagRegisters::z, static_cast<uint8_t>(read_cache) == 0);
 		set_flag(FlagRegisters::n, 0);
-		set_flag(FlagRegisters::h, ((read_cache & 0xF) + (1 & 0xF)) > 0xF);
+		set_flag(FlagRegisters::h, (read_cache & 0x0F) == 0x00);
 	}
 
 	void jr_imm8();
@@ -436,9 +414,9 @@ private:
 			} else {
 				pc += (uint16_t)val;
 			}
-			//set_cycle(3);
-		} else {
-			//set_cycle(2);
+			if (condition == Condition::ZeroFlag) {
+				DEBUG_MSG("set pc to: %u\n", pc);
+			}
 		}
 	}
 
@@ -467,9 +445,7 @@ private:
 		if (offset) {
 			branched = true;
 			pc = val;
-			//set_cycle(4);
 		} else {
-			//set_cycle(3);
 		}
 	}
 
@@ -486,24 +462,18 @@ private:
 		} else {
 			set_register(rec, val);
 		}
-		//set_cycle(1);
-		if (src == Registers::HL || rec == Registers::HL) {
-			//set_cycle(1);
-		}
 	}
 
 	template <Registers rec>
 	void ld_r16_a() {
 		uint16_t address = get_16bitregister(rec);
 		mmap.write_u8(address, get_register(Registers::A));
-		//set_cycle(2);
 	}
 
 	template <Registers src>
 	void ld_a_r16() {
 		uint16_t address = get_16bitregister(src);
 		set_register(Registers::A, mmap.read_u8(address));
-		//set_cycle(2);
 	}
 
 	template <Registers rec>
@@ -511,7 +481,6 @@ private:
 		uint8_t val = mmap.read_u8(pc);
 		pc += 1;
 		set_register(rec, val);
-		//set_cycle(2);
 	}
 
 	template <Registers rec>
@@ -519,7 +488,6 @@ private:
 		uint16_t val = mmap.read_u16(pc);
 		pc += 2;
 		set_16bitregister(rec, val);
-		//set_cycle(3);
 	}
 
 	template <Registers rec>
@@ -530,7 +498,6 @@ private:
 		}
 		set_16bitregister(rec, val);
 		sp += 2;
-		//set_cycle(3);
 	}
 
 	template <Registers src>
@@ -538,7 +505,6 @@ private:
 		uint16_t val = get_16bitregister(src);
 		sp -= 2;
 		mmap.write_u16(sp, val);
-		//set_cycle(4);
 	}
 
 	void ld_hl_imm8();
@@ -562,7 +528,6 @@ private:
 		val = get_register(rec);
 		set_register(rec, (val & 0xF) << 4);
 		set_register(rec, get_register(rec) | ((val & 0xF0) >> 4));
-		//set_cycle(2);
 		set_flag(FlagRegisters::z, val == 0);
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::c, 0);
@@ -576,9 +541,8 @@ private:
 		}
 		mmap.write_u8(get_16bitregister(Registers::HL), (read_cache & 0xF) << 4);
 		mmap.write_u8(get_16bitregister(Registers::HL),
-						mmap.read_u8(get_16bitregister(Registers::HL)) | ((read_cache & 0xF0) >> 4));
+		              mmap.read_u8(get_16bitregister(Registers::HL)) | ((read_cache & 0xF0) >> 4));
 		set_flag(FlagRegisters::z, read_cache == 0);
-		//set_cycle(4);
 		set_flag(FlagRegisters::n, 0);
 		set_flag(FlagRegisters::c, 0);
 		set_flag(FlagRegisters::h, 0);
@@ -598,9 +562,7 @@ private:
 	void rst_tg3() {
 		sp -= 2;
 		mmap.write_u16(sp, pc);
-
 		pc = value;
-		//set_cycle(4);
 	}
 
 	void ret();
@@ -634,11 +596,9 @@ private:
 			break;
 		}
 		if (cond) {
-			//set_cycle(2);
 			return;
 		}
 		branched = true;
-		//set_cycle(1);
 		ret();
 	}
 
@@ -654,7 +614,6 @@ private:
 	template <Registers rec>
 	void rlc_r8() {
 		set_register(rec, get_rlc(get_register(rec)));
-		//set_cycle(2);
 	}
 
 	void rlc_r8_hl() {
@@ -663,13 +622,11 @@ private:
 			return;
 		}
 		mmap.write_u8(get_16bitregister(Registers::HL), get_rlc(read_cache));
-		//set_cycle(4);
 	}
 
 	template <Registers rec>
 	void rl_r8() {
 		set_register(rec, get_rl(get_register(rec)));
-		//set_cycle(2);
 	}
 
 	void rl_r8_hl() {
@@ -678,13 +635,11 @@ private:
 			return;
 		}
 		mmap.write_u8(get_16bitregister(Registers::HL), get_rl(read_cache));
-		//set_cycle(4);
 	}
 
 	template <Registers rec>
 	void rrc_r8() {
 		set_register(rec, get_rrc(get_register(rec)));
-		//set_cycle(2);
 	}
 
 	void rrc_r8_hl() {
@@ -693,13 +648,11 @@ private:
 			return;
 		}
 		mmap.write_u8(get_16bitregister(Registers::HL), get_rrc(read_cache));
-		//set_cycle(4);
 	}
 
 	template <Registers rec>
 	void rr_r8() {
 		set_register(rec, get_rr(get_register(rec)));
-		//set_cycle(2);
 	}
 
 	void rr_r8_hl() {
@@ -708,13 +661,11 @@ private:
 			return;
 		}
 		mmap.write_u8(get_16bitregister(Registers::HL), get_rr(read_cache));
-		//set_cycle(4);
 	}
 
 	template <Registers rec>
 	void sla_r8() {
 		uint8_t val = get_register(rec);
-		//set_cycle(2);
 		set_flag(FlagRegisters::c, (val >> 7) & 0x01);
 		val <<= 1;
 		set_flag(FlagRegisters::n, 0);
@@ -728,7 +679,6 @@ private:
 			read_cache = mmap.read_u8(get_16bitregister(Registers::HL));
 			return;
 		}
-		//set_cycle(4);
 		set_flag(FlagRegisters::c, (read_cache >> 7) & 0x01);
 		read_cache <<= 1;
 		set_flag(FlagRegisters::n, 0);
@@ -740,7 +690,6 @@ private:
 	template <Registers rec>
 	void sra_r8() {
 		uint8_t val = get_register(rec);
-		//set_cycle(2);
 		set_flag(FlagRegisters::c, (val >> 0) & 1);
 		val = (val >> 1) | (val & 0x80);
 		set_flag(FlagRegisters::n, 0);
@@ -766,7 +715,6 @@ private:
 	void srl_r8() {
 		uint8_t val;
 		val = get_register(rec);
-		//set_cycle(2);
 		set_flag(FlagRegisters::c, val & 0x01);
 		val >>= 1;
 		set_flag(FlagRegisters::n, 0);
@@ -797,10 +745,8 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			//set_cycle(1);
 		}
 		uint16_t sub = a_val - val;
 		set_register(Registers::A, static_cast<uint8_t>(sub));
@@ -816,10 +762,8 @@ private:
 		uint8_t a_val = get_register(Registers::A);
 		if (src == Registers::HL) {
 			val = mmap.read_u8(get_16bitregister(Registers::HL));
-			//set_cycle(2);
 		} else {
 			val = get_register(src);
-			//set_cycle(1);
 		}
 		uint8_t carry = get_flag(FlagRegisters::c);
 		uint16_t sbc = a_val - val - carry;
@@ -833,8 +777,6 @@ private:
 	void execute_instruction();
 
 	void debug_print(bool prefix);
-
-	// void handle_interrupt();
 
 public:
 	uint64_t debug_count;
@@ -886,12 +828,8 @@ public:
 	}
 
 	inline void set_cycle_16(uint16_t c) {
-		m_cycle += c;
-		if (speed_multiplier) {
-			t_cycle += (c * 4) >> 1;
-		} else {
-			t_cycle += c * 4;
-		}
+		m_cycle += c / 4;
+		t_cycle += c;
 	}
 
 	inline bool is_halted() const {
@@ -905,9 +843,6 @@ public:
 	void unhalt_cpu() {
 		halted = false;
 	}
-
-	// void handle_prefixed_instruction();
-	// void handle_unprefixed_instruction();
 
 	inline bool get_cgb_speed() const {
 		return cgb_speed;
@@ -925,6 +860,3 @@ inline bool IsSetBit(const uint8_t value, const uint8_t bit) {
 }
 
 #endif
-
-// 09:01
-// 11:01
