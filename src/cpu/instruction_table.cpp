@@ -74,7 +74,7 @@ void Cpu::set_instructions() {
 	u[0x43] = &Cpu::ld_r8_r8<Registers::B, Registers::E>;
 	u[0x44] = &Cpu::ld_r8_r8<Registers::B, Registers::H>;
 	u[0x45] = &Cpu::ld_r8_r8<Registers::B, Registers::L>;
-	u[0x46] = &Cpu::ld_r8_r8<Registers::B, Registers::HL>;
+	u[0x46] = &Cpu::ld_r8_hl<Registers::B>;
 	u[0x47] = &Cpu::ld_r8_r8<Registers::B, Registers::A>;
 	u[0x48] = &Cpu::ld_r8_r8<Registers::C, Registers::B>;
 	u[0x49] = &Cpu::ld_r8_r8<Registers::C, Registers::C>;
@@ -82,7 +82,7 @@ void Cpu::set_instructions() {
 	u[0x4B] = &Cpu::ld_r8_r8<Registers::C, Registers::E>;
 	u[0x4C] = &Cpu::ld_r8_r8<Registers::C, Registers::H>;
 	u[0x4D] = &Cpu::ld_r8_r8<Registers::C, Registers::L>;
-	u[0x4E] = &Cpu::ld_r8_r8<Registers::C, Registers::HL>;
+	u[0x4E] = &Cpu::ld_r8_hl<Registers::C>;
 	u[0x4F] = &Cpu::ld_r8_r8<Registers::C, Registers::A>;
 	u[0x50] = &Cpu::ld_r8_r8<Registers::D, Registers::B>;
 	u[0x51] = &Cpu::ld_r8_r8<Registers::D, Registers::C>;
@@ -90,7 +90,7 @@ void Cpu::set_instructions() {
 	u[0x53] = &Cpu::ld_r8_r8<Registers::D, Registers::E>;
 	u[0x54] = &Cpu::ld_r8_r8<Registers::D, Registers::H>;
 	u[0x55] = &Cpu::ld_r8_r8<Registers::D, Registers::L>;
-	u[0x56] = &Cpu::ld_r8_r8<Registers::D, Registers::HL>;
+	u[0x56] = &Cpu::ld_r8_hl<Registers::D>;
 	u[0x57] = &Cpu::ld_r8_r8<Registers::D, Registers::A>;
 	u[0x58] = &Cpu::ld_r8_r8<Registers::E, Registers::B>;
 	u[0x59] = &Cpu::ld_r8_r8<Registers::E, Registers::C>;
@@ -98,7 +98,7 @@ void Cpu::set_instructions() {
 	u[0x5B] = &Cpu::ld_r8_r8<Registers::E, Registers::E>;
 	u[0x5C] = &Cpu::ld_r8_r8<Registers::E, Registers::H>;
 	u[0x5D] = &Cpu::ld_r8_r8<Registers::E, Registers::L>;
-	u[0x5E] = &Cpu::ld_r8_r8<Registers::E, Registers::HL>;
+	u[0x5E] = &Cpu::ld_r8_hl<Registers::E>;
 	u[0x5F] = &Cpu::ld_r8_r8<Registers::E, Registers::A>;
 	u[0x60] = &Cpu::ld_r8_r8<Registers::H, Registers::B>;
 	u[0x61] = &Cpu::ld_r8_r8<Registers::H, Registers::C>;
@@ -106,7 +106,7 @@ void Cpu::set_instructions() {
 	u[0x63] = &Cpu::ld_r8_r8<Registers::H, Registers::E>;
 	u[0x64] = &Cpu::ld_r8_r8<Registers::H, Registers::H>;
 	u[0x65] = &Cpu::ld_r8_r8<Registers::H, Registers::L>;
-	u[0x66] = &Cpu::ld_r8_r8<Registers::H, Registers::HL>;
+	u[0x66] = &Cpu::ld_r8_hl<Registers::H>;
 	u[0x67] = &Cpu::ld_r8_r8<Registers::H, Registers::A>;
 	u[0x68] = &Cpu::ld_r8_r8<Registers::L, Registers::B>;
 	u[0x69] = &Cpu::ld_r8_r8<Registers::L, Registers::C>;
@@ -114,23 +114,23 @@ void Cpu::set_instructions() {
 	u[0x6B] = &Cpu::ld_r8_r8<Registers::L, Registers::E>;
 	u[0x6C] = &Cpu::ld_r8_r8<Registers::L, Registers::H>;
 	u[0x6D] = &Cpu::ld_r8_r8<Registers::L, Registers::L>;
-	u[0x6E] = &Cpu::ld_r8_r8<Registers::L, Registers::HL>;
+	u[0x6E] = &Cpu::ld_r8_hl<Registers::L>;
 	u[0x6F] = &Cpu::ld_r8_r8<Registers::L, Registers::A>;
-	u[0x70] = &Cpu::ld_r8_r8<Registers::HL, Registers::B>;
-	u[0x71] = &Cpu::ld_r8_r8<Registers::HL, Registers::C>;
-	u[0x72] = &Cpu::ld_r8_r8<Registers::HL, Registers::D>;
-	u[0x73] = &Cpu::ld_r8_r8<Registers::HL, Registers::E>;
-	u[0x74] = &Cpu::ld_r8_r8<Registers::HL, Registers::H>;
-	u[0x75] = &Cpu::ld_r8_r8<Registers::HL, Registers::L>;
+	u[0x70] = &Cpu::ld_hl_r8<Registers::B>;
+	u[0x71] = &Cpu::ld_hl_r8<Registers::C>;
+	u[0x72] = &Cpu::ld_hl_r8<Registers::D>;
+	u[0x73] = &Cpu::ld_hl_r8<Registers::E>;
+	u[0x74] = &Cpu::ld_hl_r8<Registers::H>;
+	u[0x75] = &Cpu::ld_hl_r8<Registers::L>;
 	u[0x76] = &Cpu::halt;
-	u[0x77] = &Cpu::ld_r8_r8<Registers::HL, Registers::A>;
+	u[0x77] = &Cpu::ld_hl_r8<Registers::A>;
 	u[0x78] = &Cpu::ld_r8_r8<Registers::A, Registers::B>;
 	u[0x79] = &Cpu::ld_r8_r8<Registers::A, Registers::C>;
 	u[0x7A] = &Cpu::ld_r8_r8<Registers::A, Registers::D>;
 	u[0x7B] = &Cpu::ld_r8_r8<Registers::A, Registers::E>;
 	u[0x7C] = &Cpu::ld_r8_r8<Registers::A, Registers::H>;
 	u[0x7D] = &Cpu::ld_r8_r8<Registers::A, Registers::L>;
-	u[0x7E] = &Cpu::ld_r8_r8<Registers::A, Registers::HL>;
+	u[0x7E] = &Cpu::ld_r8_hl<Registers::A>;
 	u[0x7F] = &Cpu::ld_r8_r8<Registers::A, Registers::A>;
 	u[0x80] = &Cpu::add_a_r8<Registers::B>;
 	u[0x81] = &Cpu::add_a_r8<Registers::C>;
@@ -138,7 +138,7 @@ void Cpu::set_instructions() {
 	u[0x83] = &Cpu::add_a_r8<Registers::E>;
 	u[0x84] = &Cpu::add_a_r8<Registers::H>;
 	u[0x85] = &Cpu::add_a_r8<Registers::L>;
-	u[0x86] = &Cpu::add_a_r8<Registers::HL>;
+	u[0x86] = &Cpu::add_a_r8_hl;
 	u[0x87] = &Cpu::add_a_r8<Registers::A>;
 	u[0x88] = &Cpu::adc_a_r8<Registers::B>;
 	u[0x89] = &Cpu::adc_a_r8<Registers::C>;
@@ -146,7 +146,7 @@ void Cpu::set_instructions() {
 	u[0x8B] = &Cpu::adc_a_r8<Registers::E>;
 	u[0x8C] = &Cpu::adc_a_r8<Registers::H>;
 	u[0x8D] = &Cpu::adc_a_r8<Registers::L>;
-	u[0x8E] = &Cpu::adc_a_r8<Registers::HL>;
+	u[0x8E] = &Cpu::adc_a_r8_hl;
 	u[0x8F] = &Cpu::adc_a_r8<Registers::A>;
 	u[0x90] = &Cpu::sub_a_r8<Registers::B>;
 	u[0x91] = &Cpu::sub_a_r8<Registers::C>;
@@ -154,7 +154,7 @@ void Cpu::set_instructions() {
 	u[0x93] = &Cpu::sub_a_r8<Registers::E>;
 	u[0x94] = &Cpu::sub_a_r8<Registers::H>;
 	u[0x95] = &Cpu::sub_a_r8<Registers::L>;
-	u[0x96] = &Cpu::sub_a_r8<Registers::HL>;
+	u[0x96] = &Cpu::sub_a_r8_hl;
 	u[0x97] = &Cpu::sub_a_r8<Registers::A>;
 	u[0x98] = &Cpu::sbc_a_r8<Registers::B>;
 	u[0x99] = &Cpu::sbc_a_r8<Registers::C>;
@@ -162,7 +162,7 @@ void Cpu::set_instructions() {
 	u[0x9B] = &Cpu::sbc_a_r8<Registers::E>;
 	u[0x9C] = &Cpu::sbc_a_r8<Registers::H>;
 	u[0x9D] = &Cpu::sbc_a_r8<Registers::L>;
-	u[0x9E] = &Cpu::sbc_a_r8<Registers::HL>;
+	u[0x9E] = &Cpu::sbc_a_r8_hl;
 	u[0x9F] = &Cpu::sbc_a_r8<Registers::A>;
 	u[0xA0] = &Cpu::and_a_r8<Registers::B>;
 	u[0xA1] = &Cpu::and_a_r8<Registers::C>;
@@ -170,7 +170,7 @@ void Cpu::set_instructions() {
 	u[0xA3] = &Cpu::and_a_r8<Registers::E>;
 	u[0xA4] = &Cpu::and_a_r8<Registers::H>;
 	u[0xA5] = &Cpu::and_a_r8<Registers::L>;
-	u[0xA6] = &Cpu::and_a_r8<Registers::HL>;
+	u[0xA6] = &Cpu::and_a_r8_hl;
 	u[0xA7] = &Cpu::and_a_r8<Registers::A>;
 	u[0xA8] = &Cpu::xor_a_r8<Registers::B>;
 	u[0xA9] = &Cpu::xor_a_r8<Registers::C>;
@@ -178,7 +178,7 @@ void Cpu::set_instructions() {
 	u[0xAB] = &Cpu::xor_a_r8<Registers::E>;
 	u[0xAC] = &Cpu::xor_a_r8<Registers::H>;
 	u[0xAD] = &Cpu::xor_a_r8<Registers::L>;
-	u[0xAE] = &Cpu::xor_a_r8<Registers::HL>;
+	u[0xAE] = &Cpu::xor_a_r8_hl;
 	u[0xAF] = &Cpu::xor_a_r8<Registers::A>;
 	u[0xB0] = &Cpu::or_a_r8<Registers::B>;
 	u[0xB1] = &Cpu::or_a_r8<Registers::C>;
@@ -186,7 +186,7 @@ void Cpu::set_instructions() {
 	u[0xB3] = &Cpu::or_a_r8<Registers::E>;
 	u[0xB4] = &Cpu::or_a_r8<Registers::H>;
 	u[0xB5] = &Cpu::or_a_r8<Registers::L>;
-	u[0xB6] = &Cpu::or_a_r8<Registers::HL>;
+	u[0xB6] = &Cpu::or_a_r8_hl;
 	u[0xB7] = &Cpu::or_a_r8<Registers::A>;
 	u[0xB8] = &Cpu::cp_a_r8<Registers::B>;
 	u[0xB9] = &Cpu::cp_a_r8<Registers::C>;
@@ -194,7 +194,7 @@ void Cpu::set_instructions() {
 	u[0xBB] = &Cpu::cp_a_r8<Registers::E>;
 	u[0xBC] = &Cpu::cp_a_r8<Registers::H>;
 	u[0xBD] = &Cpu::cp_a_r8<Registers::L>;
-	u[0xBE] = &Cpu::cp_a_r8<Registers::HL>;
+	u[0xBE] = &Cpu::cp_a_r8_hl;
 	u[0xBF] = &Cpu::cp_a_r8<Registers::A>;
 	u[0xC0] = &Cpu::ret_cond<Condition::NotZeroFlag>;
 	u[0xC1] = &Cpu::pop_r16stk<Registers::BC>;
@@ -332,7 +332,7 @@ void Cpu::set_instructions() {
 	p[0x43] = &Cpu::bit_b3_r8<0x43, Registers::E>;
 	p[0x44] = &Cpu::bit_b3_r8<0x44, Registers::H>;
 	p[0x45] = &Cpu::bit_b3_r8<0x45, Registers::L>;
-	p[0x46] = &Cpu::bit_b3_r8<0x46, Registers::HL>;
+	p[0x46] = &Cpu::bit_b3_r8_hl<0x46>;
 	p[0x47] = &Cpu::bit_b3_r8<0x47, Registers::A>;
 	p[0x48] = &Cpu::bit_b3_r8<0x48, Registers::B>;
 	p[0x49] = &Cpu::bit_b3_r8<0x49, Registers::C>;
@@ -340,7 +340,7 @@ void Cpu::set_instructions() {
 	p[0x4B] = &Cpu::bit_b3_r8<0x4B, Registers::E>;
 	p[0x4C] = &Cpu::bit_b3_r8<0x4C, Registers::H>;
 	p[0x4D] = &Cpu::bit_b3_r8<0x4D, Registers::L>;
-	p[0x4E] = &Cpu::bit_b3_r8<0x4E, Registers::HL>;
+	p[0x4E] = &Cpu::bit_b3_r8_hl<0x4E>;
 	p[0x4F] = &Cpu::bit_b3_r8<0x4F, Registers::A>;
 	p[0x50] = &Cpu::bit_b3_r8<0x50, Registers::B>;
 	p[0x51] = &Cpu::bit_b3_r8<0x51, Registers::C>;
@@ -348,7 +348,7 @@ void Cpu::set_instructions() {
 	p[0x53] = &Cpu::bit_b3_r8<0x53, Registers::E>;
 	p[0x54] = &Cpu::bit_b3_r8<0x54, Registers::H>;
 	p[0x55] = &Cpu::bit_b3_r8<0x55, Registers::L>;
-	p[0x56] = &Cpu::bit_b3_r8<0x56, Registers::HL>;
+	p[0x56] = &Cpu::bit_b3_r8_hl<0x56>;
 	p[0x57] = &Cpu::bit_b3_r8<0x57, Registers::A>;
 	p[0x58] = &Cpu::bit_b3_r8<0x58, Registers::B>;
 	p[0x59] = &Cpu::bit_b3_r8<0x59, Registers::C>;
@@ -356,7 +356,7 @@ void Cpu::set_instructions() {
 	p[0x5B] = &Cpu::bit_b3_r8<0x5B, Registers::E>;
 	p[0x5C] = &Cpu::bit_b3_r8<0x5C, Registers::H>;
 	p[0x5D] = &Cpu::bit_b3_r8<0x5D, Registers::L>;
-	p[0x5E] = &Cpu::bit_b3_r8<0x5E, Registers::HL>;
+	p[0x5E] = &Cpu::bit_b3_r8_hl<0x5E>;
 	p[0x5F] = &Cpu::bit_b3_r8<0x5F, Registers::A>;
 	p[0x60] = &Cpu::bit_b3_r8<0x60, Registers::B>;
 	p[0x61] = &Cpu::bit_b3_r8<0x61, Registers::C>;
@@ -364,7 +364,7 @@ void Cpu::set_instructions() {
 	p[0x63] = &Cpu::bit_b3_r8<0x63, Registers::E>;
 	p[0x64] = &Cpu::bit_b3_r8<0x64, Registers::H>;
 	p[0x65] = &Cpu::bit_b3_r8<0x65, Registers::L>;
-	p[0x66] = &Cpu::bit_b3_r8<0x66, Registers::HL>;
+	p[0x66] = &Cpu::bit_b3_r8_hl<0x66>;
 	p[0x67] = &Cpu::bit_b3_r8<0x67, Registers::A>;
 	p[0x68] = &Cpu::bit_b3_r8<0x68, Registers::B>;
 	p[0x69] = &Cpu::bit_b3_r8<0x69, Registers::C>;
@@ -372,7 +372,7 @@ void Cpu::set_instructions() {
 	p[0x6B] = &Cpu::bit_b3_r8<0x6B, Registers::E>;
 	p[0x6C] = &Cpu::bit_b3_r8<0x6C, Registers::H>;
 	p[0x6D] = &Cpu::bit_b3_r8<0x6D, Registers::L>;
-	p[0x6E] = &Cpu::bit_b3_r8<0x6E, Registers::HL>;
+	p[0x6E] = &Cpu::bit_b3_r8_hl<0x6E>;
 	p[0x6F] = &Cpu::bit_b3_r8<0x6F, Registers::A>;
 	p[0x70] = &Cpu::bit_b3_r8<0x70, Registers::B>;
 	p[0x71] = &Cpu::bit_b3_r8<0x71, Registers::C>;
@@ -380,7 +380,7 @@ void Cpu::set_instructions() {
 	p[0x73] = &Cpu::bit_b3_r8<0x73, Registers::E>;
 	p[0x74] = &Cpu::bit_b3_r8<0x74, Registers::H>;
 	p[0x75] = &Cpu::bit_b3_r8<0x75, Registers::L>;
-	p[0x76] = &Cpu::bit_b3_r8<0x76, Registers::HL>;
+	p[0x76] = &Cpu::bit_b3_r8_hl<0x76>;
 	p[0x77] = &Cpu::bit_b3_r8<0x77, Registers::A>;
 	p[0x78] = &Cpu::bit_b3_r8<0x78, Registers::B>;
 	p[0x79] = &Cpu::bit_b3_r8<0x79, Registers::C>;
@@ -388,7 +388,7 @@ void Cpu::set_instructions() {
 	p[0x7B] = &Cpu::bit_b3_r8<0x7B, Registers::E>;
 	p[0x7C] = &Cpu::bit_b3_r8<0x7C, Registers::H>;
 	p[0x7D] = &Cpu::bit_b3_r8<0x7D, Registers::L>;
-	p[0x7E] = &Cpu::bit_b3_r8<0x7E, Registers::HL>;
+	p[0x7E] = &Cpu::bit_b3_r8_hl<0x7E>;
 	p[0x7F] = &Cpu::bit_b3_r8<0x7F, Registers::A>;
 	p[0x80] = &Cpu::res_b3_r8<0x80, Registers::B>;
 	p[0x81] = &Cpu::res_b3_r8<0x81, Registers::C>;

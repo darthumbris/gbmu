@@ -2,6 +2,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include "debug.hpp"
 
 MCB5::MCB5(const std::string rom_path, RomHeader rheader, bool battery, bool rumble)
     : Rom(rom_path, rheader), battery(battery), rumble(rumble) {

@@ -1,4 +1,5 @@
 #include "Cpu.hpp"
+#include "OpcodeTiming.hpp"
 #include <cstdint>
 
 void Cpu::nop() {}

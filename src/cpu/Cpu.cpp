@@ -3,7 +3,6 @@
 #include "OpcodeTiming.hpp"
 #include <cstdint>
 #include <ctime>
-#include <iostream>
 
 uint64_t const DEBUG_START = 0;
 uint64_t const DEBUG_COUNT = 1;

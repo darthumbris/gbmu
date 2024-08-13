@@ -1,5 +1,6 @@
 #include "rom/MCB1M.hpp"
 #include <iostream>
+#include "debug.hpp"
 
 // TODO handle this one
 

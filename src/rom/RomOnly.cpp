@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include "debug.hpp"
 
 uint8_t RomOnly::read_u8(uint16_t addr) {
 	switch (addr) {

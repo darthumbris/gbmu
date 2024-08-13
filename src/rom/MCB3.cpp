@@ -1,6 +1,7 @@
 #include "rom/MCB3.hpp"
 #include <fstream>
 #include <iostream>
+#include "debug.hpp"
 
 uint8_t MCB3::read_u8(uint16_t addr) {
 	switch (addr) {
