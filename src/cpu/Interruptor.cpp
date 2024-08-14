@@ -85,11 +85,11 @@ void Interruptor::input_tick(uint8_t cycle) {
 	}
 }
 
-void Interruptor::check_cycles(uint16_t cycle, uint8_t state) {
+void Interruptor::check_cycles(uint16_t cycle, instruction_state state) {
 	if (!interrupt_occured && delay_cycles > 0) {
 		delay_cycles -= cycle;
 	}
-	if (!interrupt_occured && state == StateReady && ime_cycles > 0) {
+	if (!interrupt_occured && state == instruction_state::Ready && ime_cycles > 0) {
 		ime_cycles -= cycle;
 		if (ime_cycles <= 0) {
 			ime_cycles = 0;
@@ -98,10 +98,10 @@ void Interruptor::check_cycles(uint16_t cycle, uint8_t state) {
 	}
 }
 
-bool Interruptor::handle_interrupt(uint8_t state) {
+bool Interruptor::handle_interrupt(instruction_state state) {
 	DEBUG_MSG("i %u s %u m %u p %u\n", interruptor.pending(), accurate_opcode_state, interruptor.get_ime(), pc);
 	interrupt_occured = false;
-	if (!(state == StateReady && pending() != interrupt_type::NoInterrupt && process_interrupts)) {
+	if (!(state == instruction_state::Ready && pending() != interrupt_type::NoInterrupt && process_interrupts)) {
 		return false;
 	}
 	interrupt_occured = true;

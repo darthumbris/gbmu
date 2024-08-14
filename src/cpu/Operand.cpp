@@ -53,38 +53,38 @@ namespace Dict {
 		return string_hash(std::string_view{str, len});
 	}
 
-	Registers get_register(std::string name) {
+	registers get_register(std::string name) {
 		switch (string_hash(name)) {
 		case "B"_:
-			return Registers::B;
+			return registers::B;
 		case "C"_:
-			return Registers::C;
+			return registers::C;
 		case "D"_:
-			return Registers::D;
+			return registers::D;
 		case "E"_:
-			return Registers::E;
+			return registers::E;
 		case "H"_:
-			return Registers::H;
+			return registers::H;
 		case "L"_:
-			return Registers::L;
+			return registers::L;
 		case "A"_:
-			return Registers::A;
+			return registers::A;
 		case "F"_:
-			return Registers::F;
+			return registers::F;
 		case "BC"_:
-			return Registers::BC;
+			return registers::BC;
 		case "DE"_:
-			return Registers::DE;
+			return registers::DE;
 		case "HL"_:
-			return Registers::HL;
+			return registers::HL;
 		case "AF"_:
-			return Registers::AF;
+			return registers::AF;
 		case "SP"_:
-			return Registers::SP;
+			return registers::SP;
 		default:
 			break;
 		}
-		return Registers::SP;
+		return registers::SP;
 	}
 
 	void to_json(json &j, const Operand &o) {

@@ -23,36 +23,36 @@ Cpu::Cpu(Decoder dec, const std::string path)
 
 Cpu::~Cpu() {}
 
-uint16_t Cpu::get_16bitregister(Registers reg) const {
-	if (reg == Registers::SP) {
+uint16_t Cpu::get_16bitregister(registers reg) const {
+	if (reg == registers::SP) {
 		return sp;
 	}
-	return ((uint16_t)(u8_registers[reg - Registers::BC] << 8) + (uint16_t)u8_registers[reg - Registers::BC + 1]);
+	return ((uint16_t)(u8_registers[reg - registers::BC] << 8) + (uint16_t)u8_registers[reg - registers::BC + 1]);
 }
 
-uint8_t Cpu::get_register(Registers reg) const {
+uint8_t Cpu::get_register(registers reg) const {
 	return (u8_registers[reg]);
 }
 
 uint8_t Cpu::get_flag(uint8_t flag) const {
-	return ((u8_registers[Registers::F] >> flag) & 1);
+	return ((u8_registers[registers::F] >> flag) & 1);
 }
 
-void Cpu::set_16bitregister(Registers reg, uint16_t val) {
-	if (reg == Registers::SP) {
+void Cpu::set_16bitregister(registers reg, uint16_t val) {
+	if (reg == registers::SP) {
 		sp = val;
 	} else {
-		u8_registers[reg - Registers::BC] = (uint8_t)(val >> 8);
-		u8_registers[reg - Registers::BC + 1] = (uint8_t)(val & 0xff);
+		u8_registers[reg - registers::BC] = (uint8_t)(val >> 8);
+		u8_registers[reg - registers::BC + 1] = (uint8_t)(val & 0xff);
 	}
 }
 
-void Cpu::set_register(Registers reg, uint8_t val) {
+void Cpu::set_register(registers reg, uint8_t val) {
 	u8_registers[reg] = val;
 }
 
 void Cpu::set_flag(uint8_t flag, uint8_t val) {
-	u8_registers[Registers::F] ^= ((-val) ^ u8_registers[Registers::F]) & (1U << flag);
+	u8_registers[registers::F] ^= ((-val) ^ u8_registers[registers::F]) & (1U << flag);
 }
 
 void Cpu::tick() {
@@ -113,15 +113,15 @@ void Cpu::prefix() {
 	opcode = mmap.read_u8(pc);
 #ifdef DEBUG_MODE
 	DEBUG_MSG("opcode: 0x%02X\n", opcode);
-	// DEBUG_MSG("register AF %u BC %u DE %u HL %u SP %u PC: %u\n", get_16bitregister(Registers::AF),
-	// get_16bitregister(Registers::BC), get_16bitregister(Registers::DE), get_16bitregister(Registers::HL), sp, pc);
+	// DEBUG_MSG("register AF %u BC %u DE %u HL %u SP %u PC: %u\n", get_16bitregister(registers::AF),
+	// get_16bitregister(registers::BC), get_16bitregister(registers::DE), get_16bitregister(registers::HL), sp, pc);
 	if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
 		// debug_print(true);
 		// DEBUG_MSG("debug_count: %lu opcode CB: %#04x pc: %u\n", debug_count, opcode, pc);
-		// DEBUG_MSG("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A], u8_registers[Registers::B],
-		//        u8_registers[Registers::F], get_16bitregister(Registers::HL), sp);
-		// DEBUG_MSG("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
-		// u8_registers[Registers::E]);
+		// DEBUG_MSG("register a %u b %u f %u HL %u SP %u\n", u8_registers[registers::A], u8_registers[registers::B],
+		//        u8_registers[registers::F], get_16bitregister(registers::HL), sp);
+		// DEBUG_MSG("C %u D %u E %u\n", u8_registers[registers::C], u8_registers[registers::D],
+		// u8_registers[registers::E]);
 	}
 #endif
 	pc += 1;
@@ -130,7 +130,7 @@ void Cpu::prefix() {
 }
 
 void Cpu::handle_halt() {
-	if (accurate_opcode_state == StateReady && halted) {
+	if (accurate_opcode_state == instruction_state::Ready && halted) {
 		set_cycle(1);
 
 		if (halt_cycle > 0) {
@@ -163,7 +163,7 @@ void Cpu::fetch_instruction() {
 void Cpu::set_cycles_left() {
 	int left_cycles = (accurate_cycles[instruction][opcode] < 3 ? 2 : 3);
 	set_cycle((machine_cycles[instruction][opcode] - left_cycles));
-	accurate_opcode_state = StateReadingWord;
+	accurate_opcode_state = instruction_state::ReadingWord;
 	decrement_pc();
 }
 
@@ -174,22 +174,22 @@ void Cpu::execute_instruction() {
 		set_cycle((branched_machine_cycles[opcode]));
 	} else {
 		switch (accurate_opcode_state) {
-		case StateReady:
+		case instruction_state::Ready:
 			set_cycle((machine_cycles[instruction][opcode]));
 			break;
-		case StateReadingWord:
+		case instruction_state::ReadingWord:
 			if (accurate_cycles[instruction][opcode] == 3) {
 				set_cycle(1);
-				accurate_opcode_state = StateReadingByte;
+				accurate_opcode_state = instruction_state::ReadingByte;
 				decrement_pc();
 			} else {
 				set_cycle(2);
-				accurate_opcode_state = StateReady;
+				accurate_opcode_state = instruction_state::Ready;
 			}
 			break;
-		case StateReadingByte:
+		case instruction_state::ReadingByte:
 			set_cycle(2);
-			accurate_opcode_state = StateReady;
+			accurate_opcode_state = instruction_state::Ready;
 			break;
 		}
 	}
@@ -213,15 +213,15 @@ void Cpu::handle_instruction() {
 
 		if (!halted && !interruptor.handle_interrupt(accurate_opcode_state)) {
 			fetch_instruction();
-			if ((accurate_cycles[instruction][opcode] != 0) && (accurate_opcode_state == StateReady)) {
+			if ((accurate_cycles[instruction][opcode] != 0) && (accurate_opcode_state == instruction_state::Ready)) {
 				set_cycles_left();
 			} else {
 				execute_instruction();
 			}
 		}
 		interruptor.check_cycles(t_cycle, accurate_opcode_state);
-		DEBUG_MSG("AF %u BC %u DE %u HL %u SP %u PC %u i %u c %u\n", get_16bitregister(Registers::AF),
-		          get_16bitregister(Registers::BC), get_16bitregister(Registers::DE), get_16bitregister(Registers::HL),
+		DEBUG_MSG("AF %u BC %u DE %u HL %u SP %u PC %u i %u c %u\n", get_16bitregister(registers::AF),
+		          get_16bitregister(registers::BC), get_16bitregister(registers::DE), get_16bitregister(registers::HL),
 		          sp, pc, mmap.read_u8(0xFF0F), t_cycle);
 		executed_cycles += t_cycle;
 	}

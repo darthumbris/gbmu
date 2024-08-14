@@ -5,7 +5,7 @@
 #include <optional>
 #include <string>
 
-enum Registers {
+enum registers {
 	B = 0,
 	C = 1,
 	D = 2,
@@ -35,7 +35,7 @@ namespace Dict {
 
 		bool immediate;
 		std::string name;
-		Registers reg;
+		registers reg;
 		uint32_t bytes;
 		bool decrement;
 		bool increment;

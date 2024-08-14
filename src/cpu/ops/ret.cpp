@@ -44,41 +44,41 @@ void Cpu::rst_38() {
 }
 
 void Cpu::ret_nz() {
-	ret_cond(Condition::NotZeroFlag);
+	ret_cond(condition::NotZeroFlag);
 }
 
 void Cpu::ret_z() {
-	ret_cond(Condition::ZeroFlag);
+	ret_cond(condition::ZeroFlag);
 }
 
 void Cpu::ret_nc() {
-	ret_cond(Condition::NotCarryFlag);
+	ret_cond(condition::NotCarryFlag);
 }
 
 void Cpu::ret_c() {
-	ret_cond(Condition::CarryFlag);
+	ret_cond(condition::CarryFlag);
 }
 
-void Cpu::ret_cond(Condition condition) {
+void Cpu::ret_cond(condition condition) {
 	bool cond = false;
 	switch (condition) {
-	case Condition::NotZeroFlag:
-		if (get_flag(FlagRegisters::z)) {
+	case condition::NotZeroFlag:
+		if (get_flag(flag_registers::z)) {
 			cond = true;
 		}
 		break;
-	case Condition::ZeroFlag:
-		if (!get_flag(FlagRegisters::z)) {
+	case condition::ZeroFlag:
+		if (!get_flag(flag_registers::z)) {
 			cond = true;
 		}
 		break;
-	case Condition::NotCarryFlag:
-		if (get_flag(FlagRegisters::c)) {
+	case condition::NotCarryFlag:
+		if (get_flag(flag_registers::c)) {
 			cond = true;
 		}
 		break;
-	case Condition::CarryFlag:
-		if (!get_flag(FlagRegisters::c)) {
+	case condition::CarryFlag:
+		if (!get_flag(flag_registers::c)) {
 			cond = true;
 		}
 		break;

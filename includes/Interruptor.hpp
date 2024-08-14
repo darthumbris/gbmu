@@ -5,6 +5,7 @@
 #include <fstream>
 
 class Cpu;
+enum class instruction_state;
 
 enum class interrupt_type {
 	NoInterrupt = 0,
@@ -59,7 +60,7 @@ public:
 	void timer_tick(uint8_t cycle);
 	void serial_tick(uint8_t cycle);
 	void input_tick(uint8_t cycle);
-	bool handle_interrupt(uint8_t state);
+	bool handle_interrupt(instruction_state state);
 	void process_interrupt(interrupt_type i);
 	void enable_processing();
 	void disable_processing();
@@ -84,7 +85,7 @@ public:
 	void set_timer_control(uint8_t val);
 	bool interrupt_ready() const;
 	bool get_ime() const;
-	void check_cycles(uint16_t cycle, uint8_t state);
+	void check_cycles(uint16_t cycle, instruction_state state);
 
 	int16_t get_ime_cycles();
 	int16_t get_delay_cycles();

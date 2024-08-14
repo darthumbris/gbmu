@@ -5,41 +5,41 @@
 void Cpu::nop() {}
 
 void Cpu::daa() {
-	uint8_t a_val = get_register(Registers::A);
-	if (get_flag(FlagRegisters::n)) {
-		if (get_flag(FlagRegisters::c))
+	uint8_t a_val = get_register(registers::A);
+	if (get_flag(flag_registers::n)) {
+		if (get_flag(flag_registers::c))
 			a_val -= 0x60;
-		if (get_flag(FlagRegisters::h))
+		if (get_flag(flag_registers::h))
 			a_val -= 0x6;
 	} else {
-		if (get_flag(FlagRegisters::c) || a_val > 0x99) {
+		if (get_flag(flag_registers::c) || a_val > 0x99) {
 			a_val += 0x60;
-			set_flag(FlagRegisters::c, 1);
+			set_flag(flag_registers::c, 1);
 		}
-		if (get_flag(FlagRegisters::h) || ((a_val & 0x0F) > 0x09))
+		if (get_flag(flag_registers::h) || ((a_val & 0x0F) > 0x09))
 			a_val += 0x6;
 	}
-	set_flag(FlagRegisters::z, a_val == 0);
-	set_flag(FlagRegisters::h, 0);
-	set_register(Registers::A, a_val);
+	set_flag(flag_registers::z, a_val == 0);
+	set_flag(flag_registers::h, 0);
+	set_register(registers::A, a_val);
 }
 
 void Cpu::cpl() {
-	set_register(Registers::A, ~get_register(Registers::A));
-	set_flag(FlagRegisters::n, 1);
-	set_flag(FlagRegisters::h, 1);
+	set_register(registers::A, ~get_register(registers::A));
+	set_flag(flag_registers::n, 1);
+	set_flag(flag_registers::h, 1);
 }
 
 void Cpu::scf() {
-	set_flag(FlagRegisters::n, 0);
-	set_flag(FlagRegisters::h, 0);
-	set_flag(FlagRegisters::c, 1);
+	set_flag(flag_registers::n, 0);
+	set_flag(flag_registers::h, 0);
+	set_flag(flag_registers::c, 1);
 }
 
 void Cpu::ccf() {
-	set_flag(FlagRegisters::n, 0);
-	set_flag(FlagRegisters::h, 0);
-	set_flag(FlagRegisters::c, !get_flag(FlagRegisters::c));
+	set_flag(flag_registers::n, 0);
+	set_flag(flag_registers::h, 0);
+	set_flag(flag_registers::c, !get_flag(flag_registers::c));
 }
 
 void Cpu::stop() {

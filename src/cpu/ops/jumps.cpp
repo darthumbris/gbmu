@@ -19,32 +19,40 @@ void Cpu::jp_imm16() {
 
 void Cpu::jp_hl() {
 	uint16_t val;
-	val = (get_16bitregister(Registers::HL));
+	val = (get_16bitregister(registers::HL));
 	pc = val;
 }
 
-void Cpu::jp_cond_nz() {jp_cond_imm16(Condition::NotZeroFlag);}
-void Cpu::jp_cond_z() {jp_cond_imm16(Condition::ZeroFlag);}
-void Cpu::jp_cond_nc() {jp_cond_imm16(Condition::NotCarryFlag);}
-void Cpu::jp_cond_c() {jp_cond_imm16(Condition::CarryFlag);}
+void Cpu::jp_cond_nz() {
+	jp_cond_imm16(condition::NotZeroFlag);
+}
+void Cpu::jp_cond_z() {
+	jp_cond_imm16(condition::ZeroFlag);
+}
+void Cpu::jp_cond_nc() {
+	jp_cond_imm16(condition::NotCarryFlag);
+}
+void Cpu::jp_cond_c() {
+	jp_cond_imm16(condition::CarryFlag);
+}
 
-void Cpu::jp_cond_imm16(Condition condition) {
+void Cpu::jp_cond_imm16(condition cond) {
 	bool offset = false;
 	uint16_t val;
 	pc += 2;
 	val = mmap.read_u16(pc - 2);
-	switch (condition) {
-	case Condition::NotZeroFlag:
-		offset = get_flag(FlagRegisters::z) == 0;
+	switch (cond) {
+	case condition::NotZeroFlag:
+		offset = get_flag(flag_registers::z) == 0;
 		break;
-	case Condition::ZeroFlag:
-		offset = get_flag(FlagRegisters::z) == 1;
+	case condition::ZeroFlag:
+		offset = get_flag(flag_registers::z) == 1;
 		break;
-	case Condition::NotCarryFlag:
-		offset = get_flag(FlagRegisters::c) == 0;
+	case condition::NotCarryFlag:
+		offset = get_flag(flag_registers::c) == 0;
 		break;
-	case Condition::CarryFlag:
-		offset = get_flag(FlagRegisters::c) == 1;
+	case condition::CarryFlag:
+		offset = get_flag(flag_registers::c) == 1;
 		break;
 	default:
 		break;
