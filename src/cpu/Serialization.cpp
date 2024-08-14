@@ -94,6 +94,9 @@ void MemoryMap::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&not_usable), sizeof(not_usable));
 	f.write(reinterpret_cast<const char *>(&io_registers), sizeof(io_registers));
 	f.write(reinterpret_cast<const char *>(&high_ram), sizeof(high_ram));
+	f.write(reinterpret_cast<const char *>(&interrupt), sizeof(interrupt));
+	f.write(reinterpret_cast<const char *>(&joypad_register), sizeof(joypad_register));
+	f.write(reinterpret_cast<const char *>(&joypad_pressed), sizeof(joypad_pressed));
 	f.write(reinterpret_cast<const char *>(&boot_rom_loaded), sizeof(boot_rom_loaded));
 	f.write(reinterpret_cast<const char *>(&gb_boot_rom), sizeof(gb_boot_rom));
 	f.write(reinterpret_cast<const char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
@@ -107,6 +110,9 @@ void MemoryMap::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&not_usable), sizeof(not_usable));
 	f.read(reinterpret_cast<char *>(&io_registers), sizeof(io_registers));
 	f.read(reinterpret_cast<char *>(&high_ram), sizeof(high_ram));
+	f.read(reinterpret_cast<char *>(&interrupt), sizeof(interrupt));
+	f.read(reinterpret_cast<char *>(&joypad_register), sizeof(joypad_register));
+	f.read(reinterpret_cast<char *>(&joypad_pressed), sizeof(joypad_pressed));
 	f.read(reinterpret_cast<char *>(&boot_rom_loaded), sizeof(boot_rom_loaded));
 	f.read(reinterpret_cast<char *>(&gb_boot_rom), sizeof(gb_boot_rom));
 	f.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
@@ -116,52 +122,108 @@ void MemoryMap::deserialize(std::ifstream &f) {
 
 void PixelProcessingUnit::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&lcd_clock), sizeof(lcd_clock));
+	f.write(reinterpret_cast<const char *>(&lcd_clock_vblank), sizeof(lcd_clock_vblank));
 	f.write(reinterpret_cast<const char *>(&ctrl), sizeof(ctrl));
 	f.write(reinterpret_cast<const char *>(&l_status), sizeof(l_status));
 	f.write(reinterpret_cast<const char *>(&scy), sizeof(scy));
 	f.write(reinterpret_cast<const char *>(&scx), sizeof(scx));
 	f.write(reinterpret_cast<const char *>(&ly), sizeof(ly));
 	f.write(reinterpret_cast<const char *>(&lyc), sizeof(lyc));
+	f.write(reinterpret_cast<const char *>(&vblank_line), sizeof(vblank_line));
 	f.write(reinterpret_cast<const char *>(&dma), sizeof(dma));
 	f.write(reinterpret_cast<const char *>(&bg_palette), sizeof(bg_palette));
 	f.write(reinterpret_cast<const char *>(&obj_palette_0), sizeof(obj_palette_0));
 	f.write(reinterpret_cast<const char *>(&obj_palette_1), sizeof(obj_palette_1));
+
+	f.write(reinterpret_cast<const char *>(&bg_palette_cgb), sizeof(bg_palette_cgb));
+	f.write(reinterpret_cast<const char *>(&bg_color_cgb), sizeof(bg_color_cgb));
+	f.write(reinterpret_cast<const char *>(&obj_palette_cgb), sizeof(obj_palette_cgb));
+	f.write(reinterpret_cast<const char *>(&obj_color_cgb), sizeof(obj_color_cgb));
+
 	f.write(reinterpret_cast<const char *>(&window_y), sizeof(window_y));
 	f.write(reinterpret_cast<const char *>(&window_x), sizeof(window_x));
 	f.write(reinterpret_cast<const char *>(&vbank_select), sizeof(vbank_select));
 	f.write(reinterpret_cast<const char *>(&wram_bank_select), sizeof(wram_bank_select));
+
+	f.write(reinterpret_cast<const char *>(&interrupt_signal), sizeof(interrupt_signal));
+
+	f.write(reinterpret_cast<const char *>(&hdma_source), sizeof(hdma_source));
+	f.write(reinterpret_cast<const char *>(&hdma_dest), sizeof(hdma_dest));
+	f.write(reinterpret_cast<const char *>(&hdma), sizeof(hdma));
+	f.write(reinterpret_cast<const char *>(&hdma_enable), sizeof(hdma_enable));
+	f.write(reinterpret_cast<const char *>(&hdma_bytes), sizeof(hdma_bytes));
+
 	f.write(reinterpret_cast<const char *>(&lcd_enabled), sizeof(lcd_enabled));
 	f.write(reinterpret_cast<const char *>(&window_line_active), sizeof(window_line_active));
 	f.write(reinterpret_cast<const char *>(&draw_screen), sizeof(draw_screen));
+	f.write(reinterpret_cast<const char *>(&drawn_scanline), sizeof(drawn_scanline));
+
+	f.write(reinterpret_cast<const char *>(&pixels_drawn), sizeof(pixels_drawn));
+	f.write(reinterpret_cast<const char *>(&tile_drawn), sizeof(tile_drawn));
+	f.write(reinterpret_cast<const char *>(&screen_off_cycles), sizeof(screen_off_cycles));
+	f.write(reinterpret_cast<const char *>(&hide_screen), sizeof(hide_screen));
+
 	f.write(reinterpret_cast<const char *>(&r5g6b5_framebuffer), sizeof(r5g6b5_framebuffer));
 	f.write(reinterpret_cast<const char *>(&mono_framebuffer), sizeof(mono_framebuffer));
 	f.write(reinterpret_cast<const char *>(&rgb_framebuffer), sizeof(rgb_framebuffer));
 	f.write(reinterpret_cast<const char *>(&vram), sizeof(vram));
+
+	f.write(reinterpret_cast<const char *>(&sprite_cache_buffer), sizeof(sprite_cache_buffer));
+	f.write(reinterpret_cast<const char *>(&color_cache_buffer), sizeof(color_cache_buffer));
+	f.write(reinterpret_cast<const char *>(&oam), sizeof(oam));
+	f.write(reinterpret_cast<const char *>(&sprites), sizeof(sprites));
+	f.write(reinterpret_cast<const char *>(&tile_data), sizeof(tile_data));
+	f.write(reinterpret_cast<const char *>(&cgb_bg_colors), sizeof(cgb_bg_colors));
+	f.write(reinterpret_cast<const char *>(&cgb_obj_colors), sizeof(cgb_obj_colors));
 	std::cout << "done serializing ppu" << std::endl;
 }
 
 void PixelProcessingUnit::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&lcd_clock), sizeof(lcd_clock));
+	f.read(reinterpret_cast<char *>(&lcd_clock_vblank), sizeof(lcd_clock_vblank));
 	f.read(reinterpret_cast<char *>(&ctrl), sizeof(ctrl));
 	f.read(reinterpret_cast<char *>(&l_status), sizeof(l_status));
 	f.read(reinterpret_cast<char *>(&scy), sizeof(scy));
 	f.read(reinterpret_cast<char *>(&scx), sizeof(scx));
 	f.read(reinterpret_cast<char *>(&ly), sizeof(ly));
 	f.read(reinterpret_cast<char *>(&lyc), sizeof(lyc));
+	f.read(reinterpret_cast<char *>(&vblank_line), sizeof(vblank_line));
 	f.read(reinterpret_cast<char *>(&dma), sizeof(dma));
 	f.read(reinterpret_cast<char *>(&bg_palette), sizeof(bg_palette));
 	f.read(reinterpret_cast<char *>(&obj_palette_0), sizeof(obj_palette_0));
 	f.read(reinterpret_cast<char *>(&obj_palette_1), sizeof(obj_palette_1));
+	f.read(reinterpret_cast<char *>(&bg_palette_cgb), sizeof(bg_palette_cgb));
+	f.read(reinterpret_cast<char *>(&bg_color_cgb), sizeof(bg_color_cgb));
+	f.read(reinterpret_cast<char *>(&obj_palette_cgb), sizeof(obj_palette_cgb));
+	f.read(reinterpret_cast<char *>(&obj_color_cgb), sizeof(obj_color_cgb));
 	f.read(reinterpret_cast<char *>(&window_y), sizeof(window_y));
 	f.read(reinterpret_cast<char *>(&window_x), sizeof(window_x));
 	f.read(reinterpret_cast<char *>(&vbank_select), sizeof(vbank_select));
 	f.read(reinterpret_cast<char *>(&wram_bank_select), sizeof(wram_bank_select));
+	f.read(reinterpret_cast<char *>(&interrupt_signal), sizeof(interrupt_signal));
+	f.read(reinterpret_cast<char *>(&hdma_source), sizeof(hdma_source));
+	f.read(reinterpret_cast<char *>(&hdma_dest), sizeof(hdma_dest));
+	f.read(reinterpret_cast<char *>(&hdma), sizeof(hdma));
+	f.read(reinterpret_cast<char *>(&hdma_enable), sizeof(hdma_enable));
+	f.read(reinterpret_cast<char *>(&hdma_bytes), sizeof(hdma_bytes));
 	f.read(reinterpret_cast<char *>(&lcd_enabled), sizeof(lcd_enabled));
 	f.read(reinterpret_cast<char *>(&window_line_active), sizeof(window_line_active));
 	f.read(reinterpret_cast<char *>(&draw_screen), sizeof(draw_screen));
+	f.read(reinterpret_cast<char *>(&drawn_scanline), sizeof(drawn_scanline));
+	f.read(reinterpret_cast<char *>(&pixels_drawn), sizeof(pixels_drawn));
+	f.read(reinterpret_cast<char *>(&tile_drawn), sizeof(tile_drawn));
+	f.read(reinterpret_cast<char *>(&screen_off_cycles), sizeof(screen_off_cycles));
+	f.read(reinterpret_cast<char *>(&hide_screen), sizeof(hide_screen));
 	f.read(reinterpret_cast<char *>(&r5g6b5_framebuffer), sizeof(r5g6b5_framebuffer));
 	f.read(reinterpret_cast<char *>(&mono_framebuffer), sizeof(mono_framebuffer));
 	f.read(reinterpret_cast<char *>(&rgb_framebuffer), sizeof(rgb_framebuffer));
 	f.read(reinterpret_cast<char *>(&vram), sizeof(vram));
+	f.read(reinterpret_cast<char *>(&sprite_cache_buffer), sizeof(sprite_cache_buffer));
+	f.read(reinterpret_cast<char *>(&color_cache_buffer), sizeof(color_cache_buffer));
+	f.read(reinterpret_cast<char *>(&oam), sizeof(oam));
+	f.read(reinterpret_cast<char *>(&sprites), sizeof(sprites));
+	f.read(reinterpret_cast<char *>(&tile_data), sizeof(tile_data));
+	f.read(reinterpret_cast<char *>(&cgb_bg_colors), sizeof(cgb_bg_colors));
+	f.read(reinterpret_cast<char *>(&cgb_obj_colors), sizeof(cgb_obj_colors));
 	std::cout << "done deserializing ppu" << std::endl;
 }

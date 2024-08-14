@@ -8,12 +8,14 @@
 #include "PixelProcessingUnit.hpp"
 #include "debug.hpp"
 #include <array>
-#include <bitset>
 #include <cstdint>
 #include <cstdio>
 #include <math.h>
 
 using namespace Dict;
+
+//TODO maybe try using this?
+// #include <bitset>
 
 enum flag_registers { c = 4, h = 5, n = 6, z = 7 };
 

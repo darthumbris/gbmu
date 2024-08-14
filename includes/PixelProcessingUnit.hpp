@@ -112,8 +112,8 @@ private:
 	uint8_t scy = 0;
 	uint8_t scx = 0;
 	uint8_t ly = 0;
-	uint8_t vblank_line = 0;
 	uint8_t lyc = 0;
+	uint8_t vblank_line = 0;
 	lcd_dma dma;
 	uint8_t bg_palette = 0;      // 0xFF47 (Non_CGB_Mode)
 	uint8_t obj_palette_0 = 0;   // 0xFF48 (Non_CGB_Mode)
@@ -157,7 +157,6 @@ private:
 	sprite sprites[40];
 	std::array<uint8_t, 8192> vram[2]{0};
 	uint8_t tile_data[2][384][64];
-	void set_tile_data(uint16_t addr);
 
 	uint16_t cgb_bg_colors[8][4][2];
 	uint16_t cgb_obj_colors[8][4][2];
@@ -185,6 +184,7 @@ private:
 
 	void dma_transfer(uint8_t cycle);
 
+	void set_tile_data(uint16_t addr);
 	void set_color_palette(bool background, uint8_t val);
 	void update_palette_cgb(bool background, uint8_t val);
 
