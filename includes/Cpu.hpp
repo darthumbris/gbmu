@@ -93,19 +93,6 @@ private:
 		DEBUG_MSG("Illegal instruction. Hard-Locks the Cpu. opcode: %#04x\n", op);
 	}
 
-	inline bool zero() const {
-		return (u8_registers[registers::F] >> 7) == 0b1;
-	}
-	inline bool carry() const {
-		return ((u8_registers[registers::F] >> 6) & 1) == 1;
-	}
-	inline bool half_carry() const {
-		return ((u8_registers[registers::F] >> 5) & 1) == 1;
-	}
-	inline bool subtraction() const {
-		return ((u8_registers[registers::F] >> 4) & 1) == 1;
-	}
-
 	void add_a_imm8();
 	void add_sp_imm8();
 	void adc_a_imm8();
