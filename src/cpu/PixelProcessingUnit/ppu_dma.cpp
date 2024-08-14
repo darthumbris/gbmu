@@ -28,7 +28,7 @@ void PixelProcessingUnit::dma_transfer(uint8_t cycle) {
 		if (src < 0xE000) {
 			if (src >= 0x8000 && src < 0xA000) {
 				for (uint16_t i = 0; i < 0xA0; i++) {
-					write_oam(0xFE00 + i, read_cgb_vram(src + i, false));
+					write_oam(0xFE00 + i, vram[vbank_select][(src + i) - 0x8000]);
 				}
 			} else {
 				for (uint16_t i = 0; i < 0xA0; i++) {
@@ -73,8 +73,9 @@ void PixelProcessingUnit::switch_cgb_dma(uint8_t value) {
 void PixelProcessingUnit::set_hdma_register(HDMA_Register reg, uint8_t value) {
 	switch (reg) {
 	case HDMA_1:
-		if (value > 0x7f && value < 0xa0)
+		if (value > 0x7f && value < 0xa0) {
 			value = 0;
+		}
 		hdma_source = (value << 8) | (hdma_source & 0xF0);
 		break;
 	case HDMA_2:
@@ -108,12 +109,14 @@ uint16_t PixelProcessingUnit::perform_hdma() {
 	}
 
 	hdma_dest += 0x10;
-	if (hdma_dest == 0xA000)
+	if (hdma_dest == 0xA000) {
 		hdma_dest = 0x8000;
+	}
 
 	hdma_source += 0x10;
-	if (hdma_source == 0x8000)
+	if (hdma_source == 0x8000) {
 		hdma_source = 0xA000;
+	}
 
 	hdma[1] = hdma_source & 0xFF;
 	hdma[0] = hdma_source >> 8;
@@ -122,8 +125,9 @@ uint16_t PixelProcessingUnit::perform_hdma() {
 	hdma_bytes -= 0x10;
 	hdma[4]--;
 
-	if (hdma[4] == 0xFF)
+	if (hdma[4] == 0xFF) {
 		hdma_enable = false;
+	}
 
 	return (cpu->get_cgb_speed() ? 17 : 9) * 4;
 }
@@ -140,8 +144,9 @@ void PixelProcessingUnit::perform_gdma(uint8_t value) {
 	hdma_dest += hdma_bytes;
 	hdma_source += hdma_bytes;
 
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 5; i++) {
 		hdma[i] = 0xFF;
+	}
 
 	uint16_t clock_cycles = 0;
 

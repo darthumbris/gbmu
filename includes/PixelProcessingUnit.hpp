@@ -102,7 +102,6 @@ struct Sprite_Attributes {
 	uint8_t get();
 };
 
-// TODO instead of the att_flags use 4 bools: (background, y_flip, x_flip, palette)
 struct Sprite {
 	uint8_t y_pos;
 	uint8_t x_pos;
@@ -240,12 +239,6 @@ public:
 	void switch_cgb_dma(uint8_t value);
 	void set_hdma_register(HDMA_Register reg, uint8_t value);
 	uint8_t get_hdma_register(uint8_t reg);
-
-	uint8_t read_cgb_vram(uint16_t addr, bool force);
-
-	inline uint8_t read_vram_remove(uint16_t addr, uint8_t bank) {
-		return vram[bank][addr];
-	}
 
 	uint16_t perform_hdma();
 	void perform_gdma(uint8_t value);

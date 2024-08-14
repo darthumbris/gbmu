@@ -5,9 +5,9 @@
 void PixelProcessingUnit::init_ppu_mem() {
 	const uint8_t *initial_values;
 	if (is_cgb) {
-		initial_values = InitialIOValuesCGB;
+		initial_values = initial_io_values_cgb;
 	} else {
-		initial_values = InitialIOValuesGB;
+		initial_values = initial_io_values_dmg;
 	}
 	for (int i = 0xFF00; i < 65536; i++) {
 		switch (i) {
@@ -69,14 +69,6 @@ uint8_t PixelProcessingUnit::read_oam(uint16_t addr) {
 Sprite PixelProcessingUnit::read_sprite(uint16_t addr) {
 	uint16_t sprite_addr = addr & 0xFF;
 	return sprites[sprite_addr >> 2];
-}
-
-uint8_t PixelProcessingUnit::read_cgb_vram(uint16_t addr, bool force) {
-	if (force || (vbank_select == 1)) {
-		return vram[1][addr - 0x8000];
-	} else {
-		return vram[0][addr - 0x8000];
-	}
 }
 
 uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {

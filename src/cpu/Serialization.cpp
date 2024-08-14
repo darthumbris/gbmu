@@ -94,9 +94,6 @@ void MemoryMap::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&not_usable), sizeof(not_usable));
 	f.write(reinterpret_cast<const char *>(&io_registers), sizeof(io_registers));
 	f.write(reinterpret_cast<const char *>(&high_ram), sizeof(high_ram));
-	f.write(reinterpret_cast<const char *>(&joypad), sizeof(joypad));
-	f.write(reinterpret_cast<const char *>(&joypad_dpad), sizeof(joypad_dpad));
-	f.write(reinterpret_cast<const char *>(&joypad_buttons), sizeof(joypad_buttons));
 	f.write(reinterpret_cast<const char *>(&boot_rom_loaded), sizeof(boot_rom_loaded));
 	f.write(reinterpret_cast<const char *>(&gb_boot_rom), sizeof(gb_boot_rom));
 	f.write(reinterpret_cast<const char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
@@ -110,9 +107,6 @@ void MemoryMap::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&not_usable), sizeof(not_usable));
 	f.read(reinterpret_cast<char *>(&io_registers), sizeof(io_registers));
 	f.read(reinterpret_cast<char *>(&high_ram), sizeof(high_ram));
-	f.read(reinterpret_cast<char *>(&joypad), sizeof(joypad));
-	f.read(reinterpret_cast<char *>(&joypad_dpad), sizeof(joypad_dpad));
-	f.read(reinterpret_cast<char *>(&joypad_buttons), sizeof(joypad_buttons));
 	f.read(reinterpret_cast<char *>(&boot_rom_loaded), sizeof(boot_rom_loaded));
 	f.read(reinterpret_cast<char *>(&gb_boot_rom), sizeof(gb_boot_rom));
 	f.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));

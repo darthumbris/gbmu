@@ -1,5 +1,6 @@
 #include "PixelProcessingUnit.hpp"
 #include "Cpu.hpp"
+#include "Interruptor.hpp"
 #include "MemoryMap.hpp"
 #include "debug.hpp"
 #include <SDL2/SDL_pixels.h>
