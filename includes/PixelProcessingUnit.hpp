@@ -21,16 +21,9 @@ constexpr uint32_t VBLANK_SCANLINES = 10;
 constexpr uint32_t FRAME_CYCLES = 70224;
 
 constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
-// constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
-// constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
-// constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
-
-constexpr uint16_t RED_MASK = {0b0000'0000'0001'1111};
-constexpr uint16_t GREEN_MASK = {0b0000'0011'1110'0000};
-constexpr uint16_t BLUE_MASK = {0b0111'1100'0000'0000};
-constexpr uint8_t AUTO_INC = {0b1000'0000};
-constexpr uint8_t SPEC_INDEX = !AUTO_INC;
-constexpr uint8_t PALETTE_SIZE = 64;
+// constexpr uint16_t GB_COLORS_PAL1[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
+// constexpr uint16_t GB_COLORS_PAL2[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
+// constexpr uint16_t GB_COLORS_PAL3[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
 
 constexpr uint8_t PIXELS_TO_RENDER = 4;
 
@@ -145,7 +138,7 @@ private:
 
 	bool lcd_enabled = true;
 	uint8_t window_line_active = 0;
-	bool draw_screen = false; // similar to vblank check?
+	bool draw_screen = false;
 	bool drawn_scanline = false;
 	uint8_t pixels_drawn = 0;
 	uint8_t tile_drawn = 0;

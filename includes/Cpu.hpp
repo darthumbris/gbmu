@@ -633,10 +633,6 @@ public:
 		return halted;
 	}
 
-	void halt_cpu() {
-		halted = true;
-	}
-
 	void unhalt_cpu() {
 		halted = false;
 	}

@@ -32,6 +32,7 @@ void PixelProcessingUnit::close() {
 	SDL_Quit();
 }
 
+//TODO optimize this bit!!!
 void PixelProcessingUnit::render_screen() {
 	if (!is_cgb) {
 		for (int i = 0; i < SCREEN_PIXELS; i++) {
@@ -43,6 +44,7 @@ void PixelProcessingUnit::render_screen() {
 		rgb_framebuffer[i].green = (((r5g6b5_framebuffer[i] >> 5) & 0x3F) * 255 + 31) / 63;
 		rgb_framebuffer[i].blue = ((r5g6b5_framebuffer[i] & 0x1F) * 255 + 15) / 31;
 
+		//TODO this bit especially/ maybe have a toggle or something
 		if (is_cgb) {
 			uint8_t red = (uint8_t)(((rgb_framebuffer[i].red * 0.8125f) + (rgb_framebuffer[i].green * 0.125f) +
 			                         (rgb_framebuffer[i].blue * 0.0625f)) *
@@ -58,7 +60,7 @@ void PixelProcessingUnit::render_screen() {
 		}
 	}
 	SDL_RenderPresent(data.renderer);
-	SDL_UpdateTexture(data.texture, NULL, rgb_framebuffer, 160 * sizeof(rgb_color));
+	SDL_UpdateTexture(data.texture, NULL, rgb_framebuffer, SCREEN_WIDTH * sizeof(rgb_color));
 	SDL_RenderClear(data.renderer);
 	SDL_RenderCopy(data.renderer, data.texture, NULL, NULL);
 	SDL_RenderPresent(data.renderer);

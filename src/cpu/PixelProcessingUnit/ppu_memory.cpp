@@ -143,8 +143,8 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		bool old_window_enable = ctrl.window_enable;
 		ctrl.set(val);
 		if (!old_window_enable && ctrl.window_enable) {
-			if ((window_line_active == 0) && (ly < 144) && (ly > window_y)) {
-				window_line_active = 144;
+			if ((window_line_active == 0) && (ly < SCREEN_HEIGHT) && (ly > window_y)) {
+				window_line_active = SCREEN_HEIGHT;
 			}
 		}
 		if (ctrl.lcd_enable) {

@@ -178,7 +178,6 @@ void PixelProcessingUnit::handle_pixel_drawing(uint16_t &cycle) {
 		tile_drawn += cycle;
 		if (lcd_enabled && ctrl.lcd_enable) {
 			while (tile_drawn >= 3) {
-				// TODO check if this is needed
 				render_background(ly, pixels_drawn);
 				pixels_drawn += 4;
 				tile_drawn -= 3;
@@ -189,7 +188,7 @@ void PixelProcessingUnit::handle_pixel_drawing(uint16_t &cycle) {
 		}
 	}
 
-	if (lcd_clock >= 160 && !drawn_scanline) {
+	if (lcd_clock >= SCREEN_WIDTH && !drawn_scanline) {
 		render_scanline(ly);
 		drawn_scanline = true;
 	}
@@ -490,8 +489,6 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 
 void PixelProcessingUnit::render_scanline(uint8_t line) {
 	if (lcd_enabled && ctrl.lcd_enable) {
-		// TODO check if doing render_background here helps in performance?
-		//  render_background(line, 0);
 		render_window(line);
 		render_sprites(line);
 	} else {
