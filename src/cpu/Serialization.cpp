@@ -139,7 +139,7 @@ void PixelProcessingUnit::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&lcd_enabled), sizeof(lcd_enabled));
 	f.write(reinterpret_cast<const char *>(&window_line_active), sizeof(window_line_active));
 	f.write(reinterpret_cast<const char *>(&draw_screen), sizeof(draw_screen));
-	f.write(reinterpret_cast<const char *>(&r5g6b6_framebuffer), sizeof(r5g6b6_framebuffer));
+	f.write(reinterpret_cast<const char *>(&r5g6b5_framebuffer), sizeof(r5g6b5_framebuffer));
 	f.write(reinterpret_cast<const char *>(&mono_framebuffer), sizeof(mono_framebuffer));
 	f.write(reinterpret_cast<const char *>(&rgb_framebuffer), sizeof(rgb_framebuffer));
 	f.write(reinterpret_cast<const char *>(&vram), sizeof(vram));
@@ -165,7 +165,7 @@ void PixelProcessingUnit::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&lcd_enabled), sizeof(lcd_enabled));
 	f.read(reinterpret_cast<char *>(&window_line_active), sizeof(window_line_active));
 	f.read(reinterpret_cast<char *>(&draw_screen), sizeof(draw_screen));
-	f.read(reinterpret_cast<char *>(&r5g6b6_framebuffer), sizeof(r5g6b6_framebuffer));
+	f.read(reinterpret_cast<char *>(&r5g6b5_framebuffer), sizeof(r5g6b5_framebuffer));
 	f.read(reinterpret_cast<char *>(&mono_framebuffer), sizeof(mono_framebuffer));
 	f.read(reinterpret_cast<char *>(&rgb_framebuffer), sizeof(rgb_framebuffer));
 	f.read(reinterpret_cast<char *>(&vram), sizeof(vram));

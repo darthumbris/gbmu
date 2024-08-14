@@ -3,7 +3,7 @@
 //TODO functions with an if statement for HL make seperate function for them
 
 void Cpu::set_instructions() {
-#define u unprefixed_instructions
+#define u instructions[InstructionList::Unprefixed]
 	u[0x00] = &Cpu::nop;
 	u[0x01] = &Cpu::ld_r16_imm16<Registers::BC>;
 	u[0x02] = &Cpu::ld_r16_a<Registers::BC>;
@@ -261,7 +261,7 @@ void Cpu::set_instructions() {
 	u[0xFE] = &Cpu::cp_a_imm8;
 	u[0xFF] = &Cpu::rst_38;
 
-#define p prefixed_instructions
+#define p instructions[InstructionList::Prefixed]
 	p[0x00] = &Cpu::rlc_r8<Registers::B>;
 	p[0x01] = &Cpu::rlc_r8<Registers::C>;
 	p[0x02] = &Cpu::rlc_r8<Registers::D>;

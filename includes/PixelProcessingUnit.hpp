@@ -10,7 +10,15 @@ class Cpu;
 
 constexpr int SCREEN_WIDTH = 160;
 constexpr int SCREEN_HEIGHT = 144;
+constexpr uint32_t MAX_SCANLINES = 153;
 constexpr int SCREEN_PIXELS = SCREEN_WIDTH * SCREEN_HEIGHT;
+constexpr uint32_t HORIZONTAL_BLANK_CYCLES = 204;
+constexpr uint32_t VERTICAL_BLANK_CYCLES = 456;
+constexpr uint32_t OAM_CYCLES = 80;
+constexpr uint32_t SCANLINES_9_CYCLES = 4104;
+constexpr uint32_t SCANLINES_10_CYCLES = 4560;
+constexpr uint32_t VBLANK_SCANLINES = 10;
+constexpr uint32_t FRAME_CYCLES = 70224;
 
 constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
 // constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
@@ -23,6 +31,8 @@ constexpr uint16_t BLUE_MASK = {0b0111'1100'0000'0000};
 constexpr uint8_t AUTO_INC = {0b1000'0000};
 constexpr uint8_t SPEC_INDEX = !AUTO_INC;
 constexpr uint8_t PALETTE_SIZE = 64;
+
+constexpr uint8_t PIXELS_TO_RENDER = 4;
 
 struct Sdl_Data {
 	SDL_Window *window;
@@ -68,15 +78,6 @@ struct LCD_DMA {
 	void set(uint8_t value);
 };
 
-struct Sprite_Attributes {
-	bool background;
-	bool y_flip;
-	bool x_flip;
-	bool palette;
-	void set(uint8_t value);
-	uint8_t get();
-};
-
 enum HDMA_Register {
 	HDMA_1,
 	HDMA_2,
@@ -88,6 +89,17 @@ struct RGB_COLOR {
 	uint8_t red;
 	uint8_t green;
 	uint8_t blue;
+};
+
+struct Sprite_Attributes {
+	bool background;
+	bool y_flip;
+	bool x_flip;
+	bool palette;
+	bool bank;
+	uint8_t cgb_pal;
+	void set(uint8_t value);
+	uint8_t get();
 };
 
 // TODO instead of the att_flags use 4 bools: (background, y_flip, x_flip, palette)
@@ -143,13 +155,14 @@ private:
 	bool is_cgb;
 
 	uint8_t mono_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
-	uint16_t r5g6b6_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+	uint16_t r5g6b5_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	RGB_COLOR rgb_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 
 	int32_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t oam[40][4]; // 0xFE00 - 0xFE9F 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3:
 	                    // Attributes/flags)
+	Sprite sprites[40];
 	std::array<uint8_t, 8192> vram[2]{0};
 	uint8_t tile_data[2][384][64];
 	void set_tile_data(uint16_t addr);
@@ -166,9 +179,15 @@ private:
 	void handle_vblank(uint16_t &cycle);
 	void handle_oam(uint16_t &cycle);
 	void handle_pixel_drawing(uint16_t &cycle);
+	void handle_disabled_screen(uint16_t &cycle);
 
 	void render_background(uint8_t line, uint8_t pixel);
+	void render_background_dmg(uint16_t tile_addr, uint16_t index, uint8_t pixel_x);
+	void render_background_cgb(uint16_t map_tile_addr, uint16_t tile_addr, uint16_t index, uint8_t tile_pixel_y,
+	                           uint8_t map_tile_offset_x);
 	void render_window(uint8_t line);
+	void render_window_cgb(uint16_t line_width, uint16_t map_address, int16_t wx);
+	void render_window_dmg(uint16_t line_width, uint16_t map_address, int16_t wx);
 	void render_sprites(uint8_t line);
 	void render_scanline(uint8_t line);
 
@@ -178,6 +197,8 @@ private:
 	void update_palette_cgb(bool background, uint8_t val);
 
 	void compare_ly();
+	void reset_ly();
+	void increase_ly();
 
 	void disable_screen();
 	void enable_screen();
@@ -203,6 +224,7 @@ public:
 	void write_u8_ppu(uint16_t addr, uint8_t val);
 
 	uint8_t read_oam(uint16_t addr);
+	Sprite read_sprite(uint16_t addr);
 	void write_oam(uint16_t addr, uint8_t val);
 
 	inline bool screen_ready() {

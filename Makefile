@@ -26,7 +26,10 @@ SRC =	main.cpp \
         cpu/Flags.cpp \
         cpu/Cpu.cpp \
         cpu/MemoryMap.cpp \
-        cpu/PixelProcessingUnit.cpp \
+        cpu/PixelProcessingUnit/PixelProcessingUnit.cpp \
+        cpu/PixelProcessingUnit/ppu_dma.cpp \
+        cpu/PixelProcessingUnit/ppu_memory.cpp \
+        cpu/PixelProcessingUnit/ppu_sdl.cpp \
         cpu/instruction_table.cpp \
         cpu/Serialization.cpp \
         cpu/Interruptor.cpp \

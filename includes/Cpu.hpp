@@ -30,6 +30,11 @@ enum InstructionState {
 	StateReadingByte,
 };
 
+enum InstructionList {
+	Unprefixed,
+	Prefixed
+};
+
 // TODO handle Audio (is needed for proper interrupt times etc)
 
 class Cpu {
@@ -65,6 +70,7 @@ private:
 	uint8_t accurate_opcode_state = 0;
 	uint8_t read_cache = 0;
 	bool branched = false;
+	InstructionList instruction = InstructionList::Unprefixed;
 
 	bool cgb_speed = false;
 	uint16_t speed_multiplier = 0;
@@ -73,8 +79,7 @@ private:
 
 	using OpsFn = void (Cpu::*)();
 
-	OpsFn unprefixed_instructions[256];
-	OpsFn prefixed_instructions[256];
+	OpsFn instructions[2][256];
 	void set_instructions();
 
 	void prefix();
@@ -578,7 +583,11 @@ private:
 
 	void sbc_a_r8_hl();
 
+	void handle_instruction();
+	void fetch_instruction();
+	void set_cycles_left();
 	void execute_instruction();
+	void decrement_pc();
 
 	void debug_print(bool prefix);
 

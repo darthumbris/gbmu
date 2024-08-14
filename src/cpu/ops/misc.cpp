@@ -77,6 +77,6 @@ void Cpu::di() {
 }
 
 void Cpu::ei() {
-	int16_t cycles = UnprefixedMachineCycles[0xFB] * cycle_speed(4);
+	int16_t cycles = machine_cycles[InstructionList::Unprefixed][0xFB] * cycle_speed(4);
 	interruptor.set_ime_cycles(cycles + 1);
 }

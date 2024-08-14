@@ -59,11 +59,7 @@ void Cpu::tick() {
 	if (!locked) {
 		while (ppu.screen_ready())
 			;
-#ifdef DEBUG_MODE
-// std::cout << debug_count << " opcode: 0x" << std::hex
-//             << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << std::endl;
-#endif
-		execute_instruction();
+		handle_instruction();
 		uint16_t t_cycle_u8 = (uint8_t)t_cycle;
 		interruptor.timer_tick(t_cycle_u8);
 		interruptor.serial_tick(t_cycle_u8);
@@ -129,7 +125,7 @@ void Cpu::prefix() {
 	}
 #endif
 	pc += 1;
-	auto op = prefixed_instructions[opcode];
+	auto op = instructions[InstructionList::Prefixed][opcode];
 	(this->*op)();
 }
 
@@ -152,7 +148,61 @@ void Cpu::handle_halt() {
 	}
 }
 
+void Cpu::fetch_instruction() {
+	opcode = mmap.read_u8(pc);
+	pc += 1;
+	instruction = (opcode == 0xCB) ? InstructionList::Prefixed : InstructionList::Unprefixed;
+	DEBUG_MSG("op 0x%02X state: %u c %u\n", opcode, accurate_opcode_state, t_cycle);
+	if (opcode == 0xCB) {
+		opcode = mmap.read_u8(pc);
+		DEBUG_MSG("op 0x%02X\n", opcode);
+		pc += 1;
+	}
+}
+
+void Cpu::set_cycles_left() {
+	int left_cycles = (accurate_cycles[instruction][opcode] < 3 ? 2 : 3);
+	set_cycle((machine_cycles[instruction][opcode] - left_cycles));
+	accurate_opcode_state = StateReadingWord;
+	decrement_pc();
+}
+
 void Cpu::execute_instruction() {
+	(this->*instructions[instruction][opcode])();
+	if (branched) {
+		branched = false;
+		set_cycle((branched_machine_cycles[opcode]));
+	} else {
+		switch (accurate_opcode_state) {
+		case StateReady:
+			set_cycle((machine_cycles[instruction][opcode]));
+			break;
+		case StateReadingWord:
+			if (accurate_cycles[instruction][opcode] == 3) {
+				set_cycle(1);
+				accurate_opcode_state = StateReadingByte;
+				decrement_pc();
+			} else {
+				set_cycle(2);
+				accurate_opcode_state = StateReady;
+			}
+			break;
+		case StateReadingByte:
+			set_cycle(2);
+			accurate_opcode_state = StateReady;
+			break;
+		}
+	}
+}
+
+void Cpu::decrement_pc() {
+	pc -= 1;
+	if (instruction == InstructionList::Prefixed) {
+		pc -= 1;
+	}
+}
+
+void Cpu::handle_instruction() {
 	uint8_t executed_cycles = 0;
 
 	while (executed_cycles < 1) {
@@ -161,78 +211,12 @@ void Cpu::execute_instruction() {
 		m_cycle = 0;
 		handle_halt();
 
-#ifdef DEBUG_MODE
-		if (!halted) {
-			DEBUG_MSG("i %u s %u m %u p %u\n", interruptor.pending(), accurate_opcode_state, interruptor.get_ime(), pc);
-		}
-#endif
 		if (!halted && !interruptor.handle_interrupt(accurate_opcode_state)) {
-			const uint8_t *accurateOPcodes = UnprefixedAccurate;
-			const uint8_t *machineCycles = UnprefixedMachineCycles;
-			OpsFn *opcodeTable = unprefixed_instructions;
-
-			opcode = mmap.read_u8(pc);
-			pc += 1;
-			bool isCB = (opcode == 0xCB);
-#ifdef DEBUG_MODE
-			DEBUG_MSG("op 0x%02X state: %u c %u\n", opcode, accurate_opcode_state, t_cycle);
-			if (opcode != 0xCB) {
-				// if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
-				// debug_print(false);
-				// 	DEBUG_MSG("debug_count: %lu opcode: %#04x pc: %u\n", debug_count, opcode, pc);
-				// 	DEBUG_MSG("register a %u b %u f %u HL %u SP %u\n", u8_registers[Registers::A],
-				// u8_registers[Registers::B], 	       u8_registers[Registers::F], get_16bitregister(Registers::HL),
-				// sp); 	DEBUG_MSG("C %u D %u E %u\n", u8_registers[Registers::C], u8_registers[Registers::D],
-				// u8_registers[Registers::E]);
-				// }
-			}
-#endif
-
-			if (isCB) {
-				accurateOPcodes = PrefixedAccurate;
-				machineCycles = PrefixedMachineCycles;
-				opcodeTable = prefixed_instructions;
-				opcode = mmap.read_u8(pc);
-				DEBUG_MSG("op 0x%02X\n", opcode);
-				pc += 1;
-			}
-			if ((accurateOPcodes[opcode] != 0) && (accurate_opcode_state == StateReady)) {
-				int left_cycles = (accurateOPcodes[opcode] < 3 ? 2 : 3);
-				set_cycle((machineCycles[opcode] - left_cycles));
-				accurate_opcode_state = StateReadingWord;
-				pc -= 1;
-				if (isCB) {
-					pc -= 1;
-				}
+			fetch_instruction();
+			if ((accurate_cycles[instruction][opcode] != 0) && (accurate_opcode_state == StateReady)) {
+				set_cycles_left();
 			} else {
-				(this->*opcodeTable[opcode])();
-				if (branched) {
-					branched = false;
-					set_cycle((BranchedMachineCycles[opcode]));
-				} else {
-					switch (accurate_opcode_state) {
-					case StateReady:
-						set_cycle((machineCycles[opcode]));
-						break;
-					case StateReadingWord:
-						if (accurateOPcodes[opcode] == 3) {
-							set_cycle(1);
-							accurate_opcode_state = StateReadingByte;
-							pc -= 1;
-							if (isCB) {
-								pc -= 1;
-							}
-						} else {
-							set_cycle(2);
-							accurate_opcode_state = StateReady;
-						}
-						break;
-					case StateReadingByte:
-						set_cycle(2);
-						accurate_opcode_state = StateReady;
-						break;
-					}
-				}
+				execute_instruction();
 			}
 		}
 		interruptor.check_cycles(t_cycle, accurate_opcode_state);
