@@ -249,7 +249,6 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		case 0xFF00:
 			DEBUG_MSG("writing to 0xFF00: %u\t", val);
 			joypad_register = (joypad_register & 0xCF) | (val & 0x30);
-			joypad = (val >> 4) & 3;
 			update_joypad();
 			DEBUG_MSG("after writing to 0xFF00: %u\n", read_u8(0xFF00));
 			break;
@@ -331,13 +330,13 @@ void MemoryMap::update_joypad() {
 
 	switch (current & 0x30) {
 	case 0x10: {
-		uint8_t topJoypad = (joypad_pressed >> 4) & 0x0F;
-		current |= topJoypad;
+		uint8_t top = (joypad_pressed >> 4) & 0x0F;
+		current |= top;
 		break;
 	}
 	case 0x20: {
-		uint8_t bottomJoypad = joypad_pressed & 0x0F;
-		current |= bottomJoypad;
+		uint8_t bottom = joypad_pressed & 0x0F;
+		current |= bottom;
 		break;
 	}
 	case 0x30:
@@ -346,7 +345,7 @@ void MemoryMap::update_joypad() {
 	}
 
 	if ((joypad_register & ~current & 0x0F) != 0) {
-		cpu->interrupt().set_interrupt(InterruptType::Joypad);
+		cpu->interrupt().set_interrupt(interrupt_type::Joypad);
 	}
 
 	joypad_register = current;

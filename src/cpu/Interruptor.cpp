@@ -17,16 +17,16 @@ void Interruptor::timer_tick(uint8_t cycle) {
 		tima_cycle += cycle;
 		uint16_t increment_freq = 0;
 		switch (timer_clock_select) {
-		case M_Cycles_256:
+		case clock_type::M_Cycles_256:
 			increment_freq = cpu->cycle_speed(1024);
 			break;
-		case M_Cycles_4:
+		case clock_type::M_Cycles_4:
 			increment_freq = cpu->cycle_speed(16);
 			break;
-		case M_Cycles_16:
+		case clock_type::M_Cycles_16:
 			increment_freq = cpu->cycle_speed(64);
 			break;
-		case M_Cycles_64:
+		case clock_type::M_Cycles_64:
 			increment_freq = cpu->cycle_speed(256);
 			break;
 		}
@@ -36,7 +36,7 @@ void Interruptor::timer_tick(uint8_t cycle) {
 
 			if (timer_counter == 0xFF) {
 				timer_counter = timer_modulo;
-				set_interrupt(InterruptType::Timer);
+				set_interrupt(interrupt_type::Timer);
 			} else
 				timer_counter++;
 		}
@@ -44,7 +44,7 @@ void Interruptor::timer_tick(uint8_t cycle) {
 }
 
 void Interruptor::serial_tick(uint8_t cycle) {
-	if (IsSetBit(serial_transfer_control, 7) && IsSetBit(serial_transfer_control, 0)) {
+	if ((serial_transfer_control & mask7) && (serial_transfer_control & mask0)) {
 		DEBUG_MSG("serial cycle: %u serial count: %d\n", serial_cycle, serial_count);
 		serial_cycle += cycle;
 
@@ -60,7 +60,7 @@ void Interruptor::serial_tick(uint8_t cycle) {
 			if (serial_count > 7) {
 				serial_transfer_control &= 0x7F;
 				DEBUG_MSG("setting 0xFF02: %u\n", serial_transfer_control);
-				set_interrupt(Serial);
+				set_interrupt(interrupt_type::Serial);
 				serial_count = -1;
 				return;
 			}
@@ -101,7 +101,7 @@ void Interruptor::check_cycles(uint16_t cycle, uint8_t state) {
 bool Interruptor::handle_interrupt(uint8_t state) {
 	DEBUG_MSG("i %u s %u m %u p %u\n", interruptor.pending(), accurate_opcode_state, interruptor.get_ime(), pc);
 	interrupt_occured = false;
-	if (!(state == StateReady && pending() != NoInterrupt && process_interrupts)) {
+	if (!(state == StateReady && pending() != interrupt_type::NoInterrupt && process_interrupts)) {
 		return false;
 	}
 	interrupt_occured = true;
@@ -112,29 +112,29 @@ bool Interruptor::handle_interrupt(uint8_t state) {
 
 	// Handle the interrupt, while taking the priority into account
 	if (process_interrupts) {
-		if (masked & InterruptType::Vblank) {
+		if (masked & static_cast<uint8_t>(interrupt_type::Vblank)) {
 			delay_cycles = 0;
-			process_interrupt(InterruptType::Vblank);
-		} else if (masked & InterruptType::Stat)
-			process_interrupt(InterruptType::Stat);
-		else if (masked & InterruptType::Timer)
-			process_interrupt(InterruptType::Timer);
-		else if (masked & InterruptType::Serial)
-			process_interrupt(InterruptType::Serial);
-		else if (masked & InterruptType::Joypad)
-			process_interrupt(InterruptType::Joypad);
+			process_interrupt(interrupt_type::Vblank);
+		} else if (masked & static_cast<uint8_t>(interrupt_type::Stat))
+			process_interrupt(interrupt_type::Stat);
+		else if (masked & static_cast<uint8_t>(interrupt_type::Timer))
+			process_interrupt(interrupt_type::Timer);
+		else if (masked & static_cast<uint8_t>(interrupt_type::Serial))
+			process_interrupt(interrupt_type::Serial);
+		else if (masked & static_cast<uint8_t>(interrupt_type::Joypad))
+			process_interrupt(interrupt_type::Joypad);
 	}
 	return true;
 }
 
-void Interruptor::process_interrupt(InterruptType i) {
+void Interruptor::process_interrupt(interrupt_type i) {
 	cpu->process_interrupt(i);
 	process_interrupts = false;
-	interrupt &= ~i;
+	interrupt &= ~static_cast<uint8_t>(i);
 	DEBUG_MSG("changing interrupt process: %u\n", interrupt);
 }
 
-void Interruptor::set_interrupt(InterruptType i) {
+void Interruptor::set_interrupt(interrupt_type i) {
 	interrupt |= static_cast<uint8_t>(i);
 	DEBUG_MSG("changing interrupt set: %u\n", interrupt);
 	DEBUG_MSG("interrupt requested: %u\n", i);
@@ -152,24 +152,24 @@ bool Interruptor::get_ime() const {
 	return process_interrupts;
 }
 
-InterruptType Interruptor::pending() const {
+interrupt_type Interruptor::pending() const {
 	uint8_t masked = interrupt_enable_register & interrupt;
 
 	if ((masked & 0x1F) == 0) {
-		return NoInterrupt;
+		return interrupt_type::NoInterrupt;
 	} else if ((masked & 0x01) && (delay_cycles <= 0)) {
-		return Vblank;
+		return interrupt_type::Vblank;
 	} else if (masked & 0x02) {
-		return Stat;
+		return interrupt_type::Stat;
 	} else if (masked & 0x04) {
-		return Timer;
+		return interrupt_type::Timer;
 	} else if (masked & 0x08) {
-		return Serial;
+		return interrupt_type::Serial;
 	} else if (masked & 0x10) {
-		return Joypad;
+		return interrupt_type::Joypad;
 	}
 
-	return NoInterrupt;
+	return interrupt_type::NoInterrupt;
 }
 
 void Interruptor::set_serial_transfer_control(uint8_t val) {

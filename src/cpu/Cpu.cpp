@@ -79,19 +79,19 @@ uint16_t Cpu::cycle_speed(uint16_t cycle) {
 	return cycle >> speed_multiplier;
 }
 
-void Cpu::process_interrupt(InterruptType i) {
+void Cpu::process_interrupt(interrupt_type i) {
 	sp -= 2;
 	mmap.write_u16(sp, pc);
 
-	if (i == InterruptType::Vblank) {
+	if (i == interrupt_type::Vblank) {
 		pc = 0x40;
-	} else if (i == InterruptType::Stat)
+	} else if (i == interrupt_type::Stat)
 		pc = 0x48;
-	else if (i == InterruptType::Timer)
+	else if (i == interrupt_type::Timer)
 		pc = 0x50;
-	else if (i == InterruptType::Serial)
+	else if (i == interrupt_type::Serial)
 		pc = 0x58;
-	else if (i == InterruptType::Joypad)
+	else if (i == interrupt_type::Joypad)
 		pc = 0x60;
 	set_cycle(5);
 }
@@ -125,7 +125,7 @@ void Cpu::prefix() {
 	}
 #endif
 	pc += 1;
-	auto op = instructions[InstructionList::Prefixed][opcode];
+	auto op = instructions[instruction_list::Prefixed][opcode];
 	(this->*op)();
 }
 
@@ -142,7 +142,7 @@ void Cpu::handle_halt() {
 			}
 		}
 
-		if (halted && interruptor.pending() != NoInterrupt && halt_cycle == 0) {
+		if (halted && interruptor.pending() != interrupt_type::NoInterrupt && halt_cycle == 0) {
 			halt_cycle = cycle_speed(12);
 		}
 	}
@@ -151,7 +151,7 @@ void Cpu::handle_halt() {
 void Cpu::fetch_instruction() {
 	opcode = mmap.read_u8(pc);
 	pc += 1;
-	instruction = (opcode == 0xCB) ? InstructionList::Prefixed : InstructionList::Unprefixed;
+	instruction = (opcode == 0xCB) ? instruction_list::Prefixed : instruction_list::Unprefixed;
 	DEBUG_MSG("op 0x%02X state: %u c %u\n", opcode, accurate_opcode_state, t_cycle);
 	if (opcode == 0xCB) {
 		opcode = mmap.read_u8(pc);
@@ -197,7 +197,7 @@ void Cpu::execute_instruction() {
 
 void Cpu::decrement_pc() {
 	pc -= 1;
-	if (instruction == InstructionList::Prefixed) {
+	if (instruction == instruction_list::Prefixed) {
 		pc -= 1;
 	}
 }

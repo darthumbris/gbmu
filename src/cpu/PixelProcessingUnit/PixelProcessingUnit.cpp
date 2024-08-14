@@ -14,7 +14,7 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	data.status = false;
 	ctrl = {0};
 	l_status = {0};
-	l_status.mode = PPU_Modes::Vertical_Blank;
+	l_status.mode = ppu_modes::Vertical_Blank;
 	std::memset(mono_framebuffer, 0, sizeof(mono_framebuffer));
 	std::memset(rgb_framebuffer, 0, sizeof(rgb_framebuffer));
 	std::memset(r5g6b5_framebuffer, 0, sizeof(r5g6b5_framebuffer));
@@ -35,16 +35,16 @@ void PixelProcessingUnit::tick(uint16_t &cycle) {
 	          lcd_enabled, l_status.mode, l_status.get());
 	if (lcd_enabled) {
 		switch (l_status.mode) {
-		case PPU_Modes::Horizontal_Blank:
+		case ppu_modes::Horizontal_Blank:
 			handle_hblank(cycle);
 			break;
-		case PPU_Modes::Vertical_Blank:
+		case ppu_modes::Vertical_Blank:
 			handle_vblank(cycle);
 			break;
-		case PPU_Modes::OAM_Scan:
+		case ppu_modes::OAM_Scan:
 			handle_oam(cycle);
 			break;
-		case PPU_Modes::Pixel_Drawing:
+		case ppu_modes::Pixel_Drawing:
 			handle_pixel_drawing(cycle);
 			break;
 		}
@@ -58,7 +58,7 @@ void PixelProcessingUnit::handle_disabled_screen(uint16_t &cycle) {
 		screen_off_cycles -= cycle;
 		if (screen_off_cycles <= 0) {
 			screen_off_cycles = 0;
-			l_status.mode = PPU_Modes::Horizontal_Blank;
+			l_status.mode = ppu_modes::Horizontal_Blank;
 			lcd_enabled = true;
 			hide_screen = 3;
 			window_line_active = 0;
@@ -69,7 +69,7 @@ void PixelProcessingUnit::handle_disabled_screen(uint16_t &cycle) {
 			tile_drawn = 0;
 			interrupt_signal = 0;
 			if (l_status.mode_2_oam_interrupt) {
-				cpu->interrupt().set_interrupt(InterruptType::Stat);
+				cpu->interrupt().set_interrupt(interrupt_type::Stat);
 				interrupt_signal |= mask2;
 			}
 			reset_ly();
@@ -91,15 +91,15 @@ void PixelProcessingUnit::handle_hblank(uint16_t &cycle) {
 		}
 
 		if (ly == SCREEN_HEIGHT) {
-			l_status.mode = PPU_Modes::Vertical_Blank;
+			l_status.mode = ppu_modes::Vertical_Blank;
 			vblank_line = 0;
 			lcd_clock_vblank = lcd_clock;
-			cpu->interrupt().set_interrupt(InterruptType::Vblank);
+			cpu->interrupt().set_interrupt(interrupt_type::Vblank);
 			interrupt_signal &= 0b1001;
 
 			if (l_status.mode_1_vblank_interrupt) {
 				if (!(interrupt_signal & mask0) && !(interrupt_signal & mask3)) {
-					cpu->interrupt().set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(interrupt_type::Stat);
 				}
 				interrupt_signal |= mask1;
 			}
@@ -113,11 +113,11 @@ void PixelProcessingUnit::handle_hblank(uint16_t &cycle) {
 			window_line_active = 0;
 
 		} else {
-			l_status.mode = PPU_Modes::OAM_Scan;
+			l_status.mode = ppu_modes::OAM_Scan;
 			interrupt_signal &= 0b1001;
 			if (l_status.mode_2_oam_interrupt) {
 				if (interrupt_signal == 0) {
-					cpu->interrupt().set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(interrupt_type::Stat);
 				}
 				interrupt_signal |= mask2;
 			}
@@ -143,7 +143,7 @@ void PixelProcessingUnit::handle_vblank(uint16_t &cycle) {
 	}
 	if (lcd_clock >= SCANLINES_10_CYCLES) {
 		lcd_clock -= SCANLINES_10_CYCLES;
-		l_status.mode = PPU_Modes::OAM_Scan;
+		l_status.mode = ppu_modes::OAM_Scan;
 		uint8_t stat = l_status.get();
 		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
 		DEBUG_MSG("setting lstat: %u\n", (stat & 0xFC) | (l_status.mode & 0x3));
@@ -153,7 +153,7 @@ void PixelProcessingUnit::handle_vblank(uint16_t &cycle) {
 
 		if (l_status.mode_2_oam_interrupt) {
 			if (interrupt_signal == 0) {
-				cpu->interrupt().set_interrupt(InterruptType::Stat);
+				cpu->interrupt().set_interrupt(interrupt_type::Stat);
 			}
 			interrupt_signal |= mask2;
 		}
@@ -164,7 +164,7 @@ void PixelProcessingUnit::handle_vblank(uint16_t &cycle) {
 void PixelProcessingUnit::handle_oam(uint16_t &cycle) {
 	if (lcd_clock >= OAM_CYCLES) {
 		lcd_clock -= OAM_CYCLES;
-		l_status.mode = PPU_Modes::Pixel_Drawing;
+		l_status.mode = ppu_modes::Pixel_Drawing;
 		drawn_scanline = false;
 		interrupt_signal &= 0b1000;
 		uint8_t stat = l_status.get();
@@ -198,7 +198,7 @@ void PixelProcessingUnit::handle_pixel_drawing(uint16_t &cycle) {
 		pixels_drawn = 0;
 		lcd_clock -= 172;
 		tile_drawn = 0;
-		l_status.mode = PPU_Modes::Horizontal_Blank;
+		l_status.mode = ppu_modes::Horizontal_Blank;
 		interrupt_signal &= 0b1000;
 		uint8_t stat = l_status.get();
 		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
@@ -206,7 +206,7 @@ void PixelProcessingUnit::handle_pixel_drawing(uint16_t &cycle) {
 
 		if (l_status.mode_0_hblank_interrupt) {
 			if (!(interrupt_signal & mask3)) {
-				cpu->interrupt().set_interrupt(InterruptType::Stat);
+				cpu->interrupt().set_interrupt(interrupt_type::Stat);
 			}
 			interrupt_signal |= mask0;
 		}
@@ -408,28 +408,28 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 	uint8_t sprite_limit = 0;
 	uint8_t y = 0;
 
-	for (uint8_t sprite = 0; sprite < 40; sprite++) {
-		int16_t sprite_y = read_oam(sprite << 2) - 16;
+	for (uint8_t i = 0; i < 40; i++) {
+		int16_t sprite_y = read_oam(i << 2) - 16;
 
 		if ((sprite_y > line) || ((sprite_y + sprite_height) <= line)) {
-			visible_sprites[sprite] = false;
+			visible_sprites[i] = false;
 			continue;
 		}
 		sprite_limit++;
-		visible_sprites[sprite] = sprite_limit <= 10;
+		visible_sprites[i] = sprite_limit <= 10;
 	}
 
-	for (int16_t sprite = 39; sprite >= 0; sprite--) {
-		if (!visible_sprites[sprite])
+	for (int16_t i = 39; i >= 0; i--) {
+		if (!visible_sprites[i])
 			continue;
 
-		Sprite spr = read_sprite(sprite << 2);
+		sprite spr = read_sprite(i << 2);
 		int16_t sprite_x = spr.x_pos - 8;
 
 		if ((sprite_x < -7) || (sprite_x >= SCREEN_WIDTH))
 			continue;
 
-		Sprite_Attributes atr = spr.attributes;
+		sprite_attributes atr = spr.attributes;
 		uint8_t palette = atr.palette ? obj_palette_1 : obj_palette_0;
 		uint16_t pixel_y =
 		    atr.y_flip ? ((sprite_height == 16) ? 15 : 7) - (line - (spr.y_pos - 16)) : line - (spr.y_pos - 16);
@@ -565,7 +565,7 @@ void PixelProcessingUnit::compare_ly() {
 			l_status.ly_flag = true;
 			if (l_status.ly_interrupt) {
 				if (interrupt_signal == 0) {
-					cpu->interrupt().set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(interrupt_type::Stat);
 				}
 				interrupt_signal |= mask3;
 			}
@@ -577,7 +577,7 @@ void PixelProcessingUnit::compare_ly() {
 	}
 }
 
-void LCD_CONTROL::set(uint8_t value) {
+void lcd_control::set(uint8_t value) {
 	lcd_enable = (value >> 7) & 1;
 	window_tile_map_address = (value >> 6) & 1;
 	window_enable = (value >> 5) & 1;
@@ -589,7 +589,7 @@ void LCD_CONTROL::set(uint8_t value) {
 	val = value;
 }
 
-void LCD_STATUS::set(uint8_t value) {
+void lcd_status::set(uint8_t value) {
 	ly_interrupt = (value & 0x40) != 0;            // bit 6
 	mode_2_oam_interrupt = (value & 0x20) != 0;    // bit 5
 	mode_1_vblank_interrupt = (value & 0x10) != 0; // bit 4
@@ -598,20 +598,20 @@ void LCD_STATUS::set(uint8_t value) {
 	val = value;
 }
 
-uint8_t LCD_STATUS::get() {
+uint8_t lcd_status::get() {
 	// DEBUG_MSG("val: %u get: %u\n", val, (ly_interrupt << 6 | mode_2_oam_interrupt << 5 | mode_1_vblank_interrupt << 4
 	// | mode_0_hblank_interrupt << 3 | ly_flag << 2 | mode));
 	return (ly_interrupt << 6 | mode_2_oam_interrupt << 5 | mode_1_vblank_interrupt << 4 |
 	        mode_0_hblank_interrupt << 3 | ly_flag << 2 | val & 0x80 | val & 0x3);
 }
 
-void LCD_DMA::set(uint8_t value) {
+void lcd_dma::set(uint8_t value) {
 	val = value;
 	cycles = 640; // 160 M-cycles: 640 dots (1.4 lines) in normal speed, or 320 dots
 	offset = 0;
 }
 
-void Sprite_Attributes::set(uint8_t value) {
+void sprite_attributes::set(uint8_t value) {
 	background = (value >> 7) & 1;
 	y_flip = (value >> 6) & 1;
 	x_flip = (value >> 5) & 1;
@@ -620,6 +620,6 @@ void Sprite_Attributes::set(uint8_t value) {
 	cgb_pal = value & 0x07;
 }
 
-uint8_t Sprite_Attributes::get() {
+uint8_t sprite_attributes::get() {
 	return (background << 7) | (y_flip << 6) | (x_flip << 5) | (palette << 4);
 }

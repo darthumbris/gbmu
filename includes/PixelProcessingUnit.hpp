@@ -34,16 +34,16 @@ constexpr uint8_t PALETTE_SIZE = 64;
 
 constexpr uint8_t PIXELS_TO_RENDER = 4;
 
-struct Sdl_Data {
+struct sdl_data {
 	SDL_Window *window;
 	SDL_Texture *texture;
 	SDL_Renderer *renderer;
 	bool status;
 };
 
-enum PPU_Modes { Horizontal_Blank, Vertical_Blank, OAM_Scan, Pixel_Drawing };
+enum ppu_modes { Horizontal_Blank, Vertical_Blank, OAM_Scan, Pixel_Drawing };
 
-struct LCD_STATUS {
+struct lcd_status {
 	bool ly_interrupt;            // bit 6
 	bool mode_2_oam_interrupt;    // bit 5
 	bool mode_1_vblank_interrupt; // bit 4
@@ -56,7 +56,7 @@ struct LCD_STATUS {
 	uint8_t get();
 };
 
-struct LCD_CONTROL {
+struct lcd_control {
 	bool lcd_enable;              // bit7
 	bool window_tile_map_address; // bit6
 	bool window_enable;           // bit5
@@ -71,27 +71,27 @@ struct LCD_CONTROL {
 	uint8_t get();
 };
 
-struct LCD_DMA {
+struct lcd_dma {
 	uint8_t val;
 	uint16_t cycles;
 	uint8_t offset;
 	void set(uint8_t value);
 };
 
-enum HDMA_Register {
+enum hdma_register {
 	HDMA_1,
 	HDMA_2,
 	HDMA_3,
 	HDMA_4,
 };
 
-struct RGB_COLOR {
+struct rgb_color {
 	uint8_t red;
 	uint8_t green;
 	uint8_t blue;
 };
 
-struct Sprite_Attributes {
+struct sprite_attributes {
 	bool background;
 	bool y_flip;
 	bool x_flip;
@@ -102,26 +102,26 @@ struct Sprite_Attributes {
 	uint8_t get();
 };
 
-struct Sprite {
+struct sprite {
 	uint8_t y_pos;
 	uint8_t x_pos;
 	uint8_t tile_index;
-	Sprite_Attributes attributes;
+	sprite_attributes attributes;
 };
 
 class PixelProcessingUnit {
 private:
 	uint32_t lcd_clock = 0;
 	uint16_t lcd_clock_vblank = 0;
-	Sdl_Data data;
-	LCD_CONTROL ctrl;
-	LCD_STATUS l_status;
+	sdl_data data;
+	lcd_control ctrl;
+	lcd_status l_status;
 	uint8_t scy = 0;
 	uint8_t scx = 0;
 	uint8_t ly = 0;
 	uint8_t vblank_line = 0;
 	uint8_t lyc = 0;
-	LCD_DMA dma;
+	lcd_dma dma;
 	uint8_t bg_palette = 0;      // 0xFF47 (Non_CGB_Mode)
 	uint8_t obj_palette_0 = 0;   // 0xFF48 (Non_CGB_Mode)
 	uint8_t obj_palette_1 = 0;   // 0xFF49 (Non_CGB_Mode)
@@ -155,13 +155,13 @@ private:
 
 	uint8_t mono_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint16_t r5g6b5_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
-	RGB_COLOR rgb_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+	rgb_color rgb_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 
 	int32_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t oam[40][4]; // 0xFE00 - 0xFE9F 40 * 4 bytes(Byte 0: ypos, Byte1: Xpos, Byte2: tile_index, Byte3:
 	                    // Attributes/flags)
-	Sprite sprites[40];
+	sprite sprites[40];
 	std::array<uint8_t, 8192> vram[2]{0};
 	uint8_t tile_data[2][384][64];
 	void set_tile_data(uint16_t addr);
@@ -223,7 +223,7 @@ public:
 	void write_u8_ppu(uint16_t addr, uint8_t val);
 
 	uint8_t read_oam(uint16_t addr);
-	Sprite read_sprite(uint16_t addr);
+	sprite read_sprite(uint16_t addr);
 	void write_oam(uint16_t addr, uint8_t val);
 
 	inline bool screen_ready() {
@@ -237,7 +237,7 @@ public:
 	}
 
 	void switch_cgb_dma(uint8_t value);
-	void set_hdma_register(HDMA_Register reg, uint8_t value);
+	void set_hdma_register(hdma_register reg, uint8_t value);
 	uint8_t get_hdma_register(uint8_t reg);
 
 	uint16_t perform_hdma();

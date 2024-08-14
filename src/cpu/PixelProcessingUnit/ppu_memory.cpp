@@ -19,7 +19,7 @@ void PixelProcessingUnit::init_ppu_mem() {
 			break;
 		case 0xFF41:
 			l_status.set(initial_values[i - 0xFF00]);
-			l_status.mode = PPU_Modes::Vertical_Blank;
+			l_status.mode = ppu_modes::Vertical_Blank;
 			break;
 		default:
 			break;
@@ -66,7 +66,7 @@ uint8_t PixelProcessingUnit::read_oam(uint16_t addr) {
 	return oam[sprite_addr / 4][sprite_addr % 4];
 }
 
-Sprite PixelProcessingUnit::read_sprite(uint16_t addr) {
+sprite PixelProcessingUnit::read_sprite(uint16_t addr) {
 	uint16_t sprite_addr = addr & 0xFF;
 	return sprites[sprite_addr >> 2];
 }
@@ -166,19 +166,19 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		if (ctrl.lcd_enable) {
 			if (l_status.mode_0_hblank_interrupt && current_mode == 0) {
 				if (signal == 0) {
-					cpu->interrupt().set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(interrupt_type::Stat);
 				}
 				signal |= mask0;
 			}
 			if ((new_stat & mask4) && (current_mode == 1)) {
 				if (signal == 0) {
-					cpu->interrupt().set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(interrupt_type::Stat);
 				}
 				signal |= mask1;
 			}
 			if ((new_stat & mask5) && (current_mode == 2)) {
 				if (signal == 0) {
-					cpu->interrupt().set_interrupt(InterruptType::Stat);
+					cpu->interrupt().set_interrupt(interrupt_type::Stat);
 				}
 			}
 			compare_ly();

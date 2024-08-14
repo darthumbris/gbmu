@@ -30,7 +30,7 @@ enum InstructionState {
 	StateReadingByte,
 };
 
-enum InstructionList {
+enum instruction_list {
 	Unprefixed,
 	Prefixed
 };
@@ -70,7 +70,7 @@ private:
 	uint8_t accurate_opcode_state = 0;
 	uint8_t read_cache = 0;
 	bool branched = false;
-	InstructionList instruction = InstructionList::Unprefixed;
+	instruction_list instruction = instruction_list::Unprefixed;
 
 	bool cgb_speed = false;
 	uint16_t speed_multiplier = 0;
@@ -625,7 +625,7 @@ public:
 		ppu.close();
 	}
 
-	void process_interrupt(InterruptType i);
+	void process_interrupt(interrupt_type i);
 
 	inline Interruptor &interrupt() {
 		return interruptor;
@@ -666,11 +666,5 @@ public:
 	void serialize(const std::string &file);
 	void deserialize(const std::string &file);
 };
-
-// TODO change the naming
-// TODO try using #include <bitset>
-inline bool IsSetBit(const uint8_t value, const uint8_t bit) {
-	return (value & (0x01 << bit)) != 0;
-}
 
 #endif

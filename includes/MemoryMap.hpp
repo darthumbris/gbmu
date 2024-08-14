@@ -21,9 +21,9 @@ constexpr std::uint8_t mask7{0b1000'0000}; // represents bit 7
 
 // https://gbdev.io/pandocs/Memory_Map.html
 
-using Mem16k = std::array<uint8_t, 16384>;
-using Mem8k = std::array<uint8_t, 8192>;
-using Mem4k = std::array<uint8_t, 4096>;
+using mem_16k = std::array<uint8_t, 16384>;
+using mem_8k = std::array<uint8_t, 8192>;
+using mem_4k = std::array<uint8_t, 4096>;
 using keycode = SDL_Keycode;
 
 /*IO_Registers
@@ -81,16 +81,12 @@ class MemoryMap {
 private:
 	RomHeader header;
 	std::unique_ptr<Rom> rom; // 0x0000 - 0x7FFF - 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
-	std::array<Mem4k, 8> work_ram{0}; // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
-	std::array<Mem4k, 8> echo_ram{0}; // 0xE000 - 0xFDFF   //(mirror of C000–DDFF) use of this area is prohibited.
+	std::array<mem_4k, 8> work_ram{0}; // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
+	std::array<mem_4k, 8> echo_ram{0}; // 0xE000 - 0xFDFF   //(mirror of C000–DDFF) use of this area is prohibited.
 	std::array<uint8_t, 96> not_usable{0};    // 0xFEA0 - 0xFEFF
 	std::array<uint8_t, 128> io_registers{0}; // 0xFF00 - 0xFF7F
 	std::array<uint8_t, 127> high_ram{0};     // 0xFF80 - 0xFFFE
 	uint8_t interrupt = 0;                    // 0xFFFF - 0xFFFF
-
-	uint8_t joypad = 0;
-	uint8_t joypad_dpad = 0x0F;
-	uint8_t joypad_buttons = 0x0F;
 	uint8_t joypad_register = 0xFF;
 	uint8_t joypad_pressed = 0xFF;
 	bool boot_rom_loaded = false;
@@ -131,10 +127,6 @@ public:
 		return boot_rom_loaded;
 	}
 	uint8_t wram_bank_select();
-
-	inline void set_interrupt(uint8_t i) {
-		interrupt |= i;
-	}
 
 	void handle_keydown(keycode key);
 	void handle_keyup(keycode key);

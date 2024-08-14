@@ -61,7 +61,7 @@ void PixelProcessingUnit::switch_cgb_dma(uint8_t value) {
 		if (value & mask7) {
 			hdma_enable = true;
 			hdma[4] = value & 0x7F;
-			if (l_status.mode == PPU_Modes::Horizontal_Blank) {
+			if (l_status.mode == ppu_modes::Horizontal_Blank) {
 				cpu->set_cycle_16(perform_hdma());
 			}
 		} else {
@@ -70,7 +70,7 @@ void PixelProcessingUnit::switch_cgb_dma(uint8_t value) {
 	}
 }
 
-void PixelProcessingUnit::set_hdma_register(HDMA_Register reg, uint8_t value) {
+void PixelProcessingUnit::set_hdma_register(hdma_register reg, uint8_t value) {
 	switch (reg) {
 	case HDMA_1:
 		if (value > 0x7f && value < 0xa0) {

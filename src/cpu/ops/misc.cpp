@@ -47,7 +47,7 @@ void Cpu::stop() {
 	if (mmap.is_cgb_rom()) {
 		uint8_t key1 = mmap.read_io_registers(0xFF4D);
 
-		if (IsSetBit(key1, 0)) {
+		if ((key1 & mask0)) {
 			cgb_speed = !cgb_speed;
 
 			if (cgb_speed) {
@@ -77,6 +77,6 @@ void Cpu::di() {
 }
 
 void Cpu::ei() {
-	int16_t cycles = machine_cycles[InstructionList::Unprefixed][0xFB] * cycle_speed(4);
+	int16_t cycles = machine_cycles[instruction_list::Unprefixed][0xFB] * cycle_speed(4);
 	interruptor.set_ime_cycles(cycles + 1);
 }

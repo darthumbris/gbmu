@@ -6,7 +6,7 @@
 
 class Cpu;
 
-enum InterruptType {
+enum class interrupt_type {
 	NoInterrupt = 0,
 	Vblank = 1 << 0, // 0x40 Vblank interrupt
 	Stat = 1 << 1,   // 0x48 STAT interrupt
@@ -15,7 +15,7 @@ enum InterruptType {
 	Joypad = 1 << 4  // 0x60 Joypad interrupt
 };
 
-enum ClockType {
+enum clock_type {
 	M_Cycles_256,
 	M_Cycles_4,
 	M_Cycles_16,
@@ -60,7 +60,7 @@ public:
 	void serial_tick(uint8_t cycle);
 	void input_tick(uint8_t cycle);
 	bool handle_interrupt(uint8_t state);
-	void process_interrupt(InterruptType i);
+	void process_interrupt(interrupt_type i);
 	void enable_processing();
 	void disable_processing();
 
@@ -68,10 +68,10 @@ public:
 	void set_serial_transfer_data(uint8_t val);
 	uint8_t get_serial_transfer_control();
 	uint8_t get_serial_transfer_data();
-	void set_interrupt(InterruptType i);
+	void set_interrupt(interrupt_type i);
 	void overwrite_interrupt(uint8_t val);
 	uint8_t get_interrupt() const;
-	InterruptType pending() const;
+	interrupt_type pending() const;
 	void set_interrupt_enable(uint8_t val);
 	uint8_t get_interrupt_enable();
 	uint8_t get_timer_divider();

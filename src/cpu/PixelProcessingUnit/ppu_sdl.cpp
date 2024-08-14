@@ -58,7 +58,7 @@ void PixelProcessingUnit::render_screen() {
 		}
 	}
 	SDL_RenderPresent(data.renderer);
-	SDL_UpdateTexture(data.texture, NULL, rgb_framebuffer, 160 * sizeof(RGB_COLOR));
+	SDL_UpdateTexture(data.texture, NULL, rgb_framebuffer, 160 * sizeof(rgb_color));
 	SDL_RenderClear(data.renderer);
 	SDL_RenderCopy(data.renderer, data.texture, NULL, NULL);
 	SDL_RenderPresent(data.renderer);
