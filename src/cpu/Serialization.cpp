@@ -7,8 +7,8 @@
 
 void Cpu::serialize(const std::string &file) {
 	const char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
-	std::string full_path = path;
-	full_path.append(file);
+	std::string full_path = path + file;
+	SDL_free((void *)path);
 	std::ofstream f(full_path, std::ios::binary);
 	if (!f.is_open()) {
 		std::cerr << "Error: Failed to  open file for serialization Cpu." << std::endl;
@@ -41,8 +41,8 @@ void Cpu::serialize(const std::string &file) {
 
 void Cpu::deserialize(const std::string &file) {
 	const char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
-	std::string full_path = path;
-	full_path.append(file);
+	std::string full_path = path + file;
+	SDL_free((void *)path);
 	std::ifstream f(full_path, std::ios::binary);
 
 	if (!f.is_open()) {
@@ -185,9 +185,8 @@ void PixelProcessingUnit::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&tile_drawn), sizeof(tile_drawn));
 	f.write(reinterpret_cast<const char *>(&screen_off_cycles), sizeof(screen_off_cycles));
 	f.write(reinterpret_cast<const char *>(&hide_screen), sizeof(hide_screen));
-	f.write(reinterpret_cast<const char *>(&r5g6b5_framebuffer), sizeof(r5g6b5_framebuffer));
+	f.write(reinterpret_cast<const char *>(&rgb555_framebuffer), sizeof(rgb555_framebuffer));
 	f.write(reinterpret_cast<const char *>(&mono_framebuffer), sizeof(mono_framebuffer));
-	f.write(reinterpret_cast<const char *>(&rgb_framebuffer), sizeof(rgb_framebuffer));
 	f.write(reinterpret_cast<const char *>(&vram), sizeof(vram));
 	f.write(reinterpret_cast<const char *>(&sprite_cache_buffer), sizeof(sprite_cache_buffer));
 	f.write(reinterpret_cast<const char *>(&color_cache_buffer), sizeof(color_cache_buffer));
@@ -235,9 +234,8 @@ void PixelProcessingUnit::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&tile_drawn), sizeof(tile_drawn));
 	f.read(reinterpret_cast<char *>(&screen_off_cycles), sizeof(screen_off_cycles));
 	f.read(reinterpret_cast<char *>(&hide_screen), sizeof(hide_screen));
-	f.read(reinterpret_cast<char *>(&r5g6b5_framebuffer), sizeof(r5g6b5_framebuffer));
+	f.read(reinterpret_cast<char *>(&rgb555_framebuffer), sizeof(rgb555_framebuffer));
 	f.read(reinterpret_cast<char *>(&mono_framebuffer), sizeof(mono_framebuffer));
-	f.read(reinterpret_cast<char *>(&rgb_framebuffer), sizeof(rgb_framebuffer));
 	f.read(reinterpret_cast<char *>(&vram), sizeof(vram));
 	f.read(reinterpret_cast<char *>(&sprite_cache_buffer), sizeof(sprite_cache_buffer));
 	f.read(reinterpret_cast<char *>(&color_cache_buffer), sizeof(color_cache_buffer));

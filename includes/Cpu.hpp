@@ -40,7 +40,7 @@ class Cpu {
 private:
 	/*
 	 * registers (
-	    AF Accumaltor & Flag register,
+	    AF Accumalator & Flag register,
 	    BC general purpose register, (B High byte, C Low byte)
 	    DE general purpose register,
 	    HL general purpose register and instructions for iterative code

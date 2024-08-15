@@ -16,8 +16,7 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	l_status = {0};
 	l_status.mode = ppu_modes::Vertical_Blank;
 	std::memset(mono_framebuffer, 0, sizeof(mono_framebuffer));
-	std::memset(rgb_framebuffer, 0, sizeof(rgb_framebuffer));
-	std::memset(r5g6b5_framebuffer, 0, sizeof(r5g6b5_framebuffer));
+	std::memset(rgb555_framebuffer, 0, sizeof(rgb555_framebuffer));
 	std::memset(vram, 0, sizeof(vram));
 	std::memset(oam, 0, sizeof(oam));
 	std::memset(tile_data, 0, sizeof(tile_data));
@@ -234,7 +233,7 @@ void PixelProcessingUnit::render_background_dmg(uint16_t tile_addr, uint16_t ind
 	uint8_t tile_dat = tile_data[0][(tile_address >> 4) & 0x1FF][y * 8 + pixel_x];
 
 	color_cache_buffer[index] = tile_dat & 0x03;
-	r5g6b5_framebuffer[index] = mono_framebuffer[index] = (bg_palette >> (tile_dat << 1)) & 0x03;
+	rgb555_framebuffer[index] = mono_framebuffer[index] = (bg_palette >> (tile_dat << 1)) & 0x03;
 }
 
 void PixelProcessingUnit::render_background_cgb(uint16_t map_addr, uint16_t tile_addr, uint16_t index, uint8_t pixel_y,
@@ -258,7 +257,7 @@ void PixelProcessingUnit::render_background_cgb(uint16_t map_addr, uint16_t tile
 	if ((cgb_tile_attr & mask7) && ctrl.bg_enable && (tile_dat != 0)) {
 		color_cache_buffer[index] |= mask2;
 	}
-	r5g6b5_framebuffer[index] = cgb_bg_colors[(cgb_tile_attr & 0x07)][tile_dat][1];
+	rgb555_framebuffer[index] = cgb_bg_colors[(cgb_tile_attr & 0x07)][tile_dat][1];
 }
 
 void PixelProcessingUnit::render_background(uint8_t line, uint8_t pixel) {
@@ -343,7 +342,7 @@ void PixelProcessingUnit::render_window_cgb(uint16_t line_width, uint16_t map_ad
 			if (cgb_tile_priority && (tile_dat != 0)) {
 				color_cache_buffer[position] |= mask2;
 			}
-			r5g6b5_framebuffer[position] = cgb_bg_colors[cgb_tile_pal][tile_dat][1];
+			rgb555_framebuffer[position] = cgb_bg_colors[cgb_tile_pal][tile_dat][1];
 		}
 	}
 }
@@ -376,7 +375,7 @@ void PixelProcessingUnit::render_window_dmg(uint16_t line_width, uint16_t map_ad
 			int position = line_width + buffer_x;
 			color_cache_buffer[position] = tile_dat & 0x03;
 			uint8_t color = (bg_palette >> (tile_dat << 1)) & 0x03;
-			r5g6b5_framebuffer[position] = mono_framebuffer[position] = color;
+			rgb555_framebuffer[position] = mono_framebuffer[position] = color;
 		}
 	}
 }
@@ -478,10 +477,10 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 			color_cache_buffer[position] = color_cache & mask3;
 			sprite_cache_buffer[position] = sprite_x;
 			if (is_cgb) {
-				r5g6b5_framebuffer[position] = cgb_obj_colors[atr.cgb_pal][tile_dat][1];
+				rgb555_framebuffer[position] = cgb_obj_colors[atr.cgb_pal][tile_dat][1];
 			} else {
 				uint8_t color = (palette >> (tile_dat << 1)) & 0x03;
-				r5g6b5_framebuffer[position] = mono_framebuffer[position] = color;
+				rgb555_framebuffer[position] = mono_framebuffer[position] = color;
 			}
 		}
 	}
@@ -495,7 +494,7 @@ void PixelProcessingUnit::render_scanline(uint8_t line) {
 		int line_width = line * SCREEN_WIDTH;
 		if (is_cgb) {
 			for (int x = 0; x < SCREEN_WIDTH; x++)
-				r5g6b5_framebuffer[line_width + x] = 0x8000;
+				rgb555_framebuffer[line_width + x] = 0x8000;
 		} else {
 			for (int x = 0; x < SCREEN_WIDTH; x++)
 				mono_framebuffer[line_width + x] = 0;
@@ -540,9 +539,11 @@ void PixelProcessingUnit::set_color_palette(bool background, uint8_t val) {
 	uint16_t *palette_final = background ? &cgb_bg_colors[pal][index][1] : &cgb_obj_colors[pal][index][1];
 	*palette_gbc = hl ? (*palette_gbc & 0x00FF) | (val << 8) : (*palette_gbc & 0xFF00) | val;
 	uint8_t red_5bit = *palette_gbc & 0x1F;
+	// uint8_t green_6bit = (*palette_gbc >> 4) & 0x3E;
+	uint8_t green_5bit = (*palette_gbc >> 5) & 0x1F;
 	uint8_t blue_5bit = (*palette_gbc >> 10) & 0x1F;
-	uint8_t green_6bit = (*palette_gbc >> 4) & 0x3E;
-	*palette_final = (red_5bit << 11) | (green_6bit << 5) | blue_5bit;
+	// *palette_final = (red_5bit << 11) | (green_6bit << 5) | blue_5bit;
+	*palette_final = 0x8000 | (red_5bit << 10) | (green_5bit << 5) | blue_5bit;
 }
 
 void PixelProcessingUnit::reset_ly() {

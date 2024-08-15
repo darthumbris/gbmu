@@ -20,10 +20,10 @@ constexpr uint32_t SCANLINES_10_CYCLES = 4560;
 constexpr uint32_t VBLANK_SCANLINES = 10;
 constexpr uint32_t FRAME_CYCLES = 70224;
 
-constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
-// constexpr uint16_t GB_COLORS_PAL1[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
-// constexpr uint16_t GB_COLORS_PAL2[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
-// constexpr uint16_t GB_COLORS_PAL3[4] = {0x84A0, 0x4B40, 0x2AA0, 0x1200};
+constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
+// constexpr uint16_t GB_COLORS_PAL1[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
+// constexpr uint16_t GB_COLORS_PAL2[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
+// constexpr uint16_t GB_COLORS_PAL3[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
 
 constexpr uint8_t PIXELS_TO_RENDER = 4;
 
@@ -147,8 +147,7 @@ private:
 	bool is_cgb;
 
 	uint8_t mono_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
-	uint16_t r5g6b5_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
-	rgb_color rgb_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+	uint16_t rgb555_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 
 	int32_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
@@ -160,7 +159,6 @@ private:
 	uint16_t cgb_bg_colors[8][4][2];
 	uint16_t cgb_obj_colors[8][4][2];
 
-	// TODO add shader for the rasterize effect
 	// TODO add a way to change palettes (if gb game in CGB mode)
 
 	Cpu *cpu;
