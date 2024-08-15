@@ -16,7 +16,7 @@ uint8_t RomOnly::read_u8(uint16_t addr) {
 		}
 		return 0xFF;
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		return 0xFF;
 	}
 }
@@ -28,7 +28,6 @@ void RomOnly::write_u8(uint16_t addr, uint8_t val) {
 			ram_enable = (val == 0x0A);
 		}
 		break;
-
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable && ram_banks.size()) {
 			DEBUG_MSG("writing at addr: %#06x ram_bank: 0 ram_banks size: %zu\n", addr, ram_banks.size());
@@ -36,7 +35,7 @@ void RomOnly::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }

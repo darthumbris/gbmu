@@ -14,8 +14,8 @@
 
 using namespace Dict;
 
-//TODO maybe try using this?
-// #include <bitset>
+// TODO maybe try using this?
+//  #include <bitset>
 
 enum flag_registers { c = 4, h = 5, n = 6, z = 7 };
 

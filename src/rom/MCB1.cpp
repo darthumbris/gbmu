@@ -13,19 +13,17 @@ uint8_t MCB1::read_u8(uint16_t addr) {
 		}
 		return rom_banks[0][addr];
 	case 0x4000 ... 0x7FFF:
-		// rom_banks 01-7F (00 is treated as 01)
 		if (!rom_bank) {
 			DEBUG_MSG("rom_bank: %u rom_ram_mode %u addr: %#06x\n", rom_bank == 0 ? 1 : rom_bank, rom_ram_mode, addr);
 		}
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable) {
-			// DEBUG_MSG("ram_bank: %u rom_ram_mode %u addr: %#06x\n", ram_bank, rom_ram_mode, addr);
 			return ram_banks[ram_bank][addr - 0xA000];
 		}
 		return 0xFF;
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		return 0xFF;
 	}
 }
@@ -47,7 +45,6 @@ void MCB1::write_u8(uint16_t addr, uint8_t val) {
 			secondary_rom_bank = (val & 0x04 * rom_ram_mode) << 6;
 		}
 		break;
-
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable && ram_banks.size()) {
 			DEBUG_MSG("writing at addr: %#06x ram_bank: %u ram_banks size: %zu\n", addr, ram_bank, ram_banks.size());
@@ -55,7 +52,7 @@ void MCB1::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }

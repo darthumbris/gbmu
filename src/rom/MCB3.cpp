@@ -12,7 +12,7 @@ uint8_t MCB3::read_u8(uint16_t addr) {
 	case 0xA000 ... 0xBFFF:
 		return ram_banks[ram_bank][addr - 0xA000];
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		return 0xFF;
 	}
 }
@@ -36,7 +36,6 @@ void MCB3::write_u8(uint16_t addr, uint8_t val) {
 			// procedure
 		}
 		break;
-
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable) {
 			DEBUG_MSG("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
@@ -44,7 +43,7 @@ void MCB3::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }

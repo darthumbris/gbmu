@@ -10,11 +10,10 @@ uint8_t MCB2::read_u8(uint16_t addr) {
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable) {
-			// DEBUG_MSG("ram_bank: %u rom_ram_mode %u addr: %#06x\n", ram_bank, rom_ram_mode, addr);
 			return ram_banks[0][addr - 0xA000];
 		}
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 	return 0xFF;
@@ -31,14 +30,13 @@ void MCB2::write_u8(uint16_t addr, uint8_t val) {
 			}
 		}
 		break;
-
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable) {
 			ram_banks[0][addr - 0xA000] = val;
 		}
 		break;
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }

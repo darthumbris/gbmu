@@ -34,10 +34,10 @@ void PixelProcessingUnit::close() {
 	SDL_Quit();
 }
 
-//TODO add a toggle for color correction
-//TODO add a toggle for matrix/rasterize
-//TODO add a toggle for darkness filter
-//TODO add a shader for: color correction, darkness filter, matrix/rasterize
+// TODO add a toggle for color correction
+// TODO add a toggle for matrix/rasterize
+// TODO add a toggle for darkness filter
+// TODO add a shader for: color correction, darkness filter, matrix/rasterize
 void PixelProcessingUnit::render_screen() {
 	if (!is_cgb) {
 		for (int i = 0; i < SCREEN_PIXELS; i++) {

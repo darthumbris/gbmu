@@ -1,8 +1,8 @@
 #include "rom/Rom.hpp"
 #include "debug.hpp"
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_filesystem.h>
 #include <SDL2/SDL_stdinc.h>
-#include <SDL2/SDL.h>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -10,7 +10,6 @@
 Rom::Rom(const std::string rom_path, RomHeader rheader) : header(rheader) {
 	std::ifstream ifs;
 	ifs.open(rom_path.c_str(), std::ifstream::binary);
-	// making rom and ram banks
 	ifs.seekg(0, std::ios::beg);
 	rom_banks.reserve(header.rom_size());
 	ram_banks.reserve(header.ram_size());
@@ -32,6 +31,7 @@ void Rom::save_ram() {
 	std::string full_path = path + name() + ".ram";
 	SDL_free((void *)path);
 	std::ofstream f(full_path, std::ios::binary);
+
 	if (!f.is_open()) {
 		DEBUG_MSG("Error: Failed to  open file for saving ram.\n");
 		return;
@@ -44,7 +44,7 @@ void Rom::save_ram() {
 }
 
 void Rom::load_ram() {
-	//TODO have a check if the file_size is correct for the amount of ram expected
+	// TODO have a check if the file_size is correct for the amount of ram expected
 	const char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
 	std::string full_path = path + name() + ".ram";
 	SDL_free((void *)path);

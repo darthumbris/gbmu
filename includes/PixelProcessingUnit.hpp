@@ -19,13 +19,12 @@ constexpr uint32_t SCANLINES_9_CYCLES = 4104;
 constexpr uint32_t SCANLINES_10_CYCLES = 4560;
 constexpr uint32_t VBLANK_SCANLINES = 10;
 constexpr uint32_t FRAME_CYCLES = 70224;
-
+constexpr uint8_t PIXELS_TO_RENDER = 4;
 constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
+
 // constexpr uint16_t GB_COLORS_PAL1[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
 // constexpr uint16_t GB_COLORS_PAL2[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
 // constexpr uint16_t GB_COLORS_PAL3[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
-
-constexpr uint8_t PIXELS_TO_RENDER = 4;
 
 struct sdl_data {
 	SDL_Window *window;
@@ -108,22 +107,22 @@ private:
 	uint16_t lcd_clock_vblank = 0;
 	uint8_t vblank_line = 0;
 	sdl_data data;
-	lcd_control ctrl; //0xFF40
-	lcd_status l_status; //0xFF41
-	uint8_t scy = 0; //0xFF42
-	uint8_t scx = 0; //0xFF43
-	uint8_t ly = 0; //0xFF44 read only
-	uint8_t lyc = 0; //0xFF45
-	lcd_dma dma; //0xFF46
-	uint8_t bg_palette = 0;      // 0xFF47 (Non_CGB_Mode)
-	uint8_t obj_palette_0 = 0;   // 0xFF48 (Non_CGB_Mode)
-	uint8_t obj_palette_1 = 0;   // 0xFF49 (Non_CGB_Mode)
-	uint8_t bg_palette_cgb = 0;  // 0xFF68 (CGB_ONLY) bg palette spec and index
-	uint8_t bg_color_cgb = 0;    // 0xFF69 (CGB_ONLY) bg palette color data (rgb)
-	uint8_t obj_palette_cgb = 0; // 0xFF6A (CGB_ONLY) obj palette spec and index
-	uint8_t obj_color_cgb = 0;   // 0xFF6B (CGB_ONLY) obj palette color data (rgb)
-	uint8_t window_y = 0; //0xFF4A
-	uint8_t window_x = 0; //0xFF4B
+	lcd_control ctrl;             // 0xFF40
+	lcd_status l_status;          // 0xFF41
+	uint8_t scy = 0;              // 0xFF42
+	uint8_t scx = 0;              // 0xFF43
+	uint8_t ly = 0;               // 0xFF44 read only
+	uint8_t lyc = 0;              // 0xFF45
+	lcd_dma dma;                  // 0xFF46
+	uint8_t bg_palette = 0;       // 0xFF47 (Non_CGB_Mode)
+	uint8_t obj_palette_0 = 0;    // 0xFF48 (Non_CGB_Mode)
+	uint8_t obj_palette_1 = 0;    // 0xFF49 (Non_CGB_Mode)
+	uint8_t bg_palette_cgb = 0;   // 0xFF68 (CGB_ONLY) bg palette spec and index
+	uint8_t bg_color_cgb = 0;     // 0xFF69 (CGB_ONLY) bg palette color data (rgb)
+	uint8_t obj_palette_cgb = 0;  // 0xFF6A (CGB_ONLY) obj palette spec and index
+	uint8_t obj_color_cgb = 0;    // 0xFF6B (CGB_ONLY) obj palette color data (rgb)
+	uint8_t window_y = 0;         // 0xFF4A
+	uint8_t window_x = 0;         // 0xFF4B
 	uint8_t vbank_select = 0;     // 0xFF4F
 	uint8_t wram_bank_select = 0; // 0xFF70
 
@@ -132,7 +131,7 @@ private:
 	// Horizontal blanking DMA (HDMA)
 	uint16_t hdma_source = 0;
 	uint16_t hdma_dest = 0;
-	uint8_t hdma[5]; //0xFF51 - 0xFF55
+	uint8_t hdma[5]; // 0xFF51 - 0xFF55
 	bool hdma_enable = false;
 	uint16_t hdma_bytes = 0;
 

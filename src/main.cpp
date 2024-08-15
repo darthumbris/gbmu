@@ -8,13 +8,11 @@ int main(int argc, char *argv[]) {
 	Dict::Decoder decode = Dict::Decoder(p);
 
 	decode.set_data(path);
-
 	Cpu cpu = Cpu(decode, path);
 
 	while (!cpu.status()) {
 		cpu.tick();
 	}
 	cpu.close();
-
 	return 0;
 }

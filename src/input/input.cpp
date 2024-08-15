@@ -26,7 +26,6 @@ void Cpu::handle_input(SDL_Event &e) {
 				serialize(mmap.get_rom_name() + "_2.state");
 			}
 			break;
-
 		default:
 			break;
 		}

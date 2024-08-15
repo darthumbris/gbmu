@@ -22,7 +22,6 @@ uint8_t MCB5::read_u8(uint16_t addr) {
 	case 0x0000 ... 0x3FFF:
 		return rom_banks[0][addr];
 	case 0x4000 ... 0x7FFF:
-		// rom_banks 00-1FF (00 is treated as 01)
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable) {
@@ -33,7 +32,7 @@ uint8_t MCB5::read_u8(uint16_t addr) {
 		}
 		return 0xFF;
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		return 0xFF;
 	}
 }
@@ -52,19 +51,16 @@ void MCB5::write_u8(uint16_t addr, uint8_t val) {
 			ram_bank = val & 0x0F;
 		}
 		break;
-
 	case 0xA000 ... 0xBFFF:
-		// DEBUG_MSG("writing %u to ram_bank: %u at address: %#06X ram_enable: %u\n", val, ram_bank, addr, ram_enable);
 		if (ram_enable) {
 			if (addr == 0xA511) {
 				DEBUG_MSG("writing %u to ram_bank: %u\n", val, ram_bank);
 			}
-			// DEBUG_MSG("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
 			ram_banks[ram_bank][addr - 0xA000] = val;
 		}
 		break;
 	default:
-		std::cout << "should not reach this" << std::endl;
+		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }

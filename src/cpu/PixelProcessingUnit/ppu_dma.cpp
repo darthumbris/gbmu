@@ -1,5 +1,5 @@
-#include "PixelProcessingUnit.hpp"
 #include "Cpu.hpp"
+#include "PixelProcessingUnit.hpp"
 
 void PixelProcessingUnit::init_hdma() {
 	if (is_cgb) {
