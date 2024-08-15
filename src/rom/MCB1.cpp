@@ -1,8 +1,8 @@
 #include "rom/MCB1.hpp"
+#include "debug.hpp"
 #include <cstdio>
 #include <fstream>
 #include <iostream>
-#include "debug.hpp"
 
 uint8_t MCB1::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -84,4 +84,16 @@ void MCB1::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&ram_bank), sizeof(ram_bank));
 	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
 	std::cout << "done deserializing rom" << std::endl;
+}
+
+void MCB1::save_ram() {
+	if (battery) {
+		Rom::save_ram();
+	}
+}
+
+void MCB1::load_ram() {
+	if (battery) {
+		Rom::load_ram();
+	}
 }

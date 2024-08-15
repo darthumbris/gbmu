@@ -1,7 +1,7 @@
 #include "rom/MCB3.hpp"
+#include "debug.hpp"
 #include <fstream>
 #include <iostream>
-#include "debug.hpp"
 
 uint8_t MCB3::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -85,4 +85,16 @@ void MCB3::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&day_h), sizeof(day_h));
 	f.read(reinterpret_cast<char *>(&latched), sizeof(latched));
 	std::cout << "done deserializing rom" << std::endl;
+}
+
+void MCB3::save_ram() {
+	if (battery) {
+		Rom::save_ram();
+	}
+}
+
+void MCB3::load_ram() {
+	if (battery) {
+		Rom::load_ram();
+	}
 }

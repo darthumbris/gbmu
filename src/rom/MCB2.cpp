@@ -66,3 +66,15 @@ void MCB2::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
 	std::cout << "done deserializing rom" << std::endl;
 }
+
+void MCB2::save_ram() {
+	if (battery) {
+		Rom::save_ram();
+	}
+}
+
+void MCB2::load_ram() {
+	if (battery) {
+		Rom::load_ram();
+	}
+}

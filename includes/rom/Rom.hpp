@@ -32,6 +32,9 @@ public:
 	virtual void serialize(std::ofstream &f) = 0;
 	virtual void deserialize(std::ifstream &f) = 0;
 
+	void save_ram();
+	void load_ram();
+
 	std::string name() const {
 		return header.name();
 	}
@@ -45,6 +48,5 @@ protected:
 };
 
 // TODO handle MCB1, MCB2, MCB3, MCB5
-// TODO handle loading of the ram (so that saving etc actually works)
 
 #endif

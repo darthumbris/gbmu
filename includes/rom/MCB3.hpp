@@ -25,6 +25,8 @@ public:
 
 	void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);
+	void save_ram();
+	void load_ram();
 };
 
 #endif

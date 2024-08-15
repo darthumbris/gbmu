@@ -18,6 +18,7 @@ Cpu::Cpu(Decoder dec, const std::string path)
 	mmap.init_memory();
 	ppu.init_hdma();
 	ppu.init_ppu_mem();
+	mmap.load_ram();
 	set_instructions();
 }
 

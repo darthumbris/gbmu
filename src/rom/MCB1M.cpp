@@ -1,6 +1,7 @@
 #include "rom/MCB1M.hpp"
-#include <iostream>
 #include "debug.hpp"
+#include <fstream>
+#include <iostream>
 
 // TODO handle this one
 
@@ -51,5 +52,47 @@ void MCB1M::write_u8(uint16_t addr, uint8_t val) {
 	default:
 		std::cout << "should not reach this" << std::endl;
 		break;
+	}
+}
+
+void MCB1M::serialize(std::ofstream &f) {
+	for (int i = 0; i < rom_banks.size(); i++) {
+		f.write(reinterpret_cast<const char *>(&rom_banks[i]), sizeof(rom_banks[i]));
+	}
+	for (int i = 0; i < ram_banks.size(); i++) {
+		f.write(reinterpret_cast<const char *>(&ram_banks[i]), sizeof(ram_banks[i]));
+	}
+	f.write(reinterpret_cast<const char *>(&rom_bank), sizeof(rom_bank));
+	f.write(reinterpret_cast<const char *>(&ram_bank), sizeof(ram_bank));
+	f.write(reinterpret_cast<const char *>(&ram_enable), sizeof(ram_enable));
+	f.write(reinterpret_cast<const char *>(&rom_ram_mode), sizeof(rom_ram_mode));
+	f.write(reinterpret_cast<const char *>(&battery), sizeof(battery));
+	std::cout << "done serializing rom" << std::endl;
+}
+
+void MCB1M::deserialize(std::ifstream &f) {
+	for (int i = 0; i < rom_banks.size(); i++) {
+		f.read(reinterpret_cast<char *>(&rom_banks[i]), sizeof(rom_banks[i]));
+	}
+	for (int i = 0; i < ram_banks.size(); i++) {
+		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
+	}
+	f.read(reinterpret_cast<char *>(&rom_bank), sizeof(rom_bank));
+	f.read(reinterpret_cast<char *>(&ram_bank), sizeof(ram_bank));
+	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
+	f.read(reinterpret_cast<char *>(&rom_ram_mode), sizeof(rom_ram_mode));
+	f.read(reinterpret_cast<char *>(&battery), sizeof(battery));
+	std::cout << "done deserializing rom" << std::endl;
+}
+
+void MCB1M::save_ram() {
+	if (battery) {
+		Rom::save_ram();
+	}
+}
+
+void MCB1M::load_ram() {
+	if (battery) {
+		Rom::load_ram();
 	}
 }

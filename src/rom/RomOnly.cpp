@@ -1,8 +1,8 @@
 #include "rom/RomOnly.hpp"
+#include "debug.hpp"
 #include <cstdio>
 #include <fstream>
 #include <iostream>
-#include "debug.hpp"
 
 uint8_t RomOnly::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -61,4 +61,16 @@ void RomOnly::deserialize(std::ifstream &f) {
 	}
 	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
 	std::cout << "done deserializing rom" << std::endl;
+}
+
+void RomOnly::save_ram() {
+	if (battery) {
+		Rom::save_ram();
+	}
+}
+
+void RomOnly::load_ram() {
+	if (battery) {
+		Rom::load_ram();
+	}
 }

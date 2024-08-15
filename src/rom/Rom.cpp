@@ -1,4 +1,6 @@
 #include "rom/Rom.hpp"
+#include "debug.hpp"
+#include <SDL2/SDL_filesystem.h>
 #include <cstdio>
 #include <fstream>
 
@@ -21,3 +23,36 @@ Rom::Rom(const std::string rom_path, RomHeader rheader) : header(rheader) {
 }
 
 Rom::~Rom() {}
+
+void Rom::save_ram() {
+	const char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
+	std::string full_path = path;
+	full_path.append(name() + ".ram");
+	std::ofstream f(full_path, std::ios::binary);
+	if (!f.is_open()) {
+		DEBUG_MSG("Error: Failed to  open file for saving ram.\n");
+		return;
+	}
+	DEBUG_MSG("writing ram to: %s\n", full_path.c_str());
+	for (int i = 0; i < ram_banks.size(); i++) {
+		f.write(reinterpret_cast<const char *>(&ram_banks[i]), sizeof(ram_banks[i]));
+	}
+	f.close();
+}
+
+void Rom::load_ram() {
+	const char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
+	std::string full_path = path;
+	full_path.append(name() + ".ram");
+	std::ifstream f(full_path, std::ios::binary);
+
+	if (!f.is_open()) {
+		DEBUG_MSG("Error: Failed to  open file for loading ram.\n");
+		return;
+	}
+	DEBUG_MSG("loading ram from: %s\n", full_path.c_str());
+	for (int i = 0; i < ram_banks.size(); i++) {
+		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
+	}
+	f.close();
+}

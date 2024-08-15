@@ -53,7 +53,6 @@ private:
 	 * The registers are made uint16_t because the gameboy uses 16-bit registers
 	 */
 	std::array<uint8_t, 8> u8_registers;
-
 	uint16_t sp; // stack pointer
 	uint16_t pc; // Program counter
 	Decoder decoder;

@@ -350,3 +350,12 @@ void MemoryMap::update_joypad() {
 
 	joypad_register = current;
 }
+
+void MemoryMap::save_ram() {
+	rom->save_ram();
+}
+
+void MemoryMap::load_ram() {
+	// TODO maybe have it optionally load the ram?
+	rom->load_ram();
+}

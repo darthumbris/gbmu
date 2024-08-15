@@ -122,10 +122,6 @@ public:
 	uint16_t read_u16(uint16_t addr);
 	void write_u8(uint16_t addr, uint8_t val);
 	void write_u16(uint16_t addr, uint16_t val);
-
-	inline bool is_boot_rom_enabled() {
-		return boot_rom_loaded;
-	}
 	uint8_t wram_bank_select();
 
 	void handle_keydown(keycode key);
@@ -133,6 +129,9 @@ public:
 
 	void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);
+
+	void save_ram();
+	void load_ram();
 
 	std::string get_rom_name() const {
 		return rom->name();

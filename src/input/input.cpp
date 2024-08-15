@@ -9,6 +9,7 @@ void Cpu::handle_input(SDL_Event &e) {
 		switch (e.key.keysym.sym) {
 		case SDLK_ESCAPE:
 			set_status(true);
+			mmap.save_ram();
 			DEBUG_MSG("breakpoint: %zu\n", debug_count);
 			break;
 		case SDLK_F1:
