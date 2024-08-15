@@ -106,15 +106,15 @@ class PixelProcessingUnit {
 private:
 	uint32_t lcd_clock = 0;
 	uint16_t lcd_clock_vblank = 0;
-	sdl_data data;
-	lcd_control ctrl;
-	lcd_status l_status;
-	uint8_t scy = 0;
-	uint8_t scx = 0;
-	uint8_t ly = 0;
-	uint8_t lyc = 0;
 	uint8_t vblank_line = 0;
-	lcd_dma dma;
+	sdl_data data;
+	lcd_control ctrl; //0xFF40
+	lcd_status l_status; //0xFF41
+	uint8_t scy = 0; //0xFF42
+	uint8_t scx = 0; //0xFF43
+	uint8_t ly = 0; //0xFF44 read only
+	uint8_t lyc = 0; //0xFF45
+	lcd_dma dma; //0xFF46
 	uint8_t bg_palette = 0;      // 0xFF47 (Non_CGB_Mode)
 	uint8_t obj_palette_0 = 0;   // 0xFF48 (Non_CGB_Mode)
 	uint8_t obj_palette_1 = 0;   // 0xFF49 (Non_CGB_Mode)
@@ -122,8 +122,8 @@ private:
 	uint8_t bg_color_cgb = 0;    // 0xFF69 (CGB_ONLY) bg palette color data (rgb)
 	uint8_t obj_palette_cgb = 0; // 0xFF6A (CGB_ONLY) obj palette spec and index
 	uint8_t obj_color_cgb = 0;   // 0xFF6B (CGB_ONLY) obj palette color data (rgb)
-	uint8_t window_y = 0;
-	uint8_t window_x = 0;
+	uint8_t window_y = 0; //0xFF4A
+	uint8_t window_x = 0; //0xFF4B
 	uint8_t vbank_select = 0;     // 0xFF4F
 	uint8_t wram_bank_select = 0; // 0xFF70
 
@@ -132,7 +132,7 @@ private:
 	// Horizontal blanking DMA (HDMA)
 	uint16_t hdma_source = 0;
 	uint16_t hdma_dest = 0;
-	uint8_t hdma[5];
+	uint8_t hdma[5]; //0xFF51 - 0xFF55
 	bool hdma_enable = false;
 	uint16_t hdma_bytes = 0;
 
@@ -149,7 +149,7 @@ private:
 	uint8_t mono_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint16_t rgb555_framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 
-	int32_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
+	int16_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t oam[40][4]; // 0xFE00 - 0xFE9F
 	sprite sprites[40];
