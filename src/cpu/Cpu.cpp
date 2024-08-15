@@ -99,9 +99,7 @@ void Cpu::process_interrupt(interrupt_type i) {
 
 #ifdef DEBUG_MODE
 void Cpu::debug_print(bool prefix) {
-	std::cout << "[0x" << std::setfill('0') << std::setw(4) << std::hex << pc;
-	std::cout << "] 0x" << std::setfill('0') << std::setw(2) << (uint16_t)opcode << std::dec << "\t";
-
+	DEBUG_MSG("[0x%#06X] 0x%#04X\t", pc, opcode);
 	if (prefix) {
 		decoder.prefixed_instructions[opcode].print_instruction();
 	} else {

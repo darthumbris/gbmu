@@ -3,8 +3,6 @@
 #include <fstream>
 #include <iostream>
 
-// TODO handle this one
-
 uint8_t MCB1M::read_u8(uint16_t addr) {
 	switch (addr) {
 	case 0x0000 ... 0x3FFF:
@@ -25,11 +23,7 @@ void MCB1M::write_u8(uint16_t addr, uint8_t val) {
 	switch (addr) {
 	case 0x000 ... 0x7FFF:
 		if (addr <= 0x1FFF) {
-			if (val == 0x0A) {
-				ram_enable = true;
-			} else {
-				ram_enable = false;
-			}
+			ram_enable = (val == 0x0A);
 		} else if (addr <= 0x2FFF) {
 			rom_bank = (ram_bank & (1 << 8)) | val;
 		} else if (addr <= 0x3FFF) {

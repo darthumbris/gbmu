@@ -41,6 +41,7 @@ void Rom::save_ram() {
 }
 
 void Rom::load_ram() {
+	//TODO have a check if the file_size is correct for the amount of ram expected
 	const char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
 	std::string full_path = path;
 	full_path.append(name() + ".ram");

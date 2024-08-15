@@ -3,6 +3,7 @@
 
 #include "Rom.hpp"
 
+//TODO handle the RTC
 class MCB3 : public Rom {
 private:
 	uint8_t rom_bank = 1; // 0x00 - 0x7F

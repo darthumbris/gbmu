@@ -99,7 +99,7 @@ void Interruptor::check_cycles(uint16_t cycle, instruction_state state) {
 }
 
 bool Interruptor::handle_interrupt(instruction_state state) {
-	DEBUG_MSG("i %u s %u m %u p %u\n", interruptor.pending(), accurate_opcode_state, interruptor.get_ime(), pc);
+	DEBUG_MSG("i %u s %u m %u\n", pending(), state, get_ime());
 	interrupt_occured = false;
 	if (!(state == instruction_state::Ready && pending() != interrupt_type::NoInterrupt && process_interrupts)) {
 		return false;

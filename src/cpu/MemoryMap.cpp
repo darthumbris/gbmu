@@ -8,6 +8,7 @@
 #include "rom/RomOnly.hpp"
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 
@@ -49,12 +50,11 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 		rom = Rom::make<RomOnly>(path, header, header.has_battery());
 		break;
 	default:
-		rom = Rom::make<MCB1>(path, header, header.has_battery());
+		std::cerr << "Cartridge type: " << header.cartridge_type() << " not supported" << std::endl;
+		cpu->close();
+		exit(1);
 		break;
 	}
-
-	// TODO handle MBC7, cartridge types and give an error when not mbc1,3,5,7 or Rom only roms
-	// TODO handle (ROM_ONLY, ROM_RAM, ROM_RAM_BATTERY)
 	// TODO add a way to force CGB_Enhanced roms in GB mode
 }
 

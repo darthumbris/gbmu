@@ -47,6 +47,4 @@ protected:
 	std::vector<mem_8k> ram_banks{0};
 };
 
-// TODO handle MCB1, MCB2, MCB3, MCB5
-
 #endif
