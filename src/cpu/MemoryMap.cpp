@@ -13,53 +13,45 @@
 #include <iostream>
 
 MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cpu(cpu) {
-	// header.disable_cgb_enhancement();
 	switch (header.cartridge_type()) {
-	case CartridgeType::MBC1:
-	case CartridgeType::MBC1_RAM:
-	case CartridgeType::MBC1_RAM_BATTERY:
+	case CartridgeType::MBC1 ... MBC1_RAM_BATTERY:
 		rom = Rom::make<MCB1>(options.path, header, header.has_battery());
 		break;
-	case CartridgeType::MBC2:
-	case CartridgeType::MBC2_BATTERY:
+	case CartridgeType::MBC2 ... MBC2_BATTERY:
 		rom = Rom::make<MCB2>(options.path, header, header.has_battery());
 		break;
-	case CartridgeType::MBC3_TIMER_BATTERY:
-	case CartridgeType::MBC3_TIMER_RAM_BATTERY:
-	case CartridgeType::MBC3:
-	case CartridgeType::MBC3_RAM:
-	case CartridgeType::MBC3_RAM_BATTERY:
+	case CartridgeType::MBC3_TIMER_BATTERY ... MBC3_RAM_BATTERY:
 		rom = Rom::make<MCB3>(options.path, header, header.has_battery());
 		break;
-	case CartridgeType::MBC5:
-	case CartridgeType::MBC5_RAM:
-	case CartridgeType::MBC5_RAM_BATTERY:
-	case CartridgeType::MBC5_RUMBLE:
-	case CartridgeType::MBC5_RUMBLE_RAM:
-	case CartridgeType::MBC5_RUMBLE_RAM_BATTERY:
+	case CartridgeType::MBC5 ... MBC5_RUMBLE_RAM_BATTERY:
 		rom = Rom::make<MCB5>(options.path, header, header.has_battery(), header.has_rumble());
 		break;
-	case CartridgeType::ROM_ONLY:
-	case CartridgeType::ROM_RAM:
-	case CartridgeType::ROM_RAM_BATTERY:
+	case CartridgeType::ROM_ONLY ... ROM_RAM_BATTERY:
 		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
 		break;
 	default:
 		std::cerr << "Cartridge type: " << header.cartridge_type() << " not supported" << std::endl;
 		cpu->close();
-		exit(1);
+		exit(EXIT_FAILURE);
 		break;
 	}
 
-	//TODO add a check to see if the boot roms are there otherwise give error
 	if (is_cgb_rom() && !options.force_dmg) {
 		std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
+		if (!cgb.is_open()) {
+			std::cerr << "Error: Failed to  open file cgb boot rom." << std::endl;
+			exit(EXIT_FAILURE);
+		}
 		cgb.seekg(0, std::ios::beg);
 		cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 		cgb.close();
 	}
 	else {
 		std::ifstream cgb("dmg_boot.bin", std::ios::binary | std::ios::ate);
+		if (!cgb.is_open()) {
+			std::cerr << "Error: Failed to  open file dmg boot rom." << std::endl;
+			exit(EXIT_FAILURE);
+		}
 		cgb.seekg(0, std::ios::beg);
 		cgb.read(reinterpret_cast<char *>(&gb_boot_rom), sizeof(gb_boot_rom));
 		cgb.close();
