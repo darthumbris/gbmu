@@ -12,16 +12,16 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	lcd_clock = 0;
 	init_window();
 	data.status = false;
-	ctrl = {0};
-	l_status = {0};
+	ctrl = {};
+	l_status = {};
 	l_status.mode = ppu_modes::Vertical_Blank;
 	std::memset(mono_framebuffer, 0, sizeof(mono_framebuffer));
 	std::memset(rgb555_framebuffer, 0, sizeof(rgb555_framebuffer));
 	std::memset(vram, 0, sizeof(vram));
 	std::memset(oam, 0, sizeof(oam));
 	std::memset(tile_data, 0, sizeof(tile_data));
-	dma = {0};
-	is_cgb = cpu->get_mmap().is_cgb_rom();
+	dma = {};
+	// is_cgb = cpu->get_mmap().is_cgb_rom();
 	ly = SCREEN_HEIGHT;
 }
 
@@ -41,7 +41,7 @@ void PixelProcessingUnit::tick(uint16_t &cycle) {
 			handle_vblank(cycle);
 			break;
 		case ppu_modes::OAM_Scan:
-			handle_oam(cycle);
+			handle_oam();
 			break;
 		case ppu_modes::Pixel_Drawing:
 			handle_pixel_drawing(cycle);
@@ -160,7 +160,7 @@ void PixelProcessingUnit::handle_vblank(uint16_t &cycle) {
 	}
 }
 
-void PixelProcessingUnit::handle_oam(uint16_t &cycle) {
+void PixelProcessingUnit::handle_oam() {
 	if (lcd_clock >= OAM_CYCLES) {
 		lcd_clock -= OAM_CYCLES;
 		l_status.mode = ppu_modes::Pixel_Drawing;
@@ -274,7 +274,6 @@ void PixelProcessingUnit::render_background(uint8_t line, uint8_t pixel) {
 			uint16_t screen_pixel_x = ((pixel >> 3) << 3) + offset_x;
 			uint8_t map_pixel_x = screen_pixel_x + scx;
 			uint16_t map_tile_x = map_pixel_x >> 3;
-			uint8_t map_tile_offset_x = map_pixel_x & 0x7;
 			uint16_t map_addr = map_start_addr + line_scrolled_16 + map_tile_x;
 			uint16_t map_tile = 0;
 
@@ -600,7 +599,7 @@ uint8_t lcd_status::get() {
 	// DEBUG_MSG("val: %u get: %u\n", val, (ly_interrupt << 6 | mode_2_oam_interrupt << 5 | mode_1_vblank_interrupt << 4
 	// | mode_0_hblank_interrupt << 3 | ly_flag << 2 | mode));
 	return (ly_interrupt << 6 | mode_2_oam_interrupt << 5 | mode_1_vblank_interrupt << 4 |
-	        mode_0_hblank_interrupt << 3 | ly_flag << 2 | val & 0x80 | val & 0x3);
+	        mode_0_hblank_interrupt << 3 | ly_flag << 2 | (val & 0x80) | (val & 0x3));
 }
 
 void lcd_dma::set(uint8_t value) {

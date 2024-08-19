@@ -12,6 +12,8 @@
 using mem_16k = std::array<uint8_t, 16384>;
 using mem_8k = std::array<uint8_t, 8192>;
 
+//TODO make the is_cgb stuff only in one file (now in romheader, rom and ppu etc)
+
 class Rom {
 private:
 	RomHeader header;
@@ -40,6 +42,10 @@ public:
 	}
 	inline bool cgb_mode() const {
 		return cgb_on;
+	}
+
+	inline void force_dmg_mode() {
+		cgb_on = false;
 	}
 
 protected:

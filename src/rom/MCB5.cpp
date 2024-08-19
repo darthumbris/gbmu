@@ -10,8 +10,11 @@ MCB5::MCB5(const std::string rom_path, RomHeader rheader, bool battery, bool rum
 	rom_bank = 1;
 	secondary_rom_bank = 0;
 	ram_enable = false;
-	for (auto i = 0; i < ram_banks.size(); i++) {
-		for (auto j = 0; j < ram_banks[i].size(); j++) {
+	if (MCB5::rumble) {
+		printf("hey got rumble\n");
+	}
+	for (size_t i = 0; i < ram_banks.size(); i++) {
+		for (size_t j = 0; j < ram_banks[i].size(); j++) {
 			ram_banks[i][j] = 0xFF;
 		}
 	}
@@ -66,10 +69,10 @@ void MCB5::write_u8(uint16_t addr, uint8_t val) {
 }
 
 void MCB5::serialize(std::ofstream &f) {
-	for (int i = 0; i < rom_banks.size(); i++) {
+	for (size_t i = 0; i < rom_banks.size(); i++) {
 		f.write(reinterpret_cast<const char *>(&rom_banks[i]), sizeof(rom_banks[i]));
 	}
-	for (int i = 0; i < ram_banks.size(); i++) {
+	for (size_t i = 0; i < ram_banks.size(); i++) {
 		f.write(reinterpret_cast<const char *>(&ram_banks[i]), sizeof(ram_banks[i]));
 	}
 	f.write(reinterpret_cast<const char *>(&rom_bank), sizeof(rom_bank));
@@ -79,10 +82,10 @@ void MCB5::serialize(std::ofstream &f) {
 }
 
 void MCB5::deserialize(std::ifstream &f) {
-	for (int i = 0; i < rom_banks.size(); i++) {
+	for (size_t i = 0; i < rom_banks.size(); i++) {
 		f.read(reinterpret_cast<char *>(&rom_banks[i]), sizeof(rom_banks[i]));
 	}
-	for (int i = 0; i < ram_banks.size(); i++) {
+	for (size_t i = 0; i < ram_banks.size(); i++) {
 		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
 	}
 	f.read(reinterpret_cast<char *>(&rom_bank), sizeof(rom_bank));

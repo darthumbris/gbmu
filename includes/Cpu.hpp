@@ -7,15 +7,13 @@
 #include "Operand.hpp"
 #include "PixelProcessingUnit.hpp"
 #include "debug.hpp"
+#include <SDL2/SDL_stdinc.h>
 #include <array>
 #include <cstdint>
 #include <cstdio>
 #include <math.h>
 
 using namespace Dict;
-
-// TODO maybe try using this?
-//  #include <bitset>
 
 enum flag_registers { c = 4, h = 5, n = 6, z = 7 };
 
@@ -30,6 +28,14 @@ enum class instruction_state {
 	Ready,
 	ReadingWord,
 	ReadingByte,
+};
+
+struct options {
+	bool matrix;
+	bool force_dmg;
+	uint8_t darkening;
+	bool color_correction;
+	std::string path;
 };
 
 enum instruction_list { Unprefixed, Prefixed };
@@ -323,9 +329,9 @@ private:
 		if (offset) {
 			branched = true;
 			if (val > 127) {
-				pc -= (uint16_t)(255 - val + 1);
+				pc -= static_cast<uint16_t>(255 - val + 1);
 			} else {
-				pc += (uint16_t)val;
+				pc += static_cast<uint16_t>(val);
 			}
 			if (condition == condition::ZeroFlag) {
 				DEBUG_MSG("set pc to: %u\n", pc);
@@ -578,7 +584,7 @@ private:
 
 public:
 	uint64_t debug_count;
-	Cpu(Decoder dec, const std::string path);
+	Cpu(Decoder dec, const options options);
 	~Cpu();
 
 	uint8_t get_register(registers reg) const;

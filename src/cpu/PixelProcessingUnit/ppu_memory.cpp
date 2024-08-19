@@ -3,6 +3,7 @@
 #include <cstdint>
 
 void PixelProcessingUnit::init_ppu_mem() {
+	is_cgb = cpu->get_mmap().is_cgb_rom();
 	const uint8_t *initial_values;
 	if (is_cgb) {
 		initial_values = initial_io_values_cgb;

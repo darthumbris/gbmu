@@ -49,8 +49,6 @@ private:
 
 	uint16_t input_cycles = 0;
 
-	// TODO check the interrupt delay cycles thing
-
 	Cpu *cpu;
 
 public:

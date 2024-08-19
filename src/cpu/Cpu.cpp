@@ -1,14 +1,12 @@
 #include "Cpu.hpp"
 #include "Interruptor.hpp"
 #include "OpcodeTiming.hpp"
+#include <cassert>
 #include <cstdint>
 #include <ctime>
 
-uint64_t const DEBUG_START = 0;
-uint64_t const DEBUG_COUNT = 1;
-
-Cpu::Cpu(Decoder dec, const std::string path)
-    : decoder(dec), mmap(path, this), ppu(this), rom_path(path), interruptor(this) {
+Cpu::Cpu(Decoder dec, const options options)
+    : decoder(dec), mmap(options, this), ppu(this), interruptor(this), rom_path(options.path) {
 	u8_registers = {0};
 	pc = 0;
 	sp = 0;
@@ -28,7 +26,7 @@ uint16_t Cpu::get_16bitregister(registers reg) const {
 	if (reg == registers::SP) {
 		return sp;
 	}
-	return ((uint16_t)(u8_registers[reg - registers::BC] << 8) + (uint16_t)u8_registers[reg - registers::BC + 1]);
+	return (static_cast<uint16_t>(u8_registers[reg - registers::BC] << 8) + static_cast<uint16_t>(u8_registers[reg - registers::BC + 1]));
 }
 
 uint8_t Cpu::get_register(registers reg) const {
@@ -43,8 +41,8 @@ void Cpu::set_16bitregister(registers reg, uint16_t val) {
 	if (reg == registers::SP) {
 		sp = val;
 	} else {
-		u8_registers[reg - registers::BC] = (uint8_t)(val >> 8);
-		u8_registers[reg - registers::BC + 1] = (uint8_t)(val & 0xff);
+		u8_registers[reg - registers::BC] = static_cast<uint8_t>(val >> 8);
+		u8_registers[reg - registers::BC + 1] = static_cast<uint8_t>(val & 0xff);
 	}
 }
 
@@ -61,7 +59,7 @@ void Cpu::tick() {
 		while (ppu.screen_ready())
 			;
 		handle_instruction();
-		uint16_t t_cycle_u8 = (uint8_t)t_cycle;
+		uint16_t t_cycle_u8 = static_cast<uint8_t>(t_cycle);
 		interruptor.timer_tick(t_cycle_u8);
 		interruptor.serial_tick(t_cycle_u8);
 		ppu.tick(t_cycle_u8);
@@ -99,7 +97,7 @@ void Cpu::process_interrupt(interrupt_type i) {
 
 #ifdef DEBUG_MODE
 void Cpu::debug_print(bool prefix) {
-	DEBUG_MSG("[0x%#06X] 0x%#04X\t", pc, opcode);
+	DEBUG_MSG("[%#06X] %#04X\t", pc, opcode);
 	if (prefix) {
 		decoder.prefixed_instructions[opcode].print_instruction();
 	} else {
@@ -108,25 +106,7 @@ void Cpu::debug_print(bool prefix) {
 }
 #endif
 
-void Cpu::prefix() {
-	opcode = mmap.read_u8(pc);
-#ifdef DEBUG_MODE
-	DEBUG_MSG("opcode: 0x%02X\n", opcode);
-	// DEBUG_MSG("register AF %u BC %u DE %u HL %u SP %u PC: %u\n", get_16bitregister(registers::AF),
-	// get_16bitregister(registers::BC), get_16bitregister(registers::DE), get_16bitregister(registers::HL), sp, pc);
-	if (debug_count > DEBUG_START && debug_count < DEBUG_START + DEBUG_COUNT) {
-		// debug_print(true);
-		// DEBUG_MSG("debug_count: %lu opcode CB: %#04x pc: %u\n", debug_count, opcode, pc);
-		// DEBUG_MSG("register a %u b %u f %u HL %u SP %u\n", u8_registers[registers::A], u8_registers[registers::B],
-		//        u8_registers[registers::F], get_16bitregister(registers::HL), sp);
-		// DEBUG_MSG("C %u D %u E %u\n", u8_registers[registers::C], u8_registers[registers::D],
-		// u8_registers[registers::E]);
-	}
-#endif
-	pc += 1;
-	auto op = instructions[instruction_list::Prefixed][opcode];
-	(this->*op)();
-}
+void Cpu::prefix() {}
 
 void Cpu::handle_halt() {
 	if (accurate_opcode_state == instruction_state::Ready && halted) {
@@ -148,6 +128,7 @@ void Cpu::handle_halt() {
 }
 
 void Cpu::fetch_instruction() {
+	bool is_prefixed = false;
 	opcode = mmap.read_u8(pc);
 	pc += 1;
 	instruction = (opcode == 0xCB) ? instruction_list::Prefixed : instruction_list::Unprefixed;
@@ -156,7 +137,11 @@ void Cpu::fetch_instruction() {
 		opcode = mmap.read_u8(pc);
 		DEBUG_MSG("op 0x%02X\n", opcode);
 		pc += 1;
+		is_prefixed = true;
 	}
+	#ifdef DEBUG_MODE
+	debug_print(is_prefixed);
+	#endif
 }
 
 void Cpu::set_cycles_left() {

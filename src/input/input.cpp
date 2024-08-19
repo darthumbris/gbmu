@@ -1,4 +1,5 @@
 #include "Cpu.hpp"
+#include <SDL2/SDL_keycode.h>
 #include <cstdio>
 
 void Cpu::handle_input(SDL_Event &e) {
@@ -11,6 +12,14 @@ void Cpu::handle_input(SDL_Event &e) {
 			set_status(true);
 			mmap.save_ram();
 			DEBUG_MSG("breakpoint: %zu\n", debug_count);
+			break;
+		case SDLK_p:
+			if (modstate & KMOD_SHIFT) {
+				ppu.decrease_palette();
+			}
+			else {
+				ppu.increase_palette();
+			}
 			break;
 		case SDLK_F1:
 			if (modstate & KMOD_SHIFT) {

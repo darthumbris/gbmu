@@ -47,10 +47,10 @@ void MCB1M::write_u8(uint16_t addr, uint8_t val) {
 }
 
 void MCB1M::serialize(std::ofstream &f) {
-	for (int i = 0; i < rom_banks.size(); i++) {
+	for (size_t i = 0; i < rom_banks.size(); i++) {
 		f.write(reinterpret_cast<const char *>(&rom_banks[i]), sizeof(rom_banks[i]));
 	}
-	for (int i = 0; i < ram_banks.size(); i++) {
+	for (size_t i = 0; i < ram_banks.size(); i++) {
 		f.write(reinterpret_cast<const char *>(&ram_banks[i]), sizeof(ram_banks[i]));
 	}
 	f.write(reinterpret_cast<const char *>(&rom_bank), sizeof(rom_bank));
@@ -62,10 +62,10 @@ void MCB1M::serialize(std::ofstream &f) {
 }
 
 void MCB1M::deserialize(std::ifstream &f) {
-	for (int i = 0; i < rom_banks.size(); i++) {
+	for (size_t i = 0; i < rom_banks.size(); i++) {
 		f.read(reinterpret_cast<char *>(&rom_banks[i]), sizeof(rom_banks[i]));
 	}
-	for (int i = 0; i < ram_banks.size(); i++) {
+	for (size_t i = 0; i < ram_banks.size(); i++) {
 		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
 	}
 	f.read(reinterpret_cast<char *>(&rom_bank), sizeof(rom_bank));

@@ -8,6 +8,8 @@
 
 class Cpu;
 
+// void check_color_rgb555(uint8_t red, uint8_t green, uint8_t blue);
+
 constexpr int SCREEN_WIDTH = 160;
 constexpr int SCREEN_HEIGHT = 144;
 constexpr uint32_t MAX_SCANLINES = 153;
@@ -20,11 +22,8 @@ constexpr uint32_t SCANLINES_10_CYCLES = 4560;
 constexpr uint32_t VBLANK_SCANLINES = 10;
 constexpr uint32_t FRAME_CYCLES = 70224;
 constexpr uint8_t PIXELS_TO_RENDER = 4;
-constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
 
-// constexpr uint16_t GB_COLORS_PAL1[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
-// constexpr uint16_t GB_COLORS_PAL2[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
-// constexpr uint16_t GB_COLORS_PAL3[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
+constexpr uint8_t MAX_PALETTES = 4;
 
 struct sdl_data {
 	SDL_Window *window;
@@ -152,19 +151,19 @@ private:
 	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t oam[40][4]; // 0xFE00 - 0xFE9F
 	sprite sprites[40];
-	std::array<uint8_t, 8192> vram[2]{0};
+	std::array<uint8_t, 8192> vram[2];
 	uint8_t tile_data[2][384][64];
 
 	uint16_t cgb_bg_colors[8][4][2];
 	uint16_t cgb_obj_colors[8][4][2];
 
-	// TODO add a way to change palettes (if gb game in CGB mode)
+	uint8_t current_palette = 0;
 
 	Cpu *cpu;
 
 	void handle_hblank(uint16_t &cycle);
 	void handle_vblank(uint16_t &cycle);
-	void handle_oam(uint16_t &cycle);
+	void handle_oam();
 	void handle_pixel_drawing(uint16_t &cycle);
 	void handle_disabled_screen(uint16_t &cycle);
 
@@ -221,9 +220,6 @@ public:
 	inline void screen_done() {
 		draw_screen = false;
 	}
-	inline void set_cpu(Cpu *cpu) {
-		cpu = cpu;
-	}
 
 	void switch_cgb_dma(uint8_t value);
 	void set_hdma_register(hdma_register reg, uint8_t value);
@@ -238,6 +234,9 @@ public:
 
 	void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);
+
+	void increase_palette();
+	void decrease_palette();
 };
 
 #endif

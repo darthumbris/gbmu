@@ -6,9 +6,9 @@
 #include <iostream>
 
 void Cpu::serialize(const std::string &file) {
-	const char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
+	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
 	std::string full_path = path + file;
-	SDL_free((void *)path);
+	SDL_free(static_cast<void *>(path));
 	std::ofstream f(full_path, std::ios::binary);
 	if (!f.is_open()) {
 		std::cerr << "Error: Failed to  open file for serialization Cpu." << std::endl;
@@ -40,9 +40,9 @@ void Cpu::serialize(const std::string &file) {
 }
 
 void Cpu::deserialize(const std::string &file) {
-	const char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
+	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
 	std::string full_path = path + file;
-	SDL_free((void *)path);
+	SDL_free(static_cast<void *>(path));
 	std::ifstream f(full_path, std::ios::binary);
 
 	if (!f.is_open()) {

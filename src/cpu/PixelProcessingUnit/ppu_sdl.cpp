@@ -1,6 +1,27 @@
 #include "PixelProcessingUnit.hpp"
 #include <SDL2/SDL_pixels.h>
 #include <cstdint>
+// #include <SDL2/SDL_opengl.h>
+// #include <GL/glu.h>
+// #include <GL/glew.h>
+
+
+//bright color, higlight color, shadow color , unlit color
+constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
+// constexpr uint16_t GB_COLORS_TEST[4] = {0XFC43, 0XEC64, 0XD065, 0X8C63};
+constexpr uint16_t GB_COLORS_VIRTUABOY[4] = {0XFC43, 0XEC64, 0XD065, 0X8C63};
+constexpr uint16_t GB_COLORS_LIGHT[4] = {0XE75D, 0XCF3D, 0XB2B7, 0X8002};
+constexpr uint16_t GB_COLORS_BW[4] = {0XF7BD, 0XDAD6, 0XCA52, 0X8C63};
+
+// void check_color_rgb555(uint8_t red, uint8_t green, uint8_t blue) {
+// 	int multiplier = 31;
+//     int shift = 10;
+
+// 	uint16_t color0;
+// 	color0 = (((red * 31) / 255) << shift ) | (((green * multiplier) / 255) << 5 ) | ((blue * 31) / 255);
+// 	color0 |= 0x8000;
+// 	printf("color: %#06X r: %u g: %u b: %u\n", color0, red, green, blue);
+// }
 
 bool PixelProcessingUnit::init_window() {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -39,9 +60,24 @@ void PixelProcessingUnit::close() {
 // TODO add a toggle for darkness filter
 // TODO add a shader for: color correction, darkness filter, matrix/rasterize
 void PixelProcessingUnit::render_screen() {
+	const uint16_t* palette_used;
+	switch (current_palette) {
+		case 0:
+			palette_used = GB_COLORS_ORIGNAL;
+		break;
+		case 1:
+			palette_used = GB_COLORS_VIRTUABOY;
+		break;
+		case 2:
+			palette_used = GB_COLORS_LIGHT;
+			break;
+		default:
+			palette_used = GB_COLORS_BW;
+		break;
+	}
 	if (!is_cgb) {
 		for (int i = 0; i < SCREEN_PIXELS; i++) {
-			rgb555_framebuffer[i] = GB_COLORS_ORIGNAL[mono_framebuffer[i]];
+			rgb555_framebuffer[i] = palette_used[mono_framebuffer[i]];
 		}
 	}
 	SDL_RenderPresent(data.renderer);
@@ -50,4 +86,19 @@ void PixelProcessingUnit::render_screen() {
 	SDL_RenderCopy(data.renderer, data.texture, NULL, NULL);
 	SDL_RenderPresent(data.renderer);
 	draw_screen = false;
+}
+
+void PixelProcessingUnit::increase_palette() {
+	current_palette += 1;
+	if (current_palette >= MAX_PALETTES) {
+		current_palette = 0;
+	}
+}
+void PixelProcessingUnit::decrease_palette() {
+	if (current_palette == 0) {
+		current_palette = MAX_PALETTES - 1;
+	}
+	else {
+		current_palette -= 1;
+	}
 }

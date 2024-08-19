@@ -4,9 +4,9 @@ void Cpu::jr_imm8() {
 	uint8_t val = mmap.read_u8(pc);
 	pc += 1;
 	if (val > 127) {
-		pc -= (uint16_t)(255 - val + 1);
+		pc -= static_cast<uint16_t>(255 - val + 1);
 	} else {
-		pc += (uint16_t)val;
+		pc += static_cast<uint16_t>(val);
 	}
 }
 

@@ -1,5 +1,4 @@
 #include "Instruction.hpp"
-#include <iostream>
 
 namespace Dict {
 
@@ -37,7 +36,7 @@ namespace Dict {
 			}
 			i += 1;
 		}
-		std::cout << s << std::endl;
+		printf("%s\n", s.c_str());
 	}
 
 	void to_json(json &j, const Instruction &i) {

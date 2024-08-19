@@ -11,15 +11,18 @@
 #endif
 
 inline void debug_printf(const char *const msg, ...) {
-	static int count = 1;
+	// static int count = 1;
 	char buff[512];
 	va_list args;
 
 	va_start(args, msg);
 	vsprintf(buff, msg, args);
 	va_end(args);
-	printf("%d: %s\n", count, buff);
-	count++;
+	printf("%s", buff);
+	
+	// printf("%d: %s\n", count, buff);
+	// count++;
+
 }
 
 #endif

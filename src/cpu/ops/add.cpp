@@ -68,7 +68,6 @@ void Cpu::inc_r8_hl() {
 		read_cache = res;
 		return;
 	}
-	uint8_t before_flag = get_register(registers::F);
 	mmap.write_u8(get_16bitregister(registers::HL), static_cast<uint8_t>(read_cache));
 	get_flag(flag_registers::c) ? set_register(registers::F, 1U << flag_registers::c) : set_register(registers::F, 0);
 	set_flag(flag_registers::z, static_cast<uint8_t>(read_cache) == 0);

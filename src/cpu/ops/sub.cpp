@@ -55,7 +55,6 @@ void Cpu::dec_r8_hl() {
 		return;
 	}
 	mmap.write_u8(get_16bitregister(registers::HL), static_cast<uint8_t>(read_cache));
-	uint8_t before_flag = get_register(registers::F);
 	get_flag(flag_registers::c) ? set_register(registers::F, 1U << flag_registers::c) : set_register(registers::F, 0);
 	set_flag(flag_registers::z, static_cast<uint8_t>(read_cache) == 0);
 	set_flag(flag_registers::n, 1);

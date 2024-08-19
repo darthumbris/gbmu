@@ -12,29 +12,24 @@
 #include <fstream>
 #include <iostream>
 
-MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) {
-	std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
-	cgb.seekg(0, std::ios::beg);
-	cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
-	cgb.close();
-
+MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cpu(cpu) {
 	// header.disable_cgb_enhancement();
 	switch (header.cartridge_type()) {
 	case CartridgeType::MBC1:
 	case CartridgeType::MBC1_RAM:
 	case CartridgeType::MBC1_RAM_BATTERY:
-		rom = Rom::make<MCB1>(path, header, header.has_battery());
+		rom = Rom::make<MCB1>(options.path, header, header.has_battery());
 		break;
 	case CartridgeType::MBC2:
 	case CartridgeType::MBC2_BATTERY:
-		rom = Rom::make<MCB2>(path, header, header.has_battery());
+		rom = Rom::make<MCB2>(options.path, header, header.has_battery());
 		break;
 	case CartridgeType::MBC3_TIMER_BATTERY:
 	case CartridgeType::MBC3_TIMER_RAM_BATTERY:
 	case CartridgeType::MBC3:
 	case CartridgeType::MBC3_RAM:
 	case CartridgeType::MBC3_RAM_BATTERY:
-		rom = Rom::make<MCB3>(path, header, header.has_battery());
+		rom = Rom::make<MCB3>(options.path, header, header.has_battery());
 		break;
 	case CartridgeType::MBC5:
 	case CartridgeType::MBC5_RAM:
@@ -42,12 +37,12 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 	case CartridgeType::MBC5_RUMBLE:
 	case CartridgeType::MBC5_RUMBLE_RAM:
 	case CartridgeType::MBC5_RUMBLE_RAM_BATTERY:
-		rom = Rom::make<MCB5>(path, header, header.has_battery(), header.has_rumble());
+		rom = Rom::make<MCB5>(options.path, header, header.has_battery(), header.has_rumble());
 		break;
 	case CartridgeType::ROM_ONLY:
 	case CartridgeType::ROM_RAM:
 	case CartridgeType::ROM_RAM_BATTERY:
-		rom = Rom::make<RomOnly>(path, header, header.has_battery());
+		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
 		break;
 	default:
 		std::cerr << "Cartridge type: " << header.cartridge_type() << " not supported" << std::endl;
@@ -55,7 +50,27 @@ MemoryMap::MemoryMap(const std::string path, Cpu *cpu) : cpu(cpu), header(path) 
 		exit(1);
 		break;
 	}
-	// TODO add a way to force CGB_Enhanced roms in GB mode
+
+	//TODO add a check to see if the boot roms are there otherwise give error
+	if (is_cgb_rom() && !options.force_dmg) {
+		std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
+		cgb.seekg(0, std::ios::beg);
+		cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
+		cgb.close();
+	}
+	else {
+		std::ifstream cgb("dmg_boot.bin", std::ios::binary | std::ios::ate);
+		cgb.seekg(0, std::ios::beg);
+		cgb.read(reinterpret_cast<char *>(&gb_boot_rom), sizeof(gb_boot_rom));
+		cgb.close();
+		header.disable_cgb_enhancement();
+		rom->force_dmg_mode();
+	}
+
+	// check_color_rgb555(0xff, 0x15, 0x1c);
+	// check_color_rgb555(0xe0, 0x1b, 0x24);
+	// check_color_rgb555(0xa5, 0x1d, 0x2d);
+	// check_color_rgb555(0x1A, 0x1A, 0x1A);
 }
 
 MemoryMap::~MemoryMap() {}
@@ -187,7 +202,7 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 	case 0xFF51 ... 0xFF7F:
 		return cpu->get_ppu().read_u8_ppu(addr);
 	case 0xFF50:
-		return io_registers[(std::size_t)(0xFF50 - 0xFF00)];
+		return io_registers[0x50];
 	case 0xFF80 ... 0xFFFE:
 		return high_ram[addr - 0xFF80];
 	case 0xFFFF:
@@ -199,7 +214,7 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 }
 
 uint16_t MemoryMap::read_u16(uint16_t addr) {
-	return ((uint16_t)read_u8(addr) + ((uint16_t)read_u8(addr + 1) << 8));
+	return (static_cast<uint16_t>(read_u8(addr)) + static_cast<uint16_t>(read_u8(addr + 1) << 8));
 }
 
 void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
@@ -218,23 +233,23 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		break;
 	case 0xC000 ... 0xDFFF:
 		if (addr <= 0xCFFF) {
-			work_ram[0][uint16_t(addr & 0x0FFF)] = val;
+			work_ram[0][(addr & 0x0FFF)] = val;
 		} else {
 			if (is_cgb_rom()) {
-				work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000] = val;
+				work_ram[wram_bank_select()][(addr & 0x1FFF) - 0x1000] = val;
 			} else {
-				work_ram[1][uint16_t(addr & 0x0FFF)] = val;
+				work_ram[1][(addr & 0x0FFF)] = val;
 			}
 		}
 		break;
 	case 0xE000 ... 0xFDFF:
 		if (addr <= 0xEFFF) {
-			echo_ram[0][uint16_t(addr & 0x0FFF)] = val;
+			echo_ram[0][(addr & 0x0FFF)] = val;
 		} else {
 			if (is_cgb_rom()) {
-				echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000] = val;
+				echo_ram[wram_bank_select()][(addr & 0x1FFF) - 0x1000] = val;
 			} else {
-				echo_ram[1][uint16_t(addr & 0x0FFF)] = val;
+				echo_ram[1][(addr & 0x0FFF)] = val;
 			}
 		}
 		break;
@@ -309,8 +324,8 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 }
 
 void MemoryMap::write_u16(uint16_t addr, uint16_t val) {
-	write_u8(addr, (uint8_t)(val & 0xFF));
-	write_u8(addr + 1, (uint8_t)((val & 0xFF00) >> 8));
+	write_u8(addr, static_cast<uint8_t>(val & 0xFF));
+	write_u8(addr + 1, static_cast<uint8_t>((val & 0xFF00) >> 8));
 }
 
 uint8_t MemoryMap::wram_bank_select() {

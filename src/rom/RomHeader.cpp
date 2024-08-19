@@ -4,16 +4,10 @@
 #include <fstream>
 
 template <typename IntegerType>
-void bitsToInt(IntegerType &result, const char *bits, bool little_endian) {
+void bits_to_int(IntegerType &result, const char *bits) {
 	result = 0;
-	if (little_endian) {
-		for (int n = sizeof(result) - 1; n >= 0; n--) {
-			result = (result << 8) + (uint8_t)bits[n];
-		}
-	} else {
-		for (int n = 0; n < sizeof(result); n++) {
-			result = (result << 8) + (uint8_t)bits[n];
-		}
+	for (int n = sizeof(result) - 1; n >= 0; n--) {
+		result = (result << 8) + static_cast<uint8_t>(bits[n]);
 	}
 }
 
@@ -233,13 +227,13 @@ RomHeader::RomHeader(const std::string path) {
 	ifs.seekg(0x100);
 	char vals[4];
 	ifs.read(reinterpret_cast<char *>(&vals), sizeof(vals));
-	bitsToInt(_entry_point, vals, true);
+	bits_to_int(_entry_point, vals);
 	ifs.read(reinterpret_cast<char *>(&_logo), sizeof(_logo));
 	ifs.read(reinterpret_cast<char *>(&_name), sizeof(_name));
 	_cgb_flag = get_cgb_flag(ifs.get());
 	char v[2];
 	ifs.read(reinterpret_cast<char *>(&v), sizeof(v));
-	bitsToInt(_license_code, v, true);
+	bits_to_int(_license_code, v);
 	_sgb_flag = ifs.get() == 0x03;
 	uint8_t type = ifs.get();
 	uint8_t rom_size = ifs.get();
@@ -252,7 +246,7 @@ RomHeader::RomHeader(const std::string path) {
 	_header_checksum = ifs.get();
 	char val[2];
 	ifs.read(reinterpret_cast<char *>(&val), sizeof(val));
-	bitsToInt(_global_checksum, val, true);
+	bits_to_int(_global_checksum, val);
 	ifs.close();
 	// print_rom_info();
 }
