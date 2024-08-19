@@ -2,6 +2,8 @@
 #include <SDL2/SDL_keycode.h>
 #include <cstdio>
 
+//TODO add a way to pause the gamestate
+
 void Cpu::handle_input(SDL_Event &e) {
 	SDL_Keymod modstate = SDL_GetModState();
 	switch (e.type) {
