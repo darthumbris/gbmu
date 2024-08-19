@@ -3,7 +3,7 @@ NAME = gbmu
 CXX := clang++
 CXXFLAGS := -std=c++20 -O3
 
-LINKERFLAGS := -lSDL2 -lSDL2_image -L "/home/$(USER)/.capt/root/usr/lib/x86_64-linux-gnu/" -flto
+LINKERFLAGS := -lSDL2 -flto
 
 SRC_DIR = src
 OBJ_DIR = obj
@@ -50,9 +50,6 @@ OBJ := $(addprefix $(OBJ_DIR)/, $(SRC:%.$(SRC_EXT)=%.o))
 SRC :=  $(addprefix $(SRC_DIR)/, $(SRC))
 
 INC := -I $(INC_DIR)
-# INC += -I "usr/include/SDL2/SDL.h"
-# INC += -I "/home/$(USER)/.capt/root/usr/include/SDL2/"
-INC += -I "/home/$(USER)/.capt/root/usr/include/GL"
 
 COM_COLOR   = \033[0;33m
 OBJ_COLOR   = \033[0;36m

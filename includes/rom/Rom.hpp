@@ -48,6 +48,10 @@ public:
 		cgb_on = false;
 	}
 
+	inline void force_cgb_mode() {
+		cgb_on = true;
+	}
+
 protected:
 	std::vector<mem_16k> rom_banks{0};
 	std::vector<mem_8k> ram_banks{0};

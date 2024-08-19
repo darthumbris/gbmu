@@ -33,6 +33,7 @@ enum class instruction_state {
 struct options {
 	bool matrix;
 	bool force_dmg;
+	bool force_cgb;
 	uint8_t darkening;
 	bool color_correction;
 	std::string path;

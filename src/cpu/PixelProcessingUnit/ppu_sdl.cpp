@@ -3,7 +3,6 @@
 #include <cstdint>
 // #include <SDL2/SDL_opengl.h>
 // #include <GL/glu.h>
-// #include <GL/glew.h>
 
 
 //bright color, higlight color, shadow color , unlit color

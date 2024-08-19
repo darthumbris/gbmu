@@ -36,7 +36,7 @@ MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cp
 		break;
 	}
 
-	if (is_cgb_rom() && !options.force_dmg) {
+	if (is_cgb_rom() && !options.force_dmg || options.force_cgb) {
 		std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
 		if (!cgb.is_open()) {
 			std::cerr << "Error: Failed to  open file cgb boot rom." << std::endl;
@@ -45,6 +45,10 @@ MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cp
 		cgb.seekg(0, std::ios::beg);
 		cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 		cgb.close();
+		if (options.force_cgb && !is_cgb_rom()) {
+			header.force_cgb_enhancement();
+			rom->force_cgb_mode();
+		}
 	}
 	else {
 		std::ifstream cgb("dmg_boot.bin", std::ios::binary | std::ios::ate);

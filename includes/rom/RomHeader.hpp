@@ -90,6 +90,10 @@ public:
 	inline void disable_cgb_enhancement() {
 		_cgb_flag = Non_CGB_Mode;
 	}
+
+	inline void force_cgb_enhancement() {
+		_cgb_flag = CGB_Enhanced;
+	}
 };
 
 #endif

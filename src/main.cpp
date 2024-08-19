@@ -2,8 +2,8 @@
 #include "Decoder.hpp"
 #include <SDL2/SDL.h>
 
-#define OPTSTR "i:d:fmc"
-#define USAGE_FMT "%s [-i inputfile] [-f force-dmg-mode] [-m matrix/raster] [-d darkening %%] [-c color-correction]\n"
+#define OPTSTR "i:d:fmcs"
+#define USAGE_FMT "%s [-i inputfile] [-f force-dmg-mode] [-s force cgb mode] [-m matrix/raster] [-d darkening %%] [-c color-correction]\n"
 #define DEFAULT_PROGNAME "gbmu"
 
 void usage(char *progname) {
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	int opt;
-	options options = {0, 0, 0, 0, ""};
+	options options = {0, 0, 0, 0, 0, ""};
 
 	while ((opt = getopt(argc, argv, OPTSTR)) != EOF) {
 		switch (opt) {
@@ -30,6 +30,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'f':
 			options.force_dmg = true;
+			break;
+		case 's':
+			options.force_cgb = true;
 			break;
 		case 'm':
 			options.matrix = true;

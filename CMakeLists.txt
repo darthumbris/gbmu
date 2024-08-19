@@ -2,13 +2,17 @@ cmake_minimum_required(VERSION 3.5)
 
 project(gbmu LANGUAGES CXX)
 
+set(GLEW_INCLUDE_DIR "/home/$(USER)/.capt/root/usr/include/GL")
+
 option(GBMU_VENDORED "Use vendored libraries" OFF)
+
 
 if(GBMU_VENDORED)
     add_subdirectory(vendored/sdl EXCLUDE_FROM_ALL)
 else()
     find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
 	find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
+	find_package(GLEW REQUIRED)
 endif()
 
 if(MSVC)
