@@ -37,6 +37,12 @@ void Cpu::handle_input(SDL_Event &e) {
 				serialize(mmap.get_rom_name() + "_2.state");
 			}
 			break;
+		case SDLK_MINUS:
+			apu.set_volume(0.1);
+			break;
+		case SDLK_PLUS:
+			apu.set_volume(1.0);
+			break;
 		default:
 			break;
 		}

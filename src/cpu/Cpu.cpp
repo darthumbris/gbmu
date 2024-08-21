@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstdint>
 #include <ctime>
+#include <iostream>
 
 Cpu::Cpu(Decoder dec, const options options)
     : decoder(dec), mmap(options, this), ppu(this), interruptor(this), rom_path(options.path) {
@@ -17,6 +18,7 @@ Cpu::Cpu(Decoder dec, const options options)
 	ppu.init_hdma();
 	ppu.init_ppu_mem();
 	mmap.load_ram();
+	apu.init();
 	set_instructions();
 }
 
@@ -59,14 +61,19 @@ void Cpu::tick() {
 		while (ppu.screen_ready())
 			;
 		handle_instruction();
-		uint16_t t_cycle_u8 = static_cast<uint8_t>(t_cycle);
-		interruptor.timer_tick(t_cycle_u8);
-		interruptor.serial_tick(t_cycle_u8);
-		ppu.tick(t_cycle_u8);
-		interruptor.input_tick(t_cycle_u8);
+		// uint16_t t_cycle_u8 = static_cast<uint8_t>(t_cycle);
+		interruptor.timer_tick(static_cast<uint8_t>(t_cycle));
+		interruptor.serial_tick(static_cast<uint8_t>(t_cycle));
+		ppu.tick(t_cycle);
+		apu.tick(t_cycle);
+		interruptor.input_tick(static_cast<uint8_t>(t_cycle));
 		m_cycle = 0;
 		t_cycle = 0;
 	}
+	if (ppu.screen_ready()) {
+		apu.end_frame();
+	}
+	apu.write();
 	event_handler();
 	debug_count += 1;
 }

@@ -1,9 +1,9 @@
 NAME = gbmu
 
 CXX := clang++
-CXXFLAGS := -std=c++20 -O3
+CXXFLAGS := -std=c++20 -O3 -flto
 
-LINKERFLAGS := -lSDL2 -flto
+LINKERFLAGS := -lSDL2 -flto -L /home/$(USER)/.capt/root/usr/lib/x86_64-linux-gnu/ -lSDL2_mixer
 
 SRC_DIR = src
 OBJ_DIR = obj
@@ -42,6 +42,9 @@ SRC =	main.cpp \
         cpu/ops/ret.cpp \
         cpu/ops/rotate_shift.cpp \
         cpu/ops/sub.cpp \
+        cpu/AudioProcessingUnit.cpp \
+        ../vendors/gbapu/src/Apu.cpp \
+        ../vendors/gbapu/src/_internal.cpp \
 
 
 SRC_EXT = cpp
@@ -49,7 +52,7 @@ SRC_EXT = cpp
 OBJ := $(addprefix $(OBJ_DIR)/, $(SRC:%.$(SRC_EXT)=%.o))
 SRC :=  $(addprefix $(SRC_DIR)/, $(SRC))
 
-INC := -I $(INC_DIR)
+INC := -I $(INC_DIR) -I "/home/$(USER)/.capt/root/usr/include/SDL2" -I vendors/gbapu/include
 
 COM_COLOR   = \033[0;33m
 OBJ_COLOR   = \033[0;36m

@@ -12,7 +12,7 @@ if(GBMU_VENDORED)
 else()
     find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
 	find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
-	find_package(GLEW REQUIRED)
+	#find_package(GLEW REQUIRED)
 endif()
 
 if(MSVC)
@@ -58,6 +58,7 @@ add_executable(gbmu
 	src/cpu/ops/ret.cpp
 	src/cpu/ops/rotate_shift.cpp
 	src/cpu/ops/sub.cpp
+	src/cpu/AudioProcessingUnit.cpp
 )
 
 target_include_directories(gbmu PRIVATE includes)

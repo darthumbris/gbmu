@@ -1,4 +1,5 @@
 #include "PixelProcessingUnit.hpp"
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_pixels.h>
 #include <cstdint>
 // #include <SDL2/SDL_opengl.h>

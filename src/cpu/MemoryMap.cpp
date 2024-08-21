@@ -36,7 +36,7 @@ MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cp
 		break;
 	}
 
-	if (is_cgb_rom() && !options.force_dmg || options.force_cgb) {
+	if ((is_cgb_rom() && !options.force_dmg) || options.force_cgb) {
 		std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
 		if (!cgb.is_open()) {
 			std::cerr << "Error: Failed to  open file cgb boot rom." << std::endl;
@@ -190,6 +190,9 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 			return cpu->interrupt().get_serial_transfer_control();
 		case 0xFF01:
 			return cpu->interrupt().get_serial_transfer_data();
+		case 0xFF10 ... 0xFF3F:
+			// return io_registers[addr - 0xFF00];
+			return cpu->get_apu().read_u8(addr);
 		default:
 			return io_registers[addr - 0xFF00];
 		}
@@ -285,6 +288,10 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			DEBUG_MSG("changing interrupt write: %u\n", val & 0x1F);
 			cpu->interrupt().overwrite_interrupt(val & 0x1F);
 			break;
+		case 0xFF10 ... 0xFF3F:
+			cpu->get_apu().write_u8(addr, val);
+			io_registers[addr - 0xFF00] = val;
+		break;
 		default:
 #ifdef DEBUG_MODE
 			if (addr == 0xFF26) {

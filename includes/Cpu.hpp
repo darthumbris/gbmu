@@ -1,6 +1,7 @@
 #ifndef CPU_HPP
 #define CPU_HPP
 
+#include "AudioProcessingUnit.hpp"
 #include "Decoder.hpp"
 #include "Interruptor.hpp"
 #include "MemoryMap.hpp"
@@ -65,6 +66,7 @@ private:
 	Decoder decoder;
 	MemoryMap mmap;
 	PixelProcessingUnit ppu;
+	AudioProcessingUnit apu;
 	Interruptor interruptor;
 	bool halted = false;
 	bool locked = false;
@@ -598,8 +600,13 @@ public:
 	inline PixelProcessingUnit &get_ppu() {
 		return ppu;
 	}
+
 	inline MemoryMap &get_mmap() {
 		return mmap;
+	}
+
+	inline AudioProcessingUnit &get_apu() {
+		return apu;
 	}
 
 	uint16_t cycle_speed(uint16_t cycle);
