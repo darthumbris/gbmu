@@ -55,7 +55,7 @@ void Rom::load_ram() {
 		DEBUG_MSG("Error: Failed to  open file for loading ram.\n");
 		return;
 	}
-	DEBUG_MSG("loading ram from: %s\n", full_path.c_str());
+	// DEBUG_MSG("loading ram from: %s\n", full_path.c_str());
 	for (size_t i = 0; i < ram_banks.size(); i++) {
 		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
 	}

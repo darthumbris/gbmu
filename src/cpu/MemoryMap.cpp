@@ -14,19 +14,19 @@
 
 MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cpu(cpu) {
 	switch (header.cartridge_type()) {
-	case CartridgeType::MBC1 ... MBC1_RAM_BATTERY:
+	case CartridgeType::MBC1... MBC1_RAM_BATTERY:
 		rom = Rom::make<MCB1>(options.path, header, header.has_battery());
 		break;
-	case CartridgeType::MBC2 ... MBC2_BATTERY:
+	case CartridgeType::MBC2... MBC2_BATTERY:
 		rom = Rom::make<MCB2>(options.path, header, header.has_battery());
 		break;
-	case CartridgeType::MBC3_TIMER_BATTERY ... MBC3_RAM_BATTERY:
+	case CartridgeType::MBC3_TIMER_BATTERY... MBC3_RAM_BATTERY:
 		rom = Rom::make<MCB3>(options.path, header, header.has_battery());
 		break;
-	case CartridgeType::MBC5 ... MBC5_RUMBLE_RAM_BATTERY:
+	case CartridgeType::MBC5... MBC5_RUMBLE_RAM_BATTERY:
 		rom = Rom::make<MCB5>(options.path, header, header.has_battery(), header.has_rumble());
 		break;
-	case CartridgeType::ROM_ONLY ... ROM_RAM_BATTERY:
+	case CartridgeType::ROM_ONLY... ROM_RAM_BATTERY:
 		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
 		break;
 	default:
@@ -49,8 +49,7 @@ MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cp
 			header.force_cgb_enhancement();
 			rom->force_cgb_mode();
 		}
-	}
-	else {
+	} else {
 		std::ifstream cgb("dmg_boot.bin", std::ios::binary | std::ios::ate);
 		if (!cgb.is_open()) {
 			std::cerr << "Error: Failed to  open file dmg boot rom." << std::endl;
@@ -291,13 +290,8 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		case 0xFF10 ... 0xFF3F:
 			cpu->get_apu().write_u8(addr, val);
 			io_registers[addr - 0xFF00] = val;
-		break;
+			break;
 		default:
-#ifdef DEBUG_MODE
-			if (addr == 0xFF26) {
-				DEBUG_MSG("writing to audio channel at 0xFF26: %u\n", val);
-			}
-#endif
 			io_registers[addr - 0xFF00] = val;
 			break;
 		}

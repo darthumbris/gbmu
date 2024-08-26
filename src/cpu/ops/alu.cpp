@@ -71,7 +71,7 @@ void Cpu::and_a_imm8() {
 void Cpu::and_a_r8_hl() {
 	uint8_t val = mmap.read_u8(get_16bitregister(registers::HL));
 	uint8_t a_val = get_register(registers::A);
-	DEBUG_MSG("checking and with val: %u from addr: %#06X and val: %u\n", val, get_16bitregister(registers::HL), a_val);
+	// DEBUG_MSG("checking and with val: %u from addr: %#06X and val: %u\n", val, get_16bitregister(registers::HL), a_val);
 	set_register(registers::A, a_val & val);
 	set_flag(flag_registers::z, (a_val & val) == 0);
 	set_flag(flag_registers::n, 0);

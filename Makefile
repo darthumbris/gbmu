@@ -42,9 +42,13 @@ SRC =	main.cpp \
         cpu/ops/ret.cpp \
         cpu/ops/rotate_shift.cpp \
         cpu/ops/sub.cpp \
-        cpu/AudioProcessingUnit.cpp \
-        ../vendors/gbapu/src/Apu.cpp \
-        ../vendors/gbapu/src/_internal.cpp \
+        cpu/AudioProcessingUnit/AudioProcessingUnit.cpp \
+        cpu/AudioProcessingUnit/Blip_Buffer.cpp \
+        cpu/AudioProcessingUnit/Effects_Buffer.cpp \
+        cpu/AudioProcessingUnit/Gb_Apu.cpp \
+        cpu/AudioProcessingUnit/Gb_Oscs.cpp \
+        cpu/AudioProcessingUnit/Multi_Buffer.cpp \
+        
 
 
 SRC_EXT = cpp

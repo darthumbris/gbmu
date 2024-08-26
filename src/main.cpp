@@ -3,7 +3,9 @@
 #include <SDL2/SDL.h>
 
 #define OPTSTR "i:d:fmcs"
-#define USAGE_FMT "%s [-i inputfile] [-f force-dmg-mode] [-s force cgb mode] [-m matrix/raster] [-d darkening %%] [-c color-correction]\n"
+#define USAGE_FMT                                                                                                      \
+	"%s [-i inputfile] [-f force-dmg-mode] [-s force cgb mode] [-m matrix/raster] [-d darkening %%] [-c "              \
+	"color-correction]\n"
 #define DEFAULT_PROGNAME "gbmu"
 
 void usage(char *progname) {
@@ -41,7 +43,7 @@ int main(int argc, char *argv[]) {
 			options.color_correction = true;
 			break;
 		case 'd':
-			options.darkening = static_cast<uint8_t>(strtoul(optarg, NULL, 10));
+			options.darkening = static_cast<uint8_t>(strtoul(optarg, nullptr, 10));
 			if (options.darkening > 100) {
 				printf("darkening options needs to be between 0-100\n");
 				exit(EXIT_FAILURE);

@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cstdint>
 #include <ctime>
-#include <iostream>
 
 Cpu::Cpu(Decoder dec, const options options)
     : decoder(dec), mmap(options, this), ppu(this), interruptor(this), rom_path(options.path) {
@@ -28,7 +27,8 @@ uint16_t Cpu::get_16bitregister(registers reg) const {
 	if (reg == registers::SP) {
 		return sp;
 	}
-	return (static_cast<uint16_t>(u8_registers[reg - registers::BC] << 8) + static_cast<uint16_t>(u8_registers[reg - registers::BC + 1]));
+	return (static_cast<uint16_t>(u8_registers[reg - registers::BC] << 8) +
+	        static_cast<uint16_t>(u8_registers[reg - registers::BC + 1]));
 }
 
 uint8_t Cpu::get_register(registers reg) const {
@@ -58,19 +58,28 @@ void Cpu::set_flag(uint8_t flag, uint8_t val) {
 
 void Cpu::tick() {
 	if (!locked) {
-		while (ppu.screen_ready())
-			;
-		handle_instruction();
-		// uint16_t t_cycle_u8 = static_cast<uint8_t>(t_cycle);
-		interruptor.timer_tick(static_cast<uint8_t>(t_cycle));
-		interruptor.serial_tick(static_cast<uint8_t>(t_cycle));
-		ppu.tick(t_cycle);
-		apu.tick(t_cycle);
-		interruptor.input_tick(static_cast<uint8_t>(t_cycle));
-		m_cycle = 0;
-		t_cycle = 0;
-	}
-	if (ppu.screen_ready()) {
+		bool vblank = false;
+		uint32_t total_clocks = 0;
+		while (!vblank) {
+			handle_instruction();
+			interruptor.timer_tick(static_cast<uint8_t>(t_cycle));
+			interruptor.serial_tick(static_cast<uint8_t>(t_cycle));
+			ppu.tick(t_cycle);
+			if (ppu.screen_ready()) {
+				vblank = true;
+			}
+			apu.tick(t_cycle);
+			interruptor.input_tick(static_cast<uint8_t>(t_cycle));
+
+			total_clocks += t_cycle;
+
+			if (total_clocks > 702240) {
+				vblank = true;
+			}
+
+			m_cycle = 0;
+			t_cycle = 0;
+		}
 		apu.end_frame();
 	}
 	apu.write();
@@ -146,9 +155,9 @@ void Cpu::fetch_instruction() {
 		pc += 1;
 		is_prefixed = true;
 	}
-	#ifdef DEBUG_MODE
+#ifdef DEBUG_MODE
 	debug_print(is_prefixed);
-	#endif
+#endif
 }
 
 void Cpu::set_cycles_left() {

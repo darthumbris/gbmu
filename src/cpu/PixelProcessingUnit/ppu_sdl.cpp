@@ -5,8 +5,7 @@
 // #include <SDL2/SDL_opengl.h>
 // #include <GL/glu.h>
 
-
-//bright color, higlight color, shadow color , unlit color
+// bright color, higlight color, shadow color , unlit color
 constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
 // constexpr uint16_t GB_COLORS_TEST[4] = {0XFC43, 0XEC64, 0XD065, 0X8C63};
 constexpr uint16_t GB_COLORS_VIRTUABOY[4] = {0XFC43, 0XEC64, 0XD065, 0X8C63};
@@ -30,13 +29,13 @@ bool PixelProcessingUnit::init_window() {
 	} else {
 		SDL_CreateWindowAndRenderer(SCREEN_WIDTH * 4, SCREEN_HEIGHT * 4, 0, &data.window, &data.renderer);
 		SDL_SetWindowTitle(data.window, "GBMU");
-		if (data.window == NULL || data.renderer == NULL) {
+		if (data.window == nullptr || data.renderer == nullptr) {
 			printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
 			return false;
 		} else {
 			data.texture = SDL_CreateTexture(data.renderer, SDL_PIXELFORMAT_RGB555, SDL_TEXTUREACCESS_STREAMING,
 			                                 SCREEN_WIDTH, SCREEN_HEIGHT);
-			if (data.texture == NULL) {
+			if (data.texture == nullptr) {
 				printf("texture could not be created! SDL_Error: %s\n", SDL_GetError());
 				return false;
 			}
@@ -47,11 +46,11 @@ bool PixelProcessingUnit::init_window() {
 
 void PixelProcessingUnit::close() {
 	SDL_DestroyTexture(data.texture);
-	data.texture = NULL;
+	data.texture = nullptr;
 	SDL_DestroyRenderer(data.renderer);
-	data.renderer = NULL;
+	data.renderer = nullptr;
 	SDL_DestroyWindow(data.window);
-	data.window = NULL;
+	data.window = nullptr;
 	SDL_Quit();
 }
 
@@ -60,19 +59,19 @@ void PixelProcessingUnit::close() {
 // TODO add a toggle for darkness filter
 // TODO add a shader for: color correction, darkness filter, matrix/rasterize
 void PixelProcessingUnit::render_screen() {
-	const uint16_t* palette_used;
+	const uint16_t *palette_used;
 	switch (current_palette) {
-		case 0:
-			palette_used = GB_COLORS_ORIGNAL;
+	case 0:
+		palette_used = GB_COLORS_ORIGNAL;
 		break;
-		case 1:
-			palette_used = GB_COLORS_VIRTUABOY;
+	case 1:
+		palette_used = GB_COLORS_VIRTUABOY;
 		break;
-		case 2:
-			palette_used = GB_COLORS_LIGHT;
-			break;
-		default:
-			palette_used = GB_COLORS_BW;
+	case 2:
+		palette_used = GB_COLORS_LIGHT;
+		break;
+	default:
+		palette_used = GB_COLORS_BW;
 		break;
 	}
 	if (!is_cgb) {
@@ -82,8 +81,8 @@ void PixelProcessingUnit::render_screen() {
 	}
 	SDL_RenderPresent(data.renderer);
 	SDL_RenderClear(data.renderer);
-	SDL_UpdateTexture(data.texture, NULL, rgb555_framebuffer, SCREEN_WIDTH * sizeof(uint16_t));
-	SDL_RenderCopy(data.renderer, data.texture, NULL, NULL);
+	SDL_UpdateTexture(data.texture, nullptr, rgb555_framebuffer, SCREEN_WIDTH * sizeof(uint16_t));
+	SDL_RenderCopy(data.renderer, data.texture, nullptr, nullptr);
 	SDL_RenderPresent(data.renderer);
 	draw_screen = false;
 }
@@ -97,8 +96,7 @@ void PixelProcessingUnit::increase_palette() {
 void PixelProcessingUnit::decrease_palette() {
 	if (current_palette == 0) {
 		current_palette = MAX_PALETTES - 1;
-	}
-	else {
+	} else {
 		current_palette -= 1;
 	}
 }

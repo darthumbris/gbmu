@@ -1,7 +1,7 @@
 #ifndef CPU_HPP
 #define CPU_HPP
 
-#include "AudioProcessingUnit.hpp"
+#include "AudioProcessingUnit/AudioProcessingUnit.hpp"
 #include "Decoder.hpp"
 #include "Interruptor.hpp"
 #include "MemoryMap.hpp"
