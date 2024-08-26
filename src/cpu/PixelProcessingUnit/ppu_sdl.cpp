@@ -1,9 +1,10 @@
 #include "PixelProcessingUnit.hpp"
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_pixels.h>
-#include <cstdint>
+// #include <SDL2/SDL.h>
+// #include <glew.h>
+// #include <SDL2/SDL_pixels.h>
+// #include <cstdint>
 // #include <SDL2/SDL_opengl.h>
-// #include <GL/glu.h>
+// #include <glu.h>
 
 // bright color, higlight color, shadow color , unlit color
 constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};

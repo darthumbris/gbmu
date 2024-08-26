@@ -1,12 +1,10 @@
 #include "AudioProcessingUnit/AudioProcessingUnit.hpp"
 #include "MemoryMap.hpp"
-#include "SDL_error.h"
+#include "SDL2/SDL_error.h"
 #include "debug.hpp"
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_mutex.h>
 #include <SDL2/SDL_stdinc.h>
-#include <SDL_audio.h>
-#include <SDL_mixer.h>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>

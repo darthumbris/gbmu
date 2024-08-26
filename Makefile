@@ -3,7 +3,7 @@ NAME = gbmu
 CXX := clang++
 CXXFLAGS := -std=c++20 -O3 -flto
 
-LINKERFLAGS := -lSDL2 -flto -L /home/$(USER)/.capt/root/usr/lib/x86_64-linux-gnu/ -lSDL2_mixer
+LINKERFLAGS := -lSDL2 -flto
 
 SRC_DIR = src
 OBJ_DIR = obj
@@ -55,7 +55,7 @@ SRC_EXT = cpp
 OBJ := $(addprefix $(OBJ_DIR)/, $(SRC:%.$(SRC_EXT)=%.o))
 SRC :=  $(addprefix $(SRC_DIR)/, $(SRC))
 
-INC := -I $(INC_DIR) -I "/home/$(USER)/.capt/root/usr/include/SDL2" -I vendors/gbapu/include
+INC := -I $(INC_DIR)
 
 COM_COLOR   = \033[0;33m
 OBJ_COLOR   = \033[0;36m

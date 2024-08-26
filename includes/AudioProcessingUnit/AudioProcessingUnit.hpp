@@ -3,8 +3,7 @@
 
 #include "AudioProcessingUnit/Gb_Apu.h"
 #include "AudioProcessingUnit/Multi_Buffer.h"
-#include "SDL_mutex.h"
-#include <SDL_mixer.h>
+#include "SDL2/SDL_mutex.h"
 #include <cstdint>
 #include <fstream>
 
