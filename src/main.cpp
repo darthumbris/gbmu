@@ -13,6 +13,9 @@ void usage(char *progname) {
 	exit(EXIT_FAILURE);
 }
 
+//TODO check performance optimizations
+//TODO allow file drag-drop (SDL_DropEvent), easy reset,
+
 int main(int argc, char *argv[]) {
 
 	if (argc < 2) {
@@ -26,6 +29,7 @@ int main(int argc, char *argv[]) {
 		switch (opt) {
 		case 'i':
 			if (!std::ifstream(optarg, std::ios::binary).is_open()) {
+				printf("Failed to open file: %s\n", optarg);
 				exit(EXIT_FAILURE);
 			}
 			options.path = optarg;

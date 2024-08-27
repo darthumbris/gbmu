@@ -3,7 +3,7 @@ NAME = gbmu
 CXX := clang++
 CXXFLAGS := -std=c++20 -O3 -flto
 
-LINKERFLAGS := -lSDL2 -flto
+LINKERFLAGS := -lSDL2 -flto -L "vendors/glew-2.2.0/build/lib" -lGL -lGLU -lGLEW -lglfw
 
 SRC_DIR = src
 OBJ_DIR = obj
@@ -55,7 +55,7 @@ SRC_EXT = cpp
 OBJ := $(addprefix $(OBJ_DIR)/, $(SRC:%.$(SRC_EXT)=%.o))
 SRC :=  $(addprefix $(SRC_DIR)/, $(SRC))
 
-INC := -I $(INC_DIR)
+INC := -I $(INC_DIR) -I "vendors/glew-2.2.0/include/GL"
 
 COM_COLOR   = \033[0;33m
 OBJ_COLOR   = \033[0;36m

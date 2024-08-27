@@ -1,0 +1,11 @@
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/glew.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/glew_s.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/glewinfo.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/visualinfo.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/uninstall.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/edit_cache.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/rebuild_cache.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/list_install_components.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/install.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/install/local.dir
+/home/shoogenb/Documents/Advanced/gbmu/vendors/glew-2.2.0/build/CMakeFiles/install/strip.dir

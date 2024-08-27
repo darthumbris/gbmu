@@ -222,6 +222,8 @@ std::string print_cartridge_type(CartridgeType c) {
 
 RomHeader::RomHeader(const std::string path) {
 	std::ifstream ifs;
+
+	//TODO have a check here if the file is bigger than 0x100 and also a check if valid rom
 	ifs.open(path.c_str(), std::ifstream::binary);
 
 	ifs.seekg(0x100);

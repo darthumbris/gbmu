@@ -6,11 +6,14 @@
 #include <SDL2/SDL_pixels.h>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	lcd_clock = 0;
-	init_window();
+	if (!init_window()) {
+		exit(EXIT_FAILURE);
+	}
 	data.status = false;
 	ctrl = {};
 	l_status = {};

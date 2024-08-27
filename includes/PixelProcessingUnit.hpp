@@ -6,6 +6,9 @@
 #include <cstdint>
 #include <fstream>
 
+#include <glew.h>
+#include <GL/glu.h>
+
 class Cpu;
 
 // void check_color_rgb555(uint8_t red, uint8_t green, uint8_t blue);
@@ -27,9 +30,15 @@ constexpr uint8_t MAX_PALETTES = 4;
 
 struct sdl_data {
 	SDL_Window *window;
-	SDL_Texture *texture;
 	SDL_Renderer *renderer;
+	SDL_GLContext context;
+	GLuint program;
+	GLint vertex_pos2d_loc = -1;
+	GLuint vbo = 0;
+	GLuint ibo = 0;
+	GLuint textere_id;
 	bool status;
+	bool matrix;
 };
 
 enum ppu_modes { Horizontal_Blank, Vertical_Blank, OAM_Scan, Pixel_Drawing };
@@ -190,6 +199,8 @@ private:
 	void disable_screen();
 	void enable_screen();
 
+	bool init_gl();
+
 public:
 	PixelProcessingUnit(Cpu *cpu);
 	~PixelProcessingUnit();
@@ -206,6 +217,8 @@ public:
 	inline void set_status(bool val) {
 		data.status = val;
 	}
+
+	inline void toggle_matrix() {data.matrix = !data.matrix;}
 
 	uint8_t read_u8_ppu(uint16_t addr);
 	void write_u8_ppu(uint16_t addr, uint8_t val);
