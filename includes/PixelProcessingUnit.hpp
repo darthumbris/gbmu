@@ -39,6 +39,8 @@ struct sdl_data {
 	GLuint textere_id;
 	bool status;
 	bool matrix;
+	bool color_correction;
+	bool darkening;
 };
 
 enum ppu_modes { Horizontal_Blank, Vertical_Blank, OAM_Scan, Pixel_Drawing };
@@ -219,6 +221,8 @@ public:
 	}
 
 	inline void toggle_matrix() {data.matrix = !data.matrix;}
+	inline void toggle_color_correction() {data.color_correction = !data.color_correction;}
+	inline void toggle_darkening() {data.darkening = !data.darkening;}
 
 	uint8_t read_u8_ppu(uint16_t addr);
 	void write_u8_ppu(uint16_t addr, uint8_t val);

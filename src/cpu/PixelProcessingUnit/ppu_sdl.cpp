@@ -64,8 +64,8 @@ bool PixelProcessingUnit::init_gl() {
 
 	data.program = glCreateProgram();
 
-	if (!load_shader_file(vertex_shader, GL_VERTEX_SHADER, "Assets/shaders/vertex_shader.vert") ||
-	    !load_shader_file(fragment_shader, GL_FRAGMENT_SHADER, "Assets/shaders/fragment_shader.frag")) {
+	if (!load_shader_file(vertex_shader, GL_VERTEX_SHADER, "Assets/shaders/shader.vert") ||
+	    !load_shader_file(fragment_shader, GL_FRAGMENT_SHADER, "Assets/shaders/shader.frag")) {
 		return false;
 	}
 
@@ -206,6 +206,10 @@ void PixelProcessingUnit::render_screen() {
 
 	//setting the uniform for the dot matrix shader
 	glProgramUniform1i(data.program, 0, data.matrix);
+	//setting the uniform for the color correction
+	glProgramUniform1i(data.program, 1, data.color_correction);
+	//setting the uniform for the darkening
+	glProgramUniform1i(data.program, 2, data.darkening);
 
 	glEnableVertexAttribArray(data.vertex_pos2d_loc);
 	glBindBuffer(GL_ARRAY_BUFFER, data.vbo);

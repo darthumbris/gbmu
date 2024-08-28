@@ -2,7 +2,7 @@
 #include <SDL2/SDL_keycode.h>
 #include <cstdio>
 
-//TODO add a way to pause the gamestate
+// TODO add a way to pause the gamestate
 
 void Cpu::handle_input(SDL_Event &e) {
 	SDL_Keymod modstate = SDL_GetModState();
@@ -16,30 +16,25 @@ void Cpu::handle_input(SDL_Event &e) {
 			DEBUG_MSG("breakpoint: %zu\n", debug_count);
 			break;
 		case SDLK_p:
-			if (modstate & KMOD_SHIFT) {
-				ppu.decrease_palette();
-			}
-			else {
-				ppu.increase_palette();
-			}
+			modstate &KMOD_SHIFT ? ppu.decrease_palette() : ppu.increase_palette();
 			break;
 		case SDLK_F1:
-			if (modstate & KMOD_SHIFT) {
-				deserialize(mmap.get_rom_name() + "_1.state");
-			} else {
-				serialize(mmap.get_rom_name() + "_1.state");
-			}
+			modstate &KMOD_SHIFT ? deserialize(mmap.get_rom_name() + "_1.state")
+			                     : serialize(mmap.get_rom_name() + "_1.state");
 			break;
 		case SDLK_F2:
-			if (modstate & KMOD_SHIFT) {
-				deserialize(mmap.get_rom_name() + "_2.state");
-			} else {
-				serialize(mmap.get_rom_name() + "_2.state");
-			}
+			modstate &KMOD_SHIFT ? deserialize(mmap.get_rom_name() + "_2.state")
+			                     : serialize(mmap.get_rom_name() + "_2.state");
 			break;
 		case SDLK_m:
 			ppu.toggle_matrix();
-		break;
+			break;
+		case SDLK_c:
+			ppu.toggle_color_correction();
+			break;
+		case SDLK_d:
+			ppu.toggle_darkening();
+			break;
 		case SDLK_MINUS:
 			apu.set_volume(0.1);
 			break;
