@@ -3,10 +3,6 @@
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_video.h>
 #include <cstdlib>
-// #include <SDL2/SDL.h>
-// #include <SDL2/SDL_pixels.h>
-// #include <cstdint>
-// #include <SDL2/SDL_opengl.h>
 
 // bright color, higlight color, shadow color , unlit color
 constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
@@ -17,7 +13,8 @@ constexpr uint16_t GB_COLORS_BW[4] = {0XF7BD, 0XDAD6, 0XCA52, 0X8C63};
 const GLenum tex_format = GL_BGRA;
 const GLint tex_internal_format = GL_RGB5;
 const GLenum tex_type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-// const GLenum tex_type =   GL_UNSIGNED_SHORT_5_5_5_1;
+
+//TODO cleanup some of the gl code stuff
 
 bool load_shader(GLuint &shader_id, GLenum shader_type, const GLchar *shader_source) {
 	shader_id = glCreateShader(shader_type);
@@ -206,7 +203,7 @@ void PixelProcessingUnit::render_screen() {
 	// setting the uniform for the dot matrix shader
 	glProgramUniform1i(data.program, 0, data.matrix);
 	// setting the uniform for the color correction
-	glProgramUniform1i(data.program, 1, data.color_correction);
+	glProgramUniform1i(data.program, 1, data.color_correction && is_cgb);
 	// setting the uniform for the darkening
 	glProgramUniform1i(data.program, 2, data.darkening);
 

@@ -1,7 +1,10 @@
 #include "rom/MCB2.hpp"
 #include "debug.hpp"
+#include <cstdint>
 #include <fstream>
 #include <iostream>
+
+//TODO check if rom_banks.size() check is needed
 
 uint8_t MCB2::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -10,14 +13,14 @@ uint8_t MCB2::read_u8(uint16_t addr) {
 	case 0x4000 ... 0x7FFF:
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
-		if (ram_enable) {
+		if (ram_enable && ram_banks.size()) {
 			return ram_banks[0][addr - 0xA000];
 		}
+		return 0xFF;
 	default:
 		std::cerr << "should not reach this" << std::endl;
-		break;
+		return 0xFF;
 	}
-	return 0xFF;
 }
 
 void MCB2::write_u8(uint16_t addr, uint8_t val) {
@@ -32,7 +35,7 @@ void MCB2::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	case 0xA000 ... 0xBFFF:
-		if (ram_enable) {
+		if (ram_enable && ram_banks.size()) {
 			ram_banks[0][addr - 0xA000] = val;
 		}
 		break;

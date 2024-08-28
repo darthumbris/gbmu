@@ -10,7 +10,10 @@ uint8_t MCB3::read_u8(uint16_t addr) {
 	case 0x4000 ... 0x7FFF:
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
-		return ram_banks[ram_bank][addr - 0xA000];
+		if (ram_enable && ram_banks.size()) {
+			return ram_banks[ram_bank][addr - 0xA000];
+		}
+		return 0xFF;
 	default:
 		std::cerr << "should not reach this" << std::endl;
 		return 0xFF;
@@ -37,7 +40,7 @@ void MCB3::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	case 0xA000 ... 0xBFFF:
-		if (ram_enable) {
+		if (ram_enable && ram_banks.size()) {
 			DEBUG_MSG("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
 			ram_banks[ram_bank][addr - 0xA000] = val;
 		}

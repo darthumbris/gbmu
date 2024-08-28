@@ -250,7 +250,7 @@ RomHeader::RomHeader(const std::string path) {
 	ifs.read(reinterpret_cast<char *>(&val), sizeof(val));
 	bits_to_int(_global_checksum, val);
 	ifs.close();
-	// print_rom_info();
+	print_rom_info();
 }
 
 RomHeader::~RomHeader() {}

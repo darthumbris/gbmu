@@ -19,7 +19,7 @@ uint8_t MCB1::read_u8(uint16_t addr) {
 		}
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
-		if (ram_enable) {
+		if (ram_enable && ram_banks.size()) {
 			return ram_banks[ram_bank][addr - 0xA000];
 		}
 		return 0xFF;

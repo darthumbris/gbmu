@@ -11,7 +11,6 @@
 #endif
 
 inline void debug_printf(const char *const msg, ...) {
-	// static int count = 1;
 	char buff[512];
 	va_list args;
 
@@ -19,10 +18,6 @@ inline void debug_printf(const char *const msg, ...) {
 	vsprintf(buff, msg, args);
 	va_end(args);
 	printf("%s", buff);
-	
-	// printf("%d: %s\n", count, buff);
-	// count++;
-
 }
 
 #endif

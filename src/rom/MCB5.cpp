@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 
+//TODO check why Oracle of ages/seasons doesn't work properly
+
 MCB5::MCB5(const std::string rom_path, RomHeader rheader, bool battery, bool rumble)
     : Rom(rom_path, rheader), battery(battery), rumble(rumble) {
 	ram_bank = 0;
@@ -27,7 +29,7 @@ uint8_t MCB5::read_u8(uint16_t addr) {
 	case 0x4000 ... 0x7FFF:
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
-		if (ram_enable) {
+		if (ram_enable && ram_banks.size()) {
 			if (addr == 0xA511) {
 				DEBUG_MSG("ram_bank: %u\n", ram_bank);
 			}
@@ -55,7 +57,7 @@ void MCB5::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	case 0xA000 ... 0xBFFF:
-		if (ram_enable) {
+		if (ram_enable && ram_banks.size()) {
 			if (addr == 0xA511) {
 				DEBUG_MSG("writing %u to ram_bank: %u\n", val, ram_bank);
 			}

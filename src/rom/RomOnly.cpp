@@ -11,7 +11,7 @@ uint8_t RomOnly::read_u8(uint16_t addr) {
 	case 0x4000 ... 0x7FFF:
 		return rom_banks[1][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
-		if (ram_enable) {
+		if (ram_enable && ram_banks.size()) {
 			return ram_banks[0][addr - 0xA000];
 		}
 		return 0xFF;
