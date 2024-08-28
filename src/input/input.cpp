@@ -2,8 +2,6 @@
 #include <SDL2/SDL_keycode.h>
 #include <cstdio>
 
-// TODO add a way to pause the gamestate
-
 void Cpu::handle_input(SDL_Event &e) {
 	SDL_Keymod modstate = SDL_GetModState();
 	switch (e.type) {
@@ -29,6 +27,9 @@ void Cpu::handle_input(SDL_Event &e) {
 		case SDLK_m:
 			ppu.toggle_matrix();
 			break;
+		case SDLK_h:
+			paused = !paused;
+			break;
 		case SDLK_c:
 			ppu.toggle_color_correction();
 			break;
@@ -38,7 +39,7 @@ void Cpu::handle_input(SDL_Event &e) {
 		case SDLK_MINUS:
 			apu.set_volume(0.1);
 			break;
-		case SDLK_PLUS:
+		case SDLK_EQUALS:
 			apu.set_volume(1.0);
 			break;
 		default:

@@ -68,6 +68,7 @@ private:
 	Interruptor interruptor;
 	bool halted = false;
 	bool locked = false;
+	bool paused = false;
 	uint16_t m_cycle;
 	uint16_t t_cycle;
 	int16_t halt_cycle = 0;

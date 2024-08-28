@@ -78,7 +78,7 @@ void MCB5::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&rom_bank), sizeof(rom_bank));
 	f.write(reinterpret_cast<const char *>(&ram_bank), sizeof(ram_bank));
 	f.write(reinterpret_cast<const char *>(&ram_enable), sizeof(ram_enable));
-	std::cout << "done serializing rom" << std::endl;
+	DEBUG_MSG("done serializing rom");
 }
 
 void MCB5::deserialize(std::ifstream &f) {
@@ -91,7 +91,7 @@ void MCB5::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&rom_bank), sizeof(rom_bank));
 	f.read(reinterpret_cast<char *>(&ram_bank), sizeof(ram_bank));
 	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
-	std::cout << "done deserializing rom" << std::endl;
+	DEBUG_MSG("done deserializing rom");
 }
 
 void MCB5::save_ram() {

@@ -61,6 +61,7 @@ add_executable(gbmu
 	src/cpu/AudioProcessingUnit/AudioProcessingUnit.cpp
 	src/cpu/AudioProcessingUnit/Blip_Buffer.cpp
 	src/cpu/AudioProcessingUnit/Gb_Apu.cpp
+	src/cpu/AudioProcessingUnit/Gb_Apu_State.cpp
 	src/cpu/AudioProcessingUnit/Gb_Oscs.cpp
 	src/cpu/AudioProcessingUnit/Multi_Buffer.cpp
 )

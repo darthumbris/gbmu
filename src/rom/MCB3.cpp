@@ -64,7 +64,7 @@ void MCB3::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&day_l), sizeof(day_l));
 	f.write(reinterpret_cast<const char *>(&day_h), sizeof(day_h));
 	f.write(reinterpret_cast<const char *>(&latched), sizeof(latched));
-	std::cout << "done serializing rom" << std::endl;
+	DEBUG_MSG("done serializing rom");
 }
 
 void MCB3::deserialize(std::ifstream &f) {
@@ -83,7 +83,7 @@ void MCB3::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&day_l), sizeof(day_l));
 	f.read(reinterpret_cast<char *>(&day_h), sizeof(day_h));
 	f.read(reinterpret_cast<char *>(&latched), sizeof(latched));
-	std::cout << "done deserializing rom" << std::endl;
+	DEBUG_MSG("done deserializing rom");
 }
 
 void MCB3::save_ram() {

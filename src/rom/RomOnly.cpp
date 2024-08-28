@@ -1,4 +1,5 @@
 #include "rom/RomOnly.hpp"
+#include "debug.hpp"
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -47,7 +48,7 @@ void RomOnly::serialize(std::ofstream &f) {
 		f.write(reinterpret_cast<const char *>(&ram_banks[i]), sizeof(ram_banks[i]));
 	}
 	f.write(reinterpret_cast<const char *>(&ram_enable), sizeof(ram_enable));
-	std::cout << "done serializing rom" << std::endl;
+	DEBUG_MSG("done serializing rom");
 }
 
 void RomOnly::deserialize(std::ifstream &f) {
@@ -58,7 +59,7 @@ void RomOnly::deserialize(std::ifstream &f) {
 		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
 	}
 	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
-	std::cout << "done deserializing rom" << std::endl;
+	DEBUG_MSG("done deserializing rom");
 }
 
 void RomOnly::save_ram() {

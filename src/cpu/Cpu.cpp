@@ -57,7 +57,7 @@ void Cpu::set_flag(uint8_t flag, uint8_t val) {
 }
 
 void Cpu::tick() {
-	if (!locked) {
+	if (!locked && !paused) {
 		bool vblank = false;
 		uint32_t total_clocks = 0;
 		while (!vblank) {
@@ -81,8 +81,8 @@ void Cpu::tick() {
 			t_cycle = 0;
 		}
 		apu.end_frame();
+		apu.write();
 	}
-	apu.write();
 	event_handler();
 	debug_count += 1;
 }
