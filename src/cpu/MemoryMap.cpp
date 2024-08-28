@@ -368,6 +368,5 @@ void MemoryMap::save_ram() {
 }
 
 void MemoryMap::load_ram() {
-	// TODO maybe have it optionally load the ram?
 	rom->load_ram();
 }

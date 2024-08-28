@@ -42,8 +42,6 @@ struct options {
 
 enum instruction_list { Unprefixed, Prefixed };
 
-// TODO handle Audio (is needed for proper interrupt times etc)
-
 class Cpu {
 private:
 	/*

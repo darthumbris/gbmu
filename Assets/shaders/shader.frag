@@ -53,8 +53,10 @@ void main() {
         // Apply black parts of matrix
         vec2 uvDots = vec2(fract(indexX / pixSizeX), fract(indexY / pixSizeY));
         float circle = 1.0 - step(0.5, length(uvDots - .5));
-        float inv_circle = step(0.5, length(uvDots - .5)) - 1.0;
         matrix_col = tex_col * circle;
+        if (circle != 1.0) {
+            matrix_col = vec4(vec3(0.5), 1.0);
+        }
     } else {
         matrix_col = tex_col;
     }

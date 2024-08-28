@@ -443,11 +443,6 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 
 		y = (tile_address >> 1) & 7;
 
-		// TODO check if this is indeed unnecesary
-		//  if (atr.y_flip) {
-		//  	y = 7 - y;
-		//  }
-
 		uint8_t tile_dat;
 		uint16_t tile_index = (tile_address >> 4) & 0x1FF;
 		for (uint8_t pixelx = 0; pixelx < 8; pixelx++) {

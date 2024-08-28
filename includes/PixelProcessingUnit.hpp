@@ -2,6 +2,7 @@
 #define PIXELPROCESSINGUNIT_HPP
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_video.h>
 #include <array>
 #include <cstdint>
 #include <fstream>
@@ -220,9 +221,15 @@ public:
 		data.status = val;
 	}
 
-	inline void toggle_matrix() {data.matrix = !data.matrix;}
-	inline void toggle_color_correction() {data.color_correction = !data.color_correction;}
-	inline void toggle_darkening() {data.darkening = !data.darkening;}
+	inline void toggle_matrix() {
+		data.matrix = !data.matrix;
+	}
+	inline void toggle_color_correction() {
+		data.color_correction = !data.color_correction;
+	}
+	inline void toggle_darkening() {
+		data.darkening = !data.darkening;
+	}
 
 	uint8_t read_u8_ppu(uint16_t addr);
 	void write_u8_ppu(uint16_t addr, uint8_t val);
@@ -236,6 +243,10 @@ public:
 	}
 	inline void screen_done() {
 		draw_screen = false;
+	}
+
+	SDL_Window *window() {
+		return data.window;
 	}
 
 	void switch_cgb_dma(uint8_t value);

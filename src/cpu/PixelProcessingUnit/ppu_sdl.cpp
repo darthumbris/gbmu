@@ -14,9 +14,9 @@ constexpr uint16_t GB_COLORS_VIRTUABOY[4] = {0XFC43, 0XEC64, 0XD065, 0X8C63};
 constexpr uint16_t GB_COLORS_LIGHT[4] = {0XE75D, 0XCF3D, 0XB2B7, 0X8002};
 constexpr uint16_t GB_COLORS_BW[4] = {0XF7BD, 0XDAD6, 0XCA52, 0X8C63};
 
-const GLenum tex_format =  GL_BGRA;
+const GLenum tex_format = GL_BGRA;
 const GLint tex_internal_format = GL_RGB5;
-const GLenum tex_type =   GL_UNSIGNED_SHORT_1_5_5_5_REV;
+const GLenum tex_type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
 // const GLenum tex_type =   GL_UNSIGNED_SHORT_5_5_5_1;
 
 bool load_shader(GLuint &shader_id, GLenum shader_type, const GLchar *shader_source) {
@@ -75,10 +75,10 @@ bool PixelProcessingUnit::init_gl() {
 	glGetProgramiv(data.program, GL_LINK_STATUS, &success);
 	if (success == GL_FALSE) {
 		GLchar log[1024];
-        int32_t error_len;
-        glGetShaderInfoLog(data.program, 1024, &error_len, log);
-        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to link shaders: %s\n", log);
-        glDeleteProgram(data.program);
+		int32_t error_len;
+		glGetShaderInfoLog(data.program, 1024, &error_len, log);
+		SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to link shaders: %s\n", log);
+		glDeleteProgram(data.program);
 		printf("Error linking program %d errorlen: %d, error_log: %s\n", data.program, error_len, log);
 		return false;
 	} else {
@@ -107,13 +107,14 @@ bool PixelProcessingUnit::init_gl() {
 
 	glGenTextures(1, &data.textere_id);
 	glBindTexture(GL_TEXTURE_2D, data.textere_id);
-	glTexImage2D(GL_TEXTURE_2D, 0, tex_internal_format, SCREEN_WIDTH, SCREEN_HEIGHT, 0, tex_format, tex_type, (GLvoid*)rgb555_framebuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, tex_internal_format, SCREEN_WIDTH, SCREEN_HEIGHT, 0, tex_format, tex_type,
+	             (GLvoid *)rgb555_framebuffer);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	
-	//setting the uniform for the dot matrix shader
+
+	// setting the uniform for the dot matrix shader
 	glProgramUniform1i(data.program, 0, data.matrix);
 	return true;
 }
@@ -169,7 +170,7 @@ void PixelProcessingUnit::close() {
 
 	SDL_GL_DeleteContext(data.context);
 
-	//TODO delete the gl stuff 
+	// TODO properly delete the gl stuff
 	SDL_DestroyRenderer(data.renderer);
 	data.renderer = nullptr;
 	SDL_DestroyWindow(data.window);
@@ -177,8 +178,6 @@ void PixelProcessingUnit::close() {
 	SDL_Quit();
 }
 
-// TODO add a toggle for color correction
-// TODO add a toggle for darkness filter
 void PixelProcessingUnit::render_screen() {
 	const uint16_t *palette_used;
 	switch (current_palette) {
@@ -204,11 +203,11 @@ void PixelProcessingUnit::render_screen() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glUseProgram(data.program);
 
-	//setting the uniform for the dot matrix shader
+	// setting the uniform for the dot matrix shader
 	glProgramUniform1i(data.program, 0, data.matrix);
-	//setting the uniform for the color correction
+	// setting the uniform for the color correction
 	glProgramUniform1i(data.program, 1, data.color_correction);
-	//setting the uniform for the darkening
+	// setting the uniform for the darkening
 	glProgramUniform1i(data.program, 2, data.darkening);
 
 	glEnableVertexAttribArray(data.vertex_pos2d_loc);
@@ -218,10 +217,10 @@ void PixelProcessingUnit::render_screen() {
 
 	glActiveTexture(GL_TEXTURE0);
 
-	//Update texture
+	// Update texture
 	glBindTexture(GL_TEXTURE_2D, data.textere_id);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
-            tex_format, tex_type, (GLvoid*) rgb555_framebuffer);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, tex_format, tex_type,
+	                (GLvoid *)rgb555_framebuffer);
 	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
 	glDisableVertexAttribArray(data.vertex_pos2d_loc);
 	glUseProgram(NULL);
