@@ -282,9 +282,6 @@ void Gb_Apu::write_register(blip_time_t time, unsigned addr, int data) {
 
 	blip_time_t old_time = last_time;
 	run_until(time);
-	if (old_time != last_time) {
-		// std::cout << "run_until: " << last_time - old_time << std::endl;
-	}
 
 	if (addr >= wave_ram) {
 		wave.write(addr, data);
@@ -342,13 +339,11 @@ int Gb_Apu::read_register(blip_time_t time, unsigned addr) {
 
 	// Status register
 	if (addr == status_reg) {
-		// DEBUG_MSG("channels enabled: %u %u %u %u\n", square1.enabled, square2.enabled, wave.enabled, noise.enabled);
 		data &= 0xF0;
 		data |= (int)square1.enabled << 0;
 		data |= (int)square2.enabled << 1;
 		data |= (int)wave.enabled << 2;
 		data |= (int)noise.enabled << 3;
 	}
-	// DEBUG_MSG("looking at reg: %d\n", reg);
 	return data;
 }

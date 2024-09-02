@@ -1,6 +1,5 @@
 #include "Interruptor.hpp"
 #include "Cpu.hpp"
-#include "debug.hpp"
 #include <cstdint>
 
 Interruptor::Interruptor(Cpu *cpu) : cpu(cpu) {}
@@ -14,7 +13,6 @@ void Interruptor::timer_tick(uint8_t cycle) {
 		timer_divider++;
 	}
 
-	DEBUG_MSG("timer_enable: %u\n", timer_enable);
 	if (timer_enable) {
 		tima_cycle += cycle;
 		uint16_t increment_freq = 0;
@@ -33,11 +31,8 @@ void Interruptor::timer_tick(uint8_t cycle) {
 			break;
 		}
 
-		DEBUG_MSG("freq: %u tima_cycle: %u cycle: %u\n", increment_freq, tima_cycle, cycle);
-
 		while (tima_cycle >= increment_freq) {
 			tima_cycle -= increment_freq;
-			DEBUG_MSG("tima: %u\n", timer_counter);
 			if (timer_counter == 0xFF) {
 				timer_counter = timer_modulo;
 				set_interrupt(interrupt_type::Timer);
@@ -49,7 +44,6 @@ void Interruptor::timer_tick(uint8_t cycle) {
 
 void Interruptor::serial_tick(uint8_t cycle) {
 	if ((serial_transfer_control & mask7) && (serial_transfer_control & mask0)) {
-		DEBUG_MSG("serial cycle: %u serial count: %d\n", serial_cycle, serial_count);
 		serial_cycle += cycle;
 
 		if (serial_count < 0) {
@@ -63,7 +57,6 @@ void Interruptor::serial_tick(uint8_t cycle) {
 		if (serial_cycle >= serial_cycles_max) {
 			if (serial_count > 7) {
 				serial_transfer_control &= 0x7F;
-				DEBUG_MSG("setting 0xFF02: %u\n", serial_transfer_control);
 				set_interrupt(interrupt_type::Serial);
 				serial_count = -1;
 				return;
@@ -73,7 +66,6 @@ void Interruptor::serial_tick(uint8_t cycle) {
 			sb <<= 1;
 			sb |= 0x01;
 			serial_transfer_data = sb;
-			DEBUG_MSG("setting 0xFF01: %u\n", sb);
 			serial_cycle -= serial_cycles_max;
 			serial_count += 1;
 		}
@@ -103,7 +95,6 @@ void Interruptor::check_cycles(uint16_t cycle, instruction_state state) {
 }
 
 bool Interruptor::handle_interrupt(instruction_state state) {
-	// DEBUG_MSG("i %u s %u m %u\n", pending(), state, get_ime());
 	interrupt_occured = false;
 	if (!(state == instruction_state::Ready && pending() != interrupt_type::NoInterrupt && process_interrupts)) {
 		return false;
@@ -135,13 +126,10 @@ void Interruptor::process_interrupt(interrupt_type i) {
 	cpu->process_interrupt(i);
 	process_interrupts = false;
 	interrupt &= ~static_cast<uint8_t>(i);
-	DEBUG_MSG("changing interrupt process: %u\n", interrupt);
 }
 
 void Interruptor::set_interrupt(interrupt_type i) {
 	interrupt |= static_cast<uint8_t>(i);
-	DEBUG_MSG("changing interrupt set: %u\n", interrupt);
-	DEBUG_MSG("interrupt requested: %u\n", i);
 }
 
 void Interruptor::overwrite_interrupt(uint8_t val) {
@@ -177,12 +165,10 @@ interrupt_type Interruptor::pending() const {
 }
 
 void Interruptor::set_serial_transfer_control(uint8_t val) {
-	DEBUG_MSG("setting 0xFF02: %u\n", val);
 	serial_transfer_control = val;
 }
 
 void Interruptor::set_serial_transfer_data(uint8_t val) {
-	DEBUG_MSG("setting 0xFF01: %u\n", val);
 	serial_transfer_data = val;
 }
 
@@ -232,13 +218,9 @@ uint8_t Interruptor::get_timer_control() {
 
 void Interruptor::set_timer_control(uint8_t val) {
 	uint8_t value = val & 0x07;
-	// if ((get_timer_control() & 0x03) != (value & 0x03)) {
-	// 	DEBUG_MSG("need to reset tima cycles\n");
-	// }
-	
+
 	timer_enable = (val >> 2) & 1;
 	if (timer_clock_select != (value & 0x03)) {
-		DEBUG_MSG("Setting tima_cycle to 0\n");
 		tima_cycle = 0;
 		timer_counter = timer_modulo;
 	}

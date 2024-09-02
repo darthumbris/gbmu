@@ -178,7 +178,7 @@ void PixelProcessingUnit::close() {
 	SDL_Quit();
 }
 
-//TODO get this working
+// TODO get this working
 void PixelProcessingUnit::render_with_ghosting() {
 	const float mix_intensity = 1.0f;
 	float alpha = 0.15f + (0.50f * (1.0f - mix_intensity));

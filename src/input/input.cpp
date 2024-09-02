@@ -11,7 +11,6 @@ void Cpu::handle_input(SDL_Event &e) {
 		case SDLK_ESCAPE:
 			set_status(true);
 			mmap.save_ram();
-			printf("breakpoint: %zu\n", debug_count);
 			DEBUG_MSG("breakpoint: %zu\n", debug_count);
 			break;
 		case SDLK_p:
