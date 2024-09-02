@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
+#include <iostream>
 
 template <typename IntegerType>
 void bits_to_int(IntegerType &result, const char *bits) {
@@ -223,10 +224,20 @@ std::string print_cartridge_type(CartridgeType c) {
 RomHeader::RomHeader(const std::string path) {
 	std::ifstream ifs;
 
-	//TODO have a check here if the file is bigger than 0x100 and also a check if valid rom
+	//TODO have a check here if the file is bigger than 0x100 and also a check if valid rom and check if file open etc
 	ifs.open(path.c_str(), std::ifstream::binary);
 
+	if (!ifs.is_open()) {
+		std::cerr << "Error: File could not be opened" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	ifs.seekg(0, std::ios::end);
+	unsigned int len = ifs.tellg();
 	ifs.seekg(0x100);
+	// if (len < 0x14F) {
+	// 	std::cerr << "Error: File too small." << std::endl;
+	// 	exit(EXIT_FAILURE);
+	// }
 	char vals[4];
 	ifs.read(reinterpret_cast<char *>(&vals), sizeof(vals));
 	bits_to_int(_entry_point, vals);
@@ -250,7 +261,11 @@ RomHeader::RomHeader(const std::string path) {
 	ifs.read(reinterpret_cast<char *>(&val), sizeof(val));
 	bits_to_int(_global_checksum, val);
 	ifs.close();
-	// print_rom_info();
+	// if (ifs.fail()) {
+	// 	std::cerr << "Error: Issue with reading file" << std::endl;
+	// 	exit(EXIT_FAILURE);
+	// }
+	print_rom_info();
 }
 
 RomHeader::~RomHeader() {}

@@ -46,20 +46,20 @@ enum CartridgeType {
 
 class RomHeader {
 private:
-	uint32_t _entry_point;         // 0x100-0x103
-	std::array<uint8_t, 48> _logo; // 0x104-0x133
-	char _name[15];                // 0x134-0x142
-	CGB_FLAGS _cgb_flag;           // 0x143
-	uint16_t _license_code;        // 0x144-0x145
-	bool _sgb_flag;                // 0x146
-	CartridgeType _cartridge_type; // 0x147
-	uint16_t _rom_size;            // 0x148
-	uint8_t _ram_size;             // 0x149
-	uint8_t _dest_code;            // 0x14A
-	uint8_t _old_license_code;     // 0x14B
-	uint8_t _version;              // 0x14C
-	uint8_t _header_checksum;      // 0x14D
-	uint16_t _global_checksum;     // 0x14E-0x14F
+	uint32_t _entry_point;                             // 0x100-0x103
+	std::array<uint8_t, 48> _logo;                     // 0x104-0x133
+	char _name[15];                                    // 0x134-0x142
+	CGB_FLAGS _cgb_flag = Non_CGB_Mode;                // 0x143
+	uint16_t _license_code;                            // 0x144-0x145
+	bool _sgb_flag = false;                            // 0x146
+	CartridgeType _cartridge_type = Invalid_Cartridge; // 0x147
+	uint16_t _rom_size = 0;                            // 0x148
+	uint8_t _ram_size = 0;                             // 0x149
+	uint8_t _dest_code;                                // 0x14A
+	uint8_t _old_license_code;                         // 0x14B
+	uint8_t _version;                                  // 0x14C
+	uint8_t _header_checksum;                          // 0x14D
+	uint16_t _global_checksum;                         // 0x14E-0x14F
 
 	CartridgeType get_cartridge_type(uint8_t type, uint8_t rom_size);
 

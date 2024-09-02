@@ -5,7 +5,6 @@
 #include <fstream>
 #include <iostream>
 
-// TODO Xmacro for read and write stuff
 #define SERIALIZE(f, x) (f.write(reinterpret_cast<const char *>(&x), sizeof(x)))
 #define DESERIALIZE(f, x) (f.read(reinterpret_cast<char *>(&x), sizeof(x)))
 

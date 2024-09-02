@@ -31,8 +31,8 @@ MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cp
 		break;
 	default:
 		std::cerr << "Cartridge type: " << header.cartridge_type() << " not supported" << std::endl;
-		cpu->close();
-		exit(EXIT_FAILURE);
+		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
+		// exit(EXIT_FAILURE);
 		break;
 	}
 

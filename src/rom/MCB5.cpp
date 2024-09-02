@@ -4,8 +4,6 @@
 #include <fstream>
 #include <iostream>
 
-//TODO check why Oracle of ages/seasons doesn't work properly
-
 MCB5::MCB5(const std::string rom_path, RomHeader rheader, bool battery, bool rumble)
     : Rom(rom_path, rheader), battery(battery), rumble(rumble) {
 	ram_bank = 0;
