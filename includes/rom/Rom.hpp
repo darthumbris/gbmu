@@ -14,6 +14,7 @@ using mem_8k = std::array<uint8_t, 8192>;
 
 //TODO make the is_cgb stuff only in one file (now in romheader, rom and ppu etc)
 //TODO cleanup some of the duplicate stuff
+//TODO for example the loading and saving of ram can be simplified?
 //TODO make more functions virtual?
 
 class Rom {
