@@ -13,11 +13,13 @@ private:
 
 public:
 	MCB2(const std::string rom_path, RomHeader rheader, bool battery) : Rom(rom_path, rheader), battery(battery) {}
-	uint8_t read_u8(uint16_t addr);
-	void write_u8(uint16_t addr, uint8_t val);
+	virtual ~MCB2();
+	
+	virtual uint8_t read_u8(uint16_t addr);
+	virtual void write_u8(uint16_t addr, uint8_t val);
 
-	void serialize(std::ofstream &f);
-	void deserialize(std::ifstream &f);
+	virtual void serialize(std::ofstream &f);
+	virtual void deserialize(std::ifstream &f);
 	void save_ram();
 	void load_ram();
 };
