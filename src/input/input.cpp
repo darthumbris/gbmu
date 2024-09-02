@@ -11,6 +11,7 @@ void Cpu::handle_input(SDL_Event &e) {
 		case SDLK_ESCAPE:
 			set_status(true);
 			mmap.save_ram();
+			printf("breakpoint: %zu\n", debug_count);
 			DEBUG_MSG("breakpoint: %zu\n", debug_count);
 			break;
 		case SDLK_p:
@@ -26,6 +27,9 @@ void Cpu::handle_input(SDL_Event &e) {
 			break;
 		case SDLK_m:
 			ppu.toggle_matrix();
+			break;
+		case SDLK_g:
+			ppu.toggle_ghosting();
 			break;
 		case SDLK_h:
 			paused = !paused;

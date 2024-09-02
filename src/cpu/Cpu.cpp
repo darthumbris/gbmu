@@ -61,17 +61,17 @@ void Cpu::tick() {
 		bool vblank = false;
 		uint32_t total_clocks = 0;
 		while (!vblank) {
-			handle_instruction();
-			interruptor.timer_tick(static_cast<uint8_t>(t_cycle));
-			interruptor.serial_tick(static_cast<uint8_t>(t_cycle));
-			ppu.tick(t_cycle);
+			uint16_t cycles = handle_instruction();
+			interruptor.timer_tick(cycles);
+			interruptor.serial_tick(cycles);
+			ppu.tick(cycles);
 			if (ppu.screen_ready()) {
 				vblank = true;
 			}
-			apu.tick(t_cycle);
-			interruptor.input_tick(static_cast<uint8_t>(t_cycle));
+			apu.tick(cycles);
+			interruptor.input_tick(cycles);
 
-			total_clocks += t_cycle;
+			total_clocks += cycles;
 
 			if (total_clocks > 702240) {
 				vblank = true;
@@ -156,7 +156,7 @@ void Cpu::fetch_instruction() {
 		is_prefixed = true;
 	}
 #ifdef DEBUG_MODE
-	debug_print(is_prefixed);
+	// debug_print(is_prefixed);
 #endif
 }
 
@@ -202,7 +202,7 @@ void Cpu::decrement_pc() {
 	}
 }
 
-void Cpu::handle_instruction() {
+uint8_t Cpu::handle_instruction() {
 	uint8_t executed_cycles = 0;
 
 	while (executed_cycles < 1) {
@@ -225,5 +225,6 @@ void Cpu::handle_instruction() {
 		          sp, pc, mmap.read_u8(0xFF0F), t_cycle);
 		executed_cycles += t_cycle;
 	}
+	return executed_cycles;
 	// DEBUG_MSG("clockycle: %u speed: %u state: %u\n", executed_cycles, speed_multiplier, accurate_opcode_state);
 }

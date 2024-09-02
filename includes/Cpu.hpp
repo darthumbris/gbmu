@@ -576,7 +576,7 @@ private:
 
 	void sbc_a_r8_hl();
 
-	void handle_instruction();
+	uint8_t handle_instruction();
 	void fetch_instruction();
 	void set_cycles_left();
 	void execute_instruction();

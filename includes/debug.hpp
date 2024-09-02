@@ -1,6 +1,7 @@
 #ifndef DEBUG_HPP
 #define DEBUG_HPP
 
+#include <cstdint>
 #include <cstdio>
 #include <stdarg.h>
 
@@ -11,6 +12,9 @@
 #endif
 
 inline void debug_printf(const char *const msg, ...) {
+	static int64_t count = 0;
+
+	if (count > 0) {
 	char buff[512];
 	va_list args;
 
@@ -18,6 +22,9 @@ inline void debug_printf(const char *const msg, ...) {
 	vsprintf(buff, msg, args);
 	va_end(args);
 	printf("%s", buff);
+	// printf("%zd %s", count,buff);
+	}
+	count++;
 }
 
 #endif

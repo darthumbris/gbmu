@@ -42,6 +42,7 @@ struct sdl_data {
 	bool matrix;
 	bool color_correction;
 	bool darkening;
+	bool ghosting;
 };
 
 enum ppu_modes { Horizontal_Blank, Vertical_Blank, OAM_Scan, Pixel_Drawing };
@@ -204,6 +205,9 @@ private:
 
 	bool init_gl();
 
+	void render_with_ghosting();
+	void render_default();
+
 public:
 	PixelProcessingUnit(Cpu *cpu);
 	~PixelProcessingUnit();
@@ -224,11 +228,18 @@ public:
 	inline void toggle_matrix() {
 		data.matrix = !data.matrix;
 	}
+
 	inline void toggle_color_correction() {
 		data.color_correction = !data.color_correction;
 	}
+
 	inline void toggle_darkening() {
 		data.darkening = !data.darkening;
+	}
+
+	inline void toggle_ghosting() {
+		data.ghosting = !data.ghosting;
+		printf("ghosting now: %s\n", data.ghosting ? "on" : "off");
 	}
 
 	uint8_t read_u8_ppu(uint16_t addr);

@@ -1,5 +1,6 @@
 #include "Interruptor.hpp"
 #include "Cpu.hpp"
+#include "debug.hpp"
 #include <cstdint>
 
 Interruptor::Interruptor(Cpu *cpu) : cpu(cpu) {}
@@ -13,6 +14,7 @@ void Interruptor::timer_tick(uint8_t cycle) {
 		timer_divider++;
 	}
 
+	DEBUG_MSG("timer_enable: %u\n", timer_enable);
 	if (timer_enable) {
 		tima_cycle += cycle;
 		uint16_t increment_freq = 0;
@@ -31,9 +33,11 @@ void Interruptor::timer_tick(uint8_t cycle) {
 			break;
 		}
 
+		DEBUG_MSG("freq: %u tima_cycle: %u cycle: %u\n", increment_freq, tima_cycle, cycle);
+
 		while (tima_cycle >= increment_freq) {
 			tima_cycle -= increment_freq;
-
+			DEBUG_MSG("tima: %u\n", timer_counter);
 			if (timer_counter == 0xFF) {
 				timer_counter = timer_modulo;
 				set_interrupt(interrupt_type::Timer);
@@ -227,9 +231,16 @@ uint8_t Interruptor::get_timer_control() {
 }
 
 void Interruptor::set_timer_control(uint8_t val) {
+	uint8_t value = val & 0x07;
+	// if ((get_timer_control() & 0x03) != (value & 0x03)) {
+	// 	DEBUG_MSG("need to reset tima cycles\n");
+	// }
+	
 	timer_enable = (val >> 2) & 1;
-	if (!timer_enable) {
+	if (timer_clock_select != (value & 0x03)) {
+		DEBUG_MSG("Setting tima_cycle to 0\n");
 		tima_cycle = 0;
+		timer_counter = timer_modulo;
 	}
 	timer_clock_select = (val >> 0) & 3;
 }

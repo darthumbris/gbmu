@@ -102,6 +102,7 @@ void main() {
         if (darkening_enabled == 1) {
             matrix_col = clamp(matrix_col * lum, 0.0, 1.0);
         }
-        LFragment = vec4(matrix_col.rgb, 1.0);
+        // LFragment = vec4(matrix_col.rgb, 1.0);
+        LFragment = matrix_col;
     }
 }

@@ -14,7 +14,9 @@ const GLenum tex_format = GL_BGRA;
 const GLint tex_internal_format = GL_RGB5;
 const GLenum tex_type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
 
-//TODO cleanup some of the gl code stuff
+static bool first_frame;
+
+// TODO cleanup some of the gl code stuff
 
 bool load_shader(GLuint &shader_id, GLenum shader_type, const GLchar *shader_source) {
 	shader_id = glCreateShader(shader_type);
@@ -113,6 +115,7 @@ bool PixelProcessingUnit::init_gl() {
 
 	// setting the uniform for the dot matrix shader
 	glProgramUniform1i(data.program, 0, data.matrix);
+	first_frame = true;
 	return true;
 }
 
@@ -175,37 +178,25 @@ void PixelProcessingUnit::close() {
 	SDL_Quit();
 }
 
-void PixelProcessingUnit::render_screen() {
-	const uint16_t *palette_used;
-	switch (current_palette) {
-	case 0:
-		palette_used = GB_COLORS_ORIGNAL;
-		break;
-	case 1:
-		palette_used = GB_COLORS_VIRTUABOY;
-		break;
-	case 2:
-		palette_used = GB_COLORS_LIGHT;
-		break;
-	default:
-		palette_used = GB_COLORS_BW;
-		break;
-	}
-	if (!is_cgb) {
-		for (int i = 0; i < SCREEN_PIXELS; i++) {
-			rgb555_framebuffer[i] = palette_used[mono_framebuffer[i]];
-		}
+//TODO get this working
+void PixelProcessingUnit::render_with_ghosting() {
+	const float mix_intensity = 1.0f;
+	float alpha = 0.15f + (0.50f * (1.0f - mix_intensity));
+
+	if (first_frame) {
+		first_frame = false;
+		alpha = 1.0f;
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
-	glClear(GL_COLOR_BUFFER_BIT);
-	glUseProgram(data.program);
+	static bool round_error = false;
+	float round_color = 1.0f - (round_error ? 0.03f : 0.0f);
+	round_error = !round_error;
 
-	// setting the uniform for the dot matrix shader
-	glProgramUniform1i(data.program, 0, data.matrix);
-	// setting the uniform for the color correction
-	glProgramUniform1i(data.program, 1, data.color_correction && is_cgb);
-	// setting the uniform for the darkening
-	glProgramUniform1i(data.program, 2, data.darkening);
+	glEnable(GL_BLEND);
+	glColor4f(round_color, round_color, round_color, alpha);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnableVertexAttribArray(data.vertex_pos2d_loc);
 	glBindBuffer(GL_ARRAY_BUFFER, data.vbo);
@@ -219,8 +210,70 @@ void PixelProcessingUnit::render_screen() {
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, tex_format, tex_type,
 	                (GLvoid *)rgb555_framebuffer);
 	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glDisable(GL_BLEND);
+}
+
+void PixelProcessingUnit::render_default() {
+	glDisable(GL_BLEND);
+
+	glEnableVertexAttribArray(data.vertex_pos2d_loc);
+	glBindBuffer(GL_ARRAY_BUFFER, data.vbo);
+	glVertexAttribPointer(data.vertex_pos2d_loc, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, data.ibo);
+
+	glActiveTexture(GL_TEXTURE0);
+
+	// Update texture
+	glBindTexture(GL_TEXTURE_2D, data.textere_id);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, tex_format, tex_type,
+	                (GLvoid *)rgb555_framebuffer);
+	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
+}
+
+void PixelProcessingUnit::render_screen() {
+	if (!is_cgb) {
+		const uint16_t *palette_used;
+		switch (current_palette) {
+		case 0:
+			palette_used = GB_COLORS_ORIGNAL;
+			break;
+		case 1:
+			palette_used = GB_COLORS_VIRTUABOY;
+			break;
+		case 2:
+			palette_used = GB_COLORS_LIGHT;
+			break;
+		default:
+			palette_used = GB_COLORS_BW;
+			break;
+		}
+		for (int i = 0; i < SCREEN_PIXELS; i++) {
+			rgb555_framebuffer[i] = palette_used[mono_framebuffer[i]];
+		}
+	}
+
+	// glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	// glClear(GL_COLOR_BUFFER_BIT);
+	glUseProgram(data.program);
+
+	// setting the uniform for the dot matrix shader
+	glProgramUniform1i(data.program, 0, data.matrix);
+	// setting the uniform for the color correction
+	glProgramUniform1i(data.program, 1, data.color_correction && is_cgb);
+	// setting the uniform for the darkening
+	glProgramUniform1i(data.program, 2, data.darkening);
+
+	if (data.ghosting) {
+		render_with_ghosting();
+	} else {
+		render_default();
+	}
+
 	glDisableVertexAttribArray(data.vertex_pos2d_loc);
 	glUseProgram(NULL);
+
 	SDL_GL_SwapWindow(data.window);
 	draw_screen = false;
 }

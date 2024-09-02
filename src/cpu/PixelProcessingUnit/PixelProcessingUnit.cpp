@@ -325,18 +325,24 @@ void PixelProcessingUnit::render_window_cgb(uint16_t line_width, uint16_t map_ad
 		for (uint8_t pixelx = 0; pixelx < 8; pixelx++) {
 			int16_t buffer_x = (map_offset_x + pixelx + wx);
 
-			if (buffer_x < 0 || buffer_x >= SCREEN_WIDTH)
+			DEBUG_MSG("buffer_x: %d mof %u px %u wx %d\n", buffer_x, map_offset_x, pixelx, wx);
+			if (buffer_x < 0 || buffer_x >= SCREEN_WIDTH) {
 				continue;
+			}
 
+			int8_t pixelx_pos = pixelx;
 			if (cgb_tile_attr & mask5) {
-				pixelx = 7 - pixelx;
+				pixelx_pos = 7 - pixelx_pos;
 			}
 
 			if (cgb_tile_attr & mask3) {
-				tile_dat = tile_data[1][tile_index][y * 8 + pixelx];
+				tile_dat = tile_data[1][tile_index][y * 8 + pixelx_pos];
 			} else {
-				tile_dat = tile_data[0][tile_index][y * 8 + pixelx];
+				tile_dat = tile_data[0][tile_index][y * 8 + pixelx_pos];
 			}
+
+			DEBUG_MSG("attr %u wcgp %u pix %u adr %u bank: %u mad %u x %u\n", cgb_tile_attr, cgb_tile_pal, tile_dat,
+			          tile_address + 0x8000, (bool)(cgb_tile_attr & mask3), map_address, x);
 
 			int position = line_width + buffer_x;
 			color_cache_buffer[position] = tile_dat & 0x03;
@@ -419,17 +425,24 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 		visible_sprites[i] = sprite_limit <= 10;
 	}
 
+	DEBUG_MSG("sh %u\n", sprite_height);
+
 	for (int16_t i = 39; i >= 0; i--) {
 		if (!visible_sprites[i])
 			continue;
 
 		sprite spr = read_sprite(i << 2);
 		int16_t sprite_x = spr.x_pos - 8;
-
+		sprite_attributes satr = spr.attributes;
+		DEBUG_MSG("x %u y %u ti %u bg %u yf %u xf %u p %u b %u cgp %u\n", spr.x_pos, spr.y_pos, spr.tile_index,
+		          satr.background, satr.y_flip, satr.x_flip, satr.palette, satr.bank, satr.cgb_pal);
 		if ((sprite_x < -7) || (sprite_x >= SCREEN_WIDTH))
 			continue;
 
 		sprite_attributes atr = spr.attributes;
+		if (atr.y_flip) {
+			DEBUG_MSG("flipping sprite\n");
+		}
 		uint8_t palette = atr.palette ? obj_palette_1 : obj_palette_0;
 		uint16_t pixel_y =
 		    atr.y_flip ? ((sprite_height == 16) ? 15 : 7) - (line - (spr.y_pos - 16)) : line - (spr.y_pos - 16);
@@ -449,8 +462,9 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 			if (atr.bank) {
 				tile_dat = tile_data[1][tile_index][y * 8 + (!atr.x_flip ? pixelx : (7 - pixelx))];
 			} else {
-				tile_dat = tile_data[vbank_select][tile_index][y * 8 + (!atr.x_flip ? pixelx : (7 - pixelx))];
+				tile_dat = tile_data[0][tile_index][y * 8 + (!atr.x_flip ? pixelx : (7 - pixelx))];
 			}
+			DEBUG_MSG("cgp %u pix %u adr %u bank: %u\n", atr.cgb_pal, tile_dat, tile_address + 0x8000, atr.bank);
 			if (tile_dat == 0)
 				continue;
 
@@ -474,6 +488,7 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 			color_cache_buffer[position] = color_cache & mask3;
 			sprite_cache_buffer[position] = sprite_x;
 			if (is_cgb) {
+				// DEBUG_MSG("c %u\n", cgb_obj_colors[atr.cgb_pal][tile_dat][1]);
 				rgb555_framebuffer[position] = cgb_obj_colors[atr.cgb_pal][tile_dat][1];
 			} else {
 				uint8_t color = (palette >> (tile_dat << 1)) & 0x03;

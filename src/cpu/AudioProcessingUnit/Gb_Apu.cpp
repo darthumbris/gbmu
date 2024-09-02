@@ -342,13 +342,13 @@ int Gb_Apu::read_register(blip_time_t time, unsigned addr) {
 
 	// Status register
 	if (addr == status_reg) {
-		DEBUG_MSG("channels enabled: %u %u %u %u\n", square1.enabled, square2.enabled, wave.enabled, noise.enabled);
+		// DEBUG_MSG("channels enabled: %u %u %u %u\n", square1.enabled, square2.enabled, wave.enabled, noise.enabled);
 		data &= 0xF0;
 		data |= (int)square1.enabled << 0;
 		data |= (int)square2.enabled << 1;
 		data |= (int)wave.enabled << 2;
 		data |= (int)noise.enabled << 3;
 	}
-	DEBUG_MSG("looking at reg: %d\n", reg);
+	// DEBUG_MSG("looking at reg: %d\n", reg);
 	return data;
 }
