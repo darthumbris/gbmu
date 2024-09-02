@@ -9,10 +9,9 @@ class MCB2 : public Rom {
 private:
 	uint8_t rom_bank = 1; // 0x01 - 0x0F
 	bool ram_enable = false;
-	bool battery = false;
 
 public:
-	MCB2(const std::string rom_path, RomHeader rheader, bool battery) : Rom(rom_path, rheader), battery(battery) {}
+	MCB2(const std::string rom_path, RomHeader rheader, bool battery) : Rom(rom_path, rheader, battery) {}
 	virtual ~MCB2();
 	
 	virtual uint8_t read_u8(uint16_t addr);
@@ -20,8 +19,6 @@ public:
 
 	virtual void serialize(std::ofstream &f);
 	virtual void deserialize(std::ifstream &f);
-	void save_ram();
-	void load_ram();
 };
 
 #endif

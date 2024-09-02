@@ -5,7 +5,7 @@
 #include <iostream>
 
 MCB5::MCB5(const std::string rom_path, RomHeader rheader, bool battery, bool rumble)
-    : Rom(rom_path, rheader), battery(battery), rumble(rumble) {
+    : Rom(rom_path, rheader, battery), rumble(rumble) {
 	ram_bank = 0;
 	rom_bank = 1;
 	secondary_rom_bank = 0;
@@ -92,16 +92,4 @@ void MCB5::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&ram_bank), sizeof(ram_bank));
 	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
 	DEBUG_MSG("done deserializing rom");
-}
-
-void MCB5::save_ram() {
-	if (battery) {
-		Rom::save_ram();
-	}
-}
-
-void MCB5::load_ram() {
-	if (battery) {
-		Rom::load_ram();
-	}
 }

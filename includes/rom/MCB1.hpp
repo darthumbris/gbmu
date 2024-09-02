@@ -10,10 +10,9 @@ private:
 	uint8_t ram_bank = 0;           // 0-3
 	bool ram_enable = false;
 	bool rom_ram_mode = false; // Not needed for (≤ 8 KiB RAM and ≤ 512 KiB ROM)
-	bool battery = false;
 
 public:
-	MCB1(const std::string rom_path, RomHeader rheader, bool battery) : Rom(rom_path, rheader), battery(battery) {}
+	MCB1(const std::string rom_path, RomHeader rheader, bool battery) : Rom(rom_path, rheader, battery) {}
 	virtual ~MCB1();
 
 	virtual uint8_t read_u8(uint16_t addr);
@@ -21,9 +20,6 @@ public:
 
 	virtual void serialize(std::ofstream &f);
 	virtual void deserialize(std::ifstream &f);
-
-	void save_ram();
-	void load_ram();
 };
 
 #endif

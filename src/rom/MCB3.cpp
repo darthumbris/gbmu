@@ -88,15 +88,3 @@ void MCB3::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&latched), sizeof(latched));
 	DEBUG_MSG("done deserializing rom");
 }
-
-void MCB3::save_ram() {
-	if (battery) {
-		Rom::save_ram();
-	}
-}
-
-void MCB3::load_ram() {
-	if (battery) {
-		Rom::load_ram();
-	}
-}

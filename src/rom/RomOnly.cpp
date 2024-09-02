@@ -61,15 +61,3 @@ void RomOnly::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
 	DEBUG_MSG("done deserializing rom");
 }
-
-void RomOnly::save_ram() {
-	if (battery) {
-		Rom::save_ram();
-	}
-}
-
-void RomOnly::load_ram() {
-	if (battery) {
-		Rom::load_ram();
-	}
-}

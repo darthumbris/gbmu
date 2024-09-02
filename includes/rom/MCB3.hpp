@@ -9,7 +9,6 @@ private:
 	uint8_t rom_bank = 1; // 0x00 - 0x7F
 	uint8_t ram_bank = 0; // 0x00 - 0x03
 	bool ram_enable = false;
-	bool battery = false;
 
 	// Clock counter registers (only if MBC3 has a timer?)
 	uint8_t seconds = 0;  // 0x08
@@ -20,7 +19,7 @@ private:
 	bool latched = false; //
 
 public:
-	MCB3(const std::string rom_path, RomHeader rheader, bool battery) : Rom(rom_path, rheader), battery(battery) {}
+	MCB3(const std::string rom_path, RomHeader rheader, bool battery) : Rom(rom_path, rheader, battery){}
 	virtual ~MCB3();
 
 	virtual uint8_t read_u8(uint16_t addr);
@@ -28,8 +27,6 @@ public:
 
 	virtual void serialize(std::ofstream &f);
 	virtual void deserialize(std::ifstream &f);
-	void save_ram();
-	void load_ram();
 };
 
 #endif

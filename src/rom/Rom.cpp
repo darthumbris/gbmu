@@ -8,7 +8,7 @@
 #include <fstream>
 #include <iostream>
 
-Rom::Rom(const std::string rom_path, RomHeader rheader) : header(rheader) {
+Rom::Rom(const std::string rom_path, RomHeader rheader, bool battery) : header(rheader), battery(battery) {
 	std::ifstream ifs;
 	ifs.open(rom_path.c_str(), std::ifstream::binary);
 	ifs.seekg(0, std::ios::beg);
@@ -28,6 +28,9 @@ Rom::Rom(const std::string rom_path, RomHeader rheader) : header(rheader) {
 Rom::~Rom() {}
 
 void Rom::save_ram() {
+	if (!battery) {
+		return;
+	}
 	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
 	std::string full_path = path + name() + ".ram";
 	SDL_free(static_cast<void *>(path));
@@ -45,6 +48,9 @@ void Rom::save_ram() {
 }
 
 void Rom::load_ram() {
+	if (!battery) {
+		return;
+	}
 	// TODO have a check if the file_size is correct for the amount of ram expected
 	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
 	std::string full_path = path + name() + ".ram";

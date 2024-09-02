@@ -59,7 +59,6 @@ void MCB1M::serialize(std::ofstream &f) {
 	f.write(reinterpret_cast<const char *>(&ram_bank), sizeof(ram_bank));
 	f.write(reinterpret_cast<const char *>(&ram_enable), sizeof(ram_enable));
 	f.write(reinterpret_cast<const char *>(&rom_ram_mode), sizeof(rom_ram_mode));
-	f.write(reinterpret_cast<const char *>(&battery), sizeof(battery));
 	DEBUG_MSG("done serializing rom");
 }
 
@@ -74,18 +73,5 @@ void MCB1M::deserialize(std::ifstream &f) {
 	f.read(reinterpret_cast<char *>(&ram_bank), sizeof(ram_bank));
 	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
 	f.read(reinterpret_cast<char *>(&rom_ram_mode), sizeof(rom_ram_mode));
-	f.read(reinterpret_cast<char *>(&battery), sizeof(battery));
 	DEBUG_MSG("done deserializing rom");
-}
-
-void MCB1M::save_ram() {
-	if (battery) {
-		Rom::save_ram();
-	}
-}
-
-void MCB1M::load_ram() {
-	if (battery) {
-		Rom::load_ram();
-	}
 }

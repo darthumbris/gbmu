@@ -21,9 +21,10 @@ class Rom {
 private:
 	RomHeader header;
 	bool cgb_on = false;
+	bool battery = false;
 
 public:
-	Rom(const std::string rom_path, RomHeader rheader);
+	Rom(const std::string rom_path, RomHeader rheader, bool battery);
 	virtual ~Rom();
 
 	template <typename MBC, typename... Args>
@@ -37,8 +38,8 @@ public:
 	virtual void serialize(std::ofstream &f) = 0;
 	virtual void deserialize(std::ifstream &f) = 0;
 
-	void save_ram();
-	void load_ram();
+	virtual void save_ram();
+	virtual void load_ram();
 
 	std::string name() const {
 		return header.name();
