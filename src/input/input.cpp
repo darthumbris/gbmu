@@ -27,6 +27,9 @@ void Cpu::handle_input(SDL_Event &e) {
 		case SDLK_m:
 			ppu.toggle_matrix();
 			break;
+		case SDLK_r:
+			reset();
+			break;
 		case SDLK_g:
 			ppu.toggle_ghosting();
 			break;

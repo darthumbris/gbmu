@@ -58,3 +58,11 @@ void MCB5::write_u8(uint16_t addr, uint8_t val) {
 		break;
 	}
 }
+
+void MCB5::reset() {
+	Rom::reset();
+	rom_bank = 1;
+	secondary_rom_bank = 0;
+	ram_bank = 0;
+	ram_enable = false;
+}

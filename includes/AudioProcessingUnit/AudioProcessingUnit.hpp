@@ -29,7 +29,6 @@ private:
 	sample_t *sample_buffer;
 	sample_t *volatile bufs;
 	double sample_rate;
-	bool is_cgb;
 	SDL_sem *free_sem;
 	volatile int read_buf;
 	int32_t sample_count;
@@ -41,7 +40,7 @@ public:
 	AudioProcessingUnit();
 	~AudioProcessingUnit();
 
-	void init();
+	void init(bool cgb_mode);
 	void set_volume(float volume);
 	void tick(uint16_t cycle);
 	uint8_t read_u8(uint16_t addr);
@@ -52,8 +51,10 @@ public:
 	sample_t *buf(int index);
 	void write();
 
+	void reset(bool cgb_mode);
+
 	void serialize(std::ofstream &f);
-	void deserialize(std::ifstream &f);
+	void deserialize(std::ifstream &f, bool cgb_mode);
 };
 
 #endif

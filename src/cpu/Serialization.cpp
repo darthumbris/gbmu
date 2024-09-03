@@ -10,7 +10,6 @@
 #include "rom/RomOnly.hpp"
 #include <SDL2/SDL_filesystem.h>
 #include <cstddef>
-#include <cstdint>
 #include <fstream>
 #include <iostream>
 
@@ -83,7 +82,7 @@ void Cpu::deserialize(const std::string &file) {
 	interruptor.deserialize(f);
 	mmap.deserialize(f);
 	ppu.deserialize(f);
-	apu.deserialize(f);
+	apu.deserialize(f, mmap.is_cgb_rom());
 	f.close();
 	DEBUG_MSG("done deserializing\n");
 }
@@ -271,14 +270,14 @@ void AudioProcessingUnit::serialize(std::ofstream &f) {
 	DEBUG_MSG("done serializing apu\n");
 }
 
-void AudioProcessingUnit::deserialize(std::ifstream &f) {
+void AudioProcessingUnit::deserialize(std::ifstream &f, bool cgb_mode) {
 	gb_apu_state_t apu_state;
 
 	DESERIALIZE(f, elapsed_cycles);
 	DESERIALIZE(f, audio_buffer);
 	DESERIALIZE(f, apu_state);
 
-	Gb_Apu::mode_t mode = is_cgb ? Gb_Apu::mode_cgb : Gb_Apu::mode_dmg;
+	Gb_Apu::mode_t mode = cgb_mode ? Gb_Apu::mode_cgb : Gb_Apu::mode_dmg;
 	apu->reset(mode);
 	apu->load_state(apu_state);
 	stereo_buffer->clear();
@@ -536,8 +535,7 @@ void MCB3::load_ram() {
 	if (file_size < 0x2000 * ram_banks.size()) {
 		DEBUG_MSG("Error: Ram Save file is too small.\n");
 		return;
-	}
-	else if (file_size < 0x2000 * ram_banks.size() + 16) {
+	} else if (file_size < 0x2000 * ram_banks.size() + 16) {
 		DEBUG_MSG("Error: Ram has no valid RTC data. Skipping loading RTC.\n");
 		rtc_load = false;
 	}

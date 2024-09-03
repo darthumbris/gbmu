@@ -17,11 +17,35 @@ Cpu::Cpu(Decoder dec, const options options)
 	ppu.init_hdma();
 	ppu.init_ppu_mem();
 	mmap.load_ram();
-	apu.init();
+	apu.init(mmap.is_cgb_rom());
 	set_instructions();
 }
 
 Cpu::~Cpu() {}
+
+void Cpu::reset() {
+	mmap.reset();
+	locked = false;
+	paused = false;
+	halted = false;
+	u8_registers = {0};
+	pc = 0;
+	sp = 0;
+	debug_count = 0;
+	m_cycle = 0;
+	t_cycle = 0;
+	halt_cycle = 0;
+	opcode = 0;
+	accurate_opcode_state = instruction_state::Ready;
+	read_cache = 0;
+	branched = false;
+	instruction = instruction_list::Unprefixed;
+	cgb_speed = false;
+	speed_multiplier = 0;
+	interruptor.reset();
+	ppu.reset();
+	apu.reset(mmap.is_cgb_rom());
+}
 
 uint16_t Cpu::get_16bitregister(registers reg) const {
 	if (reg == registers::SP) {

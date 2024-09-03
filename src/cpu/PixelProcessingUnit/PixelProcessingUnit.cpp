@@ -24,11 +24,62 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	std::memset(oam, 0, sizeof(oam));
 	std::memset(tile_data, 0, sizeof(tile_data));
 	dma = {};
-	// is_cgb = cpu->get_mmap().is_cgb_rom();
+	is_cgb = cpu->get_mmap().is_cgb_rom();
 	ly = SCREEN_HEIGHT;
 }
 
 PixelProcessingUnit::~PixelProcessingUnit() {}
+
+void PixelProcessingUnit::reset() {
+	lcd_clock = 0;
+	dma.set(0);
+	data.status = false;
+	ctrl.set(0);
+	l_status.set(0);
+	vblank_line = 0;
+	scy = 0;
+	scx = 0;
+	ly = SCREEN_HEIGHT;
+	lyc = 0;
+	bg_palette = 0;
+	obj_palette_0 = 0;
+	obj_palette_1 = 0;
+	bg_palette_cgb = 0;
+	bg_color_cgb = 0;
+	obj_palette_cgb = 0;
+	obj_color_cgb = 0;
+	window_x = 0;
+	window_y = 0;
+	vbank_select = 0;
+	wram_bank_select = 0;
+	interrupt_signal = 0;
+	hdma_source = 0;
+	hdma_dest = 0;
+	std::memset(hdma, 0, sizeof(hdma));
+	hdma_enable = false;
+	hdma_bytes = 0;
+	lcd_enabled = true;
+	window_line_active = 0;
+	draw_screen = false;
+	drawn_scanline = false;
+	pixels_drawn = 0;
+	tile_drawn = 0;
+	screen_off_cycles = 0;
+	hide_screen = 0;
+	std::memset(mono_framebuffer, 0, sizeof(mono_framebuffer));
+	std::memset(rgb555_framebuffer, 0, sizeof(rgb555_framebuffer));
+	std::memset(sprite_cache_buffer, 0, sizeof(sprite_cache_buffer));
+	std::memset(color_cache_buffer, 0, sizeof(color_cache_buffer));
+	std::memset(oam, 0, sizeof(oam));
+	std::memset(sprites, 0, sizeof(sprites));
+	std::memset(tile_data, 0, sizeof(tile_data));
+	std::memset(cgb_bg_colors, 0, sizeof(cgb_bg_colors));
+	std::memset(cgb_obj_colors, 0, sizeof(cgb_obj_colors));
+	std::memset(vram, 0, sizeof(vram));
+	current_palette = 0;
+	init_hdma();
+	init_ppu_mem();
+}
 
 void PixelProcessingUnit::tick(uint16_t &cycle) {
 	lcd_clock += cycle;

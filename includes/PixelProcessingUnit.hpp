@@ -271,6 +271,8 @@ public:
 		return wram_bank_select;
 	}
 
+	void reset();
+
 	void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);
 

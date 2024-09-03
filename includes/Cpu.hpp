@@ -657,6 +657,8 @@ public:
 
 	void handle_halt();
 
+	void reset();
+
 	void serialize(const std::string &file);
 	void deserialize(const std::string &file);
 };

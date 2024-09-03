@@ -2,8 +2,10 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_filesystem.h>
 #include <SDL2/SDL_stdinc.h>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
@@ -25,3 +27,11 @@ Rom::Rom(const std::string rom_path, RomHeader rheader, bool battery) : header(r
 }
 
 Rom::~Rom() {}
+
+void Rom::reset() {
+	save_ram();
+	for (size_t i = 0; i < ram_banks.size(); i++) {
+		ram_banks[i] = {0};
+	}
+	load_ram();
+}

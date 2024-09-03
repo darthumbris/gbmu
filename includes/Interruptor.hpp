@@ -93,6 +93,8 @@ public:
 	void check_halt_bug();
 	void reset_interrupt();
 
+	void reset();
+
 	void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);
 };

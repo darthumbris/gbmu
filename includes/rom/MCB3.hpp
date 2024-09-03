@@ -49,6 +49,8 @@ public:
 	virtual void save_ram();
 	virtual void load_ram();
 
+	virtual void reset();
+
 	virtual void serialize(std::ofstream &f);
 	virtual void deserialize(std::ifstream &f);
 };

@@ -13,8 +13,6 @@
 using mem_16k = std::array<uint8_t, 16384>;
 using mem_8k = std::array<uint8_t, 8192>;
 
-// TODO make the is_cgb stuff only in one file (now in romheader, rom and ppu etc)
-
 class Rom {
 private:
 	RomHeader header;
@@ -32,6 +30,8 @@ public:
 	virtual uint8_t read_u8(uint16_t addr) = 0;
 	virtual void write_u8(uint16_t addr, uint8_t val) = 0;
 
+	virtual void reset();
+
 	virtual void serialize(std::ofstream &f);
 	virtual void deserialize(std::ifstream &f);
 
@@ -43,14 +43,6 @@ public:
 	}
 	inline bool cgb_mode() const {
 		return cgb_on;
-	}
-
-	inline void force_dmg_mode() {
-		cgb_on = false;
-	}
-
-	inline void force_cgb_mode() {
-		cgb_on = true;
 	}
 
 	virtual void update_clock() {}

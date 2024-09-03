@@ -51,3 +51,13 @@ void MCB1::write_u8(uint16_t addr, uint8_t val) {
 		break;
 	}
 }
+
+void MCB1::reset() {
+	save_ram();
+	rom_bank = 1;
+	secondary_rom_bank = 0;
+	ram_bank = 0;
+	ram_enable = false;
+	rom_ram_mode = false;
+	load_ram();
+}

@@ -147,3 +147,31 @@ void MCB3::update_rtc() {
 		}
 	}
 }
+
+void MCB3::reset() {
+	save_ram();
+	rom_bank = 1;
+	ram_bank = 0;
+	ram_timer_enable = false;
+	seconds = 0;
+	minutes = 0;
+	hours = 0;
+	days = 0;
+	flags = 0;
+	latched_seconds = 0;
+	latched_minutes = 0;
+	latched_hours = 0;
+	latched_days = 0;
+	latched_flags = 0;
+	rtc =0;
+	latch = 0;
+	last_time = 0;
+	last_time_cached = 0;
+	timer = 0;
+	rtc_counter = 0;
+	time(&timer);
+	for (size_t i = 0; i < ram_banks.size(); i++) {
+		ram_banks[i] = {0};
+	}
+	load_ram();
+}

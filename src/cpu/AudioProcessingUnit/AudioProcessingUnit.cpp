@@ -40,7 +40,20 @@ AudioProcessingUnit::~AudioProcessingUnit() {
 	delete stereo_buffer;
 }
 
-void AudioProcessingUnit::init() {
+void AudioProcessingUnit::reset(bool cgb_mode) {
+	Gb_Apu::mode_t mode = cgb_mode ? Gb_Apu::mode_cgb : Gb_Apu::mode_dmg;
+	apu->reset(mode);
+	stereo_buffer->clear();
+
+	for (int addr = 0xFF10; addr <= 0xFF3F; addr++) {
+		uint8_t value = cgb_mode ? initial_io_values_cgb[addr - 0xFF00] : initial_io_values_dmg[addr - 0xFF00];
+		apu->write_register(0, addr, value);
+	}
+
+	elapsed_cycles = 0;
+}
+
+void AudioProcessingUnit::init(bool cgb_mode) {
 	assert(!bufs);
 
 	bufs = new sample_t[(long)SAMPLES * BUF_COUNT];
@@ -89,12 +102,12 @@ void AudioProcessingUnit::init() {
 
 	apu->set_output(stereo_buffer->center(), stereo_buffer->left(), stereo_buffer->right());
 
-	Gb_Apu::mode_t mode = is_cgb ? Gb_Apu::mode_cgb : Gb_Apu::mode_dmg;
+	Gb_Apu::mode_t mode = cgb_mode ? Gb_Apu::mode_cgb : Gb_Apu::mode_dmg;
 	apu->reset(mode);
 	stereo_buffer->clear();
 
 	for (int addr = 0xFF10; addr <= 0xFF3F; addr++) {
-		uint8_t value = is_cgb ? initial_io_values_cgb[addr - 0xFF00] : initial_io_values_dmg[addr - 0xFF00];
+		uint8_t value = cgb_mode ? initial_io_values_cgb[addr - 0xFF00] : initial_io_values_dmg[addr - 0xFF00];
 		apu->write_register(0, addr, value);
 	}
 	apu->volume((1.0f));

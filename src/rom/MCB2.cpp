@@ -45,3 +45,11 @@ void MCB2::write_u8(uint16_t addr, uint8_t val) {
 		break;
 	}
 }
+
+void MCB2::reset() {
+	save_ram();
+	rom_bank = 1;
+	ram_enable = false;
+	ram = {};
+	load_ram();
+}

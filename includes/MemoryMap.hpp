@@ -92,6 +92,7 @@ private:
 	uint8_t joypad_register = 0xFF;
 	uint8_t joypad_pressed = 0xFF;
 	bool boot_rom_loaded = false;
+    bool is_cgb_mode = false;
 
 	std::array<uint8_t, 256> gb_boot_rom = {};
 	std::array<uint8_t, 2304> cgb_boot_rom = {};
@@ -124,7 +125,7 @@ public:
 	}
 
 	bool is_cgb_rom() const {
-		return header.is_cgb_game();
+		return is_cgb_mode;
 	}
 
     void update_clock() {
@@ -134,6 +135,8 @@ public:
 	uint8_t read_io_registers(uint16_t addr);
 	void write_io_registers(uint16_t addr, uint8_t val);
 	void update_joypad();
+
+    void reset();
 };
 
 // From Gambatte emulator

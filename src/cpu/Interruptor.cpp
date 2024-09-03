@@ -5,6 +5,29 @@
 Interruptor::Interruptor(Cpu *cpu) : cpu(cpu) {}
 Interruptor::~Interruptor() {}
 
+void Interruptor::reset() {
+	interrupt_enable_register = 0;
+	interrupt = 0;
+	process_interrupts = false;
+	interrupt_occured = false;
+	ime_cycles = 0;
+	delay_cycles = 0;
+	halt_bug_triggered = false;
+	
+	serial_transfer_data = 0;
+	serial_transfer_control = 0;
+	timer_divider = 0;
+	timer_counter = 0;
+	timer_modulo = 0;
+	timer_enable = false;
+	timer_clock_select = 0;
+	div_cycle = 0;
+	tima_cycle = 0;
+	serial_cycle = 0;
+	serial_count = 0;
+	input_cycles = 0;
+}
+
 void Interruptor::timer_tick(uint8_t cycle) {
 	div_cycle += cycle;
 	uint16_t div_cycles_max = cpu->cycle_speed(256);

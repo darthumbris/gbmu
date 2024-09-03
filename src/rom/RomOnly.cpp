@@ -1,4 +1,5 @@
 #include "rom/RomOnly.hpp"
+#include "rom/Rom.hpp"
 #include <cstdio>
 #include <iostream>
 
@@ -35,4 +36,9 @@ void RomOnly::write_u8(uint16_t addr, uint8_t val) {
 		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
+}
+
+void RomOnly::reset() {
+	ram_enable = false;
+	Rom::reset();
 }

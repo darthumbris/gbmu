@@ -32,11 +32,10 @@ MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cp
 	default:
 		std::cerr << "Cartridge type: " << header.cartridge_type() << " not supported" << std::endl;
 		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
-		// exit(EXIT_FAILURE);
 		break;
 	}
 
-	if ((is_cgb_rom() && !options.force_dmg) || options.force_cgb) {
+	if ((rom->cgb_mode() && !options.force_dmg) || options.force_cgb) {
 		std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
 		if (!cgb.is_open()) {
 			std::cerr << "Error: Failed to  open file cgb boot rom." << std::endl;
@@ -45,10 +44,10 @@ MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cp
 		cgb.seekg(0, std::ios::beg);
 		cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
 		cgb.close();
-		if (options.force_cgb && !is_cgb_rom()) {
+		if (options.force_cgb && !rom->cgb_mode()) {
 			header.force_cgb_enhancement();
-			rom->force_cgb_mode();
 		}
+		is_cgb_mode = true;
 	} else {
 		std::ifstream cgb("dmg_boot.bin", std::ios::binary | std::ios::ate);
 		if (!cgb.is_open()) {
@@ -59,20 +58,15 @@ MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cp
 		cgb.read(reinterpret_cast<char *>(&gb_boot_rom), sizeof(gb_boot_rom));
 		cgb.close();
 		header.disable_cgb_enhancement();
-		rom->force_dmg_mode();
+		is_cgb_mode = false;
 	}
-
-	// check_color_rgb555(0xff, 0x15, 0x1c);
-	// check_color_rgb555(0xe0, 0x1b, 0x24);
-	// check_color_rgb555(0xa5, 0x1d, 0x2d);
-	// check_color_rgb555(0x1A, 0x1A, 0x1A);
 }
 
 MemoryMap::~MemoryMap() {}
 
 void MemoryMap::init_memory() {
 	const uint8_t *initial_values;
-	if (is_cgb_rom()) {
+	if (is_cgb_mode) {
 		initial_values = initial_io_values_dmg;
 	} else {
 		initial_values = initial_io_values_dmg;
@@ -80,7 +74,7 @@ void MemoryMap::init_memory() {
 	for (int i = 0; i < 65536; i++) {
 		if ((i >= 0xC000) && (i < 0xE000)) {
 			if ((i & 0x8) ^ ((i & 0x800) >> 8)) {
-				if (is_cgb_rom()) {
+				if (is_cgb_mode) {
 					write_u8(i, 0x00);
 					if (i >= 0xD000) {
 						for (int a = 0; a < 8; a++) {
@@ -129,12 +123,26 @@ void MemoryMap::init_memory() {
 	}
 }
 
+void MemoryMap::reset() {
+	work_ram = {0};
+	echo_ram = {0};
+	not_usable = {0};
+	io_registers = {0};
+	high_ram = {0};
+	interrupt = 0;
+	joypad_register = 0xFF;
+	joypad_pressed = 0xFF;
+	boot_rom_loaded = false;
+	init_memory();
+	rom->reset();
+}
+
 uint8_t MemoryMap::read_u8(uint16_t addr) {
 	// DEBUG_MSG("trying to read addr: %#06x\n", addr);
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
 		if (!boot_rom_loaded) {
-			if (rom->cgb_mode()) {
+			if (is_cgb_mode) {
 				if (((addr < 0x0100) || (addr < 0x0900 && addr > 0x01FF))) {
 					return cgb_boot_rom[addr];
 				}
@@ -151,7 +159,7 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 		if (addr <= 0xCFFF) {
 			return work_ram[0][uint16_t(addr & 0x0FFF)];
 		} else {
-			if (is_cgb_rom()) {
+			if (is_cgb_mode) {
 				return work_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000];
 			} else {
 				return work_ram[1][uint16_t(addr & 0x1FFF) - 0x1000];
@@ -161,7 +169,7 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 		if (addr <= 0xEFFF) {
 			return echo_ram[0][uint16_t(addr & 0x0FFF)];
 		} else {
-			if (is_cgb_rom()) {
+			if (is_cgb_mode) {
 				return echo_ram[wram_bank_select()][uint16_t(addr & 0x1FFF) - 0x1000];
 			} else {
 				return echo_ram[1][uint16_t(addr & 0x0FFF) - 0x1000];
@@ -233,7 +241,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		if (addr <= 0xCFFF) {
 			work_ram[0][(addr & 0x0FFF)] = val;
 		} else {
-			if (is_cgb_rom()) {
+			if (is_cgb_mode) {
 				work_ram[wram_bank_select()][(addr & 0x1FFF) - 0x1000] = val;
 			} else {
 				work_ram[1][(addr & 0x0FFF)] = val;
@@ -244,7 +252,7 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 		if (addr <= 0xEFFF) {
 			echo_ram[0][(addr & 0x0FFF)] = val;
 		} else {
-			if (is_cgb_rom()) {
+			if (is_cgb_mode) {
 				echo_ram[wram_bank_select()][(addr & 0x1FFF) - 0x1000] = val;
 			} else {
 				echo_ram[1][(addr & 0x0FFF)] = val;
