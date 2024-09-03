@@ -7,6 +7,7 @@
 
 Cpu::Cpu(Decoder dec, const options options)
     : decoder(dec), mmap(options, this), ppu(this), interruptor(this), rom_path(options.path) {
+	load_options = options;
 	u8_registers = {0};
 	pc = 0;
 	sp = 0;
@@ -43,7 +44,7 @@ void Cpu::reset() {
 	cgb_speed = false;
 	speed_multiplier = 0;
 	interruptor.reset();
-	ppu.reset();
+	ppu.reset(mmap.is_cgb_rom());
 	apu.reset(mmap.is_cgb_rom());
 }
 

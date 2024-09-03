@@ -13,53 +13,7 @@
 #include <iostream>
 
 MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cpu(cpu) {
-	switch (header.cartridge_type()) {
-	case CartridgeType::MBC1... MBC1_RAM_BATTERY:
-		rom = Rom::make<MCB1>(options.path, header, header.has_battery());
-		break;
-	case CartridgeType::MBC2... MBC2_BATTERY:
-		rom = Rom::make<MCB2>(options.path, header, header.has_battery());
-		break;
-	case CartridgeType::MBC3_TIMER_BATTERY... MBC3_RAM_BATTERY:
-		rom = Rom::make<MCB3>(options.path, header, header.has_battery());
-		break;
-	case CartridgeType::MBC5... MBC5_RUMBLE_RAM_BATTERY:
-		rom = Rom::make<MCB5>(options.path, header, header.has_battery(), header.has_rumble());
-		break;
-	case CartridgeType::ROM_ONLY... ROM_RAM_BATTERY:
-		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
-		break;
-	default:
-		std::cerr << "Cartridge type: " << header.cartridge_type() << " not supported" << std::endl;
-		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
-		break;
-	}
-
-	if ((rom->cgb_mode() && !options.force_dmg) || options.force_cgb) {
-		std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
-		if (!cgb.is_open()) {
-			std::cerr << "Error: Failed to  open file cgb boot rom." << std::endl;
-			exit(EXIT_FAILURE);
-		}
-		cgb.seekg(0, std::ios::beg);
-		cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
-		cgb.close();
-		if (options.force_cgb && !rom->cgb_mode()) {
-			header.force_cgb_enhancement();
-		}
-		is_cgb_mode = true;
-	} else {
-		std::ifstream cgb("dmg_boot.bin", std::ios::binary | std::ios::ate);
-		if (!cgb.is_open()) {
-			std::cerr << "Error: Failed to  open file dmg boot rom." << std::endl;
-			exit(EXIT_FAILURE);
-		}
-		cgb.seekg(0, std::ios::beg);
-		cgb.read(reinterpret_cast<char *>(&gb_boot_rom), sizeof(gb_boot_rom));
-		cgb.close();
-		header.disable_cgb_enhancement();
-		is_cgb_mode = false;
-	}
+	load_file(options);
 }
 
 MemoryMap::~MemoryMap() {}
@@ -123,6 +77,57 @@ void MemoryMap::init_memory() {
 	}
 }
 
+void MemoryMap::load_file(const options options) {
+	header = RomHeader(options.path);
+	switch (header.cartridge_type()) {
+	case CartridgeType::MBC1... MBC1_RAM_BATTERY:
+		rom = Rom::make<MCB1>(options.path, header, header.has_battery());
+		break;
+	case CartridgeType::MBC2... MBC2_BATTERY:
+		rom = Rom::make<MCB2>(options.path, header, header.has_battery());
+		break;
+	case CartridgeType::MBC3_TIMER_BATTERY... MBC3_RAM_BATTERY:
+		rom = Rom::make<MCB3>(options.path, header, header.has_battery());
+		break;
+	case CartridgeType::MBC5... MBC5_RUMBLE_RAM_BATTERY:
+		rom = Rom::make<MCB5>(options.path, header, header.has_battery(), header.has_rumble());
+		break;
+	case CartridgeType::ROM_ONLY... ROM_RAM_BATTERY:
+		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
+		break;
+	default:
+		std::cerr << "Cartridge type: " << header.cartridge_type() << " not supported" << std::endl;
+		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
+		break;
+	}
+
+	if ((rom->cgb_mode() && !options.force_dmg) || options.force_cgb) {
+		std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
+		if (!cgb.is_open()) {
+			std::cerr << "Error: Failed to  open file cgb boot rom." << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		cgb.seekg(0, std::ios::beg);
+		cgb.read(reinterpret_cast<char *>(&cgb_boot_rom), sizeof(cgb_boot_rom));
+		cgb.close();
+		if (options.force_cgb && !rom->cgb_mode()) {
+			header.force_cgb_enhancement();
+		}
+		is_cgb_mode = true;
+	} else {
+		std::ifstream cgb("dmg_boot.bin", std::ios::binary | std::ios::ate);
+		if (!cgb.is_open()) {
+			std::cerr << "Error: Failed to  open file dmg boot rom." << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		cgb.seekg(0, std::ios::beg);
+		cgb.read(reinterpret_cast<char *>(&gb_boot_rom), sizeof(gb_boot_rom));
+		cgb.close();
+		header.disable_cgb_enhancement();
+		is_cgb_mode = false;
+	}
+}
+
 void MemoryMap::reset() {
 	work_ram = {0};
 	echo_ram = {0};
@@ -134,6 +139,22 @@ void MemoryMap::reset() {
 	joypad_pressed = 0xFF;
 	boot_rom_loaded = false;
 	init_memory();
+	rom->reset();
+}
+
+void MemoryMap::reset_file(const options options) {
+	work_ram = {0};
+	echo_ram = {0};
+	not_usable = {0};
+	io_registers = {0};
+	high_ram = {0};
+	interrupt = 0;
+	joypad_register = 0xFF;
+	joypad_pressed = 0xFF;
+	boot_rom_loaded = false;
+	init_memory();
+	header = RomHeader(options.path);
+	load_file(options);
 	rom->reset();
 }
 

@@ -99,6 +99,8 @@ private:
 
 	Cpu *cpu;
 
+    void load_file(const options options);
+
 public:
 	MemoryMap(const options options, Cpu *cpu);
 	void init_memory();
@@ -137,6 +139,7 @@ public:
 	void update_joypad();
 
     void reset();
+    void reset_file(const options options);
 };
 
 // From Gambatte emulator

@@ -82,6 +82,7 @@ private:
 	uint16_t speed_multiplier = 0;
 
 	std::string rom_path;
+	options load_options;
 
 	using OpsFn = void (Cpu::*)();
 

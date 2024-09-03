@@ -81,6 +81,11 @@ void PixelProcessingUnit::reset() {
 	init_ppu_mem();
 }
 
+void PixelProcessingUnit::reset(bool cgb_mode) {
+	is_cgb = cgb_mode;
+	reset();
+}
+
 void PixelProcessingUnit::tick(uint16_t &cycle) {
 	lcd_clock += cycle;
 	DEBUG_MSG("cycle: %u ", cycle);

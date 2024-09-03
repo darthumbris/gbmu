@@ -1,4 +1,6 @@
 #include "Cpu.hpp"
+#include "MemoryMap.hpp"
+#include "debug.hpp"
 
 void Cpu::event_handler() {
 	SDL_Event e;
@@ -11,10 +13,12 @@ void Cpu::event_handler() {
 			handle_input(e);
 		}
 		if (e.type == SDL_DROPFILE) {
-			//TODO handle this properly
 			char *dropped_filedir = e.drop.file;
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "File dropped on window", dropped_filedir,
-			                         ppu.window());
+			DEBUG_MSG("loading rom: %s\n", dropped_filedir);
+			rom_path = dropped_filedir;
+			load_options.path = dropped_filedir;
+			mmap.reset_file(load_options);
+			reset();
 			SDL_free(dropped_filedir);
 		}
 	}

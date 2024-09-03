@@ -272,6 +272,7 @@ public:
 	}
 
 	void reset();
+	void reset(bool cgb_mode);
 
 	void serialize(std::ofstream &f);
 	void deserialize(std::ifstream &f);
