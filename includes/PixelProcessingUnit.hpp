@@ -239,7 +239,6 @@ public:
 
 	inline void toggle_ghosting() {
 		data.ghosting = !data.ghosting;
-		printf("ghosting now: %s\n", data.ghosting ? "on" : "off");
 	}
 
 	uint8_t read_u8_ppu(uint16_t addr);

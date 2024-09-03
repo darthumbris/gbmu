@@ -14,7 +14,7 @@ void usage(char *progname) {
 }
 
 //TODO check performance optimizations
-//TODO allow file drag-drop (SDL_DropEvent)
+//TODO remove most DEBUG_MSG stuff
 
 int main(int argc, char *argv[]) {
 

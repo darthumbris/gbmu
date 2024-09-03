@@ -17,6 +17,7 @@ const GLenum tex_type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
 static bool first_frame;
 
 // TODO cleanup some of the gl code stuff
+//TODO check framerate?
 
 bool load_shader(GLuint &shader_id, GLenum shader_type, const GLchar *shader_source) {
 	shader_id = glCreateShader(shader_type);
