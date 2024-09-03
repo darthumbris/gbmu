@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <cstdio>
+#include <ctime>
 #include <memory>
 #include <string>
 #include <vector>
@@ -18,7 +19,7 @@ using mem_8k = std::array<uint8_t, 8192>;
 //TODO make more functions virtual?
 
 class Rom {
-private:
+protected:
 	RomHeader header;
 	bool cgb_on = false;
 	bool battery = false;
@@ -55,6 +56,8 @@ public:
 	inline void force_cgb_mode() {
 		cgb_on = true;
 	}
+
+	virtual void update_clock() {}
 
 protected:
 	std::vector<mem_16k> rom_banks{0};

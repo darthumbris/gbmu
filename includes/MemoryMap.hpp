@@ -127,6 +127,10 @@ public:
 		return header.is_cgb_game();
 	}
 
+    void update_clock() {
+        rom->update_clock();
+    }
+
 	uint8_t read_io_registers(uint16_t addr);
 	void write_io_registers(uint16_t addr, uint8_t val);
 	void update_joypad();

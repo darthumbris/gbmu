@@ -9,12 +9,10 @@ private:
 	uint8_t secondary_rom_bank = 0;
 	uint8_t ram_bank = 0;
 	bool ram_enable = false;
-	bool battery = false;
 	bool rumble = false;
 
 public:
 	MCB5(const std::string rom_path, RomHeader rheader, bool battery, bool rumble);
-	virtual ~MCB5();
 	
 	virtual uint8_t read_u8(uint16_t addr);
 	virtual void write_u8(uint16_t addr, uint8_t val);

@@ -12,7 +12,7 @@ private:
 
 public:
 	MCB2(const std::string rom_path, RomHeader rheader, bool battery) : Rom(rom_path, rheader, battery) {}
-	virtual ~MCB2();
+	// virtual ~MCB2();
 	
 	virtual uint8_t read_u8(uint16_t addr);
 	virtual void write_u8(uint16_t addr, uint8_t val);

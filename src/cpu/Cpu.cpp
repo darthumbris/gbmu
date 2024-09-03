@@ -82,6 +82,7 @@ void Cpu::tick() {
 		}
 		apu.end_frame();
 		apu.write();
+		mmap.update_clock();
 	}
 	event_handler();
 	debug_count += 1;
