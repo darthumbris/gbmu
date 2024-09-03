@@ -1,7 +1,6 @@
 #include "rom/MCB5.hpp"
 #include "debug.hpp"
 #include <cstring>
-#include <fstream>
 #include <iostream>
 
 MCB5::MCB5(const std::string rom_path, RomHeader rheader, bool battery, bool rumble)
@@ -66,30 +65,4 @@ void MCB5::write_u8(uint16_t addr, uint8_t val) {
 		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
-}
-
-void MCB5::serialize(std::ofstream &f) {
-	for (size_t i = 0; i < rom_banks.size(); i++) {
-		f.write(reinterpret_cast<const char *>(&rom_banks[i]), sizeof(rom_banks[i]));
-	}
-	for (size_t i = 0; i < ram_banks.size(); i++) {
-		f.write(reinterpret_cast<const char *>(&ram_banks[i]), sizeof(ram_banks[i]));
-	}
-	f.write(reinterpret_cast<const char *>(&rom_bank), sizeof(rom_bank));
-	f.write(reinterpret_cast<const char *>(&ram_bank), sizeof(ram_bank));
-	f.write(reinterpret_cast<const char *>(&ram_enable), sizeof(ram_enable));
-	DEBUG_MSG("done serializing rom");
-}
-
-void MCB5::deserialize(std::ifstream &f) {
-	for (size_t i = 0; i < rom_banks.size(); i++) {
-		f.read(reinterpret_cast<char *>(&rom_banks[i]), sizeof(rom_banks[i]));
-	}
-	for (size_t i = 0; i < ram_banks.size(); i++) {
-		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
-	}
-	f.read(reinterpret_cast<char *>(&rom_bank), sizeof(rom_bank));
-	f.read(reinterpret_cast<char *>(&ram_bank), sizeof(ram_bank));
-	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
-	DEBUG_MSG("done deserializing rom");
 }

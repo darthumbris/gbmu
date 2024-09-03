@@ -19,10 +19,9 @@ using mem_8k = std::array<uint8_t, 8192>;
 //TODO make more functions virtual?
 
 class Rom {
-protected:
+private:
 	RomHeader header;
 	bool cgb_on = false;
-	bool battery = false;
 
 public:
 	Rom(const std::string rom_path, RomHeader rheader, bool battery);
@@ -36,8 +35,8 @@ public:
 	virtual uint8_t read_u8(uint16_t addr) = 0;
 	virtual void write_u8(uint16_t addr, uint8_t val) = 0;
 
-	virtual void serialize(std::ofstream &f) = 0;
-	virtual void deserialize(std::ifstream &f) = 0;
+	virtual void serialize(std::ofstream &f);
+	virtual void deserialize(std::ifstream &f);
 
 	virtual void save_ram();
 	virtual void load_ram();
@@ -62,6 +61,7 @@ public:
 protected:
 	std::vector<mem_16k> rom_banks{0};
 	std::vector<mem_8k> ram_banks{0};
+	bool battery = false;
 };
 
 #endif

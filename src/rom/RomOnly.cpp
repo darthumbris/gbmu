@@ -1,7 +1,5 @@
 #include "rom/RomOnly.hpp"
-#include "debug.hpp"
 #include <cstdio>
-#include <fstream>
 #include <iostream>
 
 uint8_t RomOnly::read_u8(uint16_t addr) {
@@ -38,26 +36,4 @@ void RomOnly::write_u8(uint16_t addr, uint8_t val) {
 		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
-}
-
-void RomOnly::serialize(std::ofstream &f) {
-	for (size_t i = 0; i < rom_banks.size(); i++) {
-		f.write(reinterpret_cast<const char *>(&rom_banks[i]), sizeof(rom_banks[i]));
-	}
-	for (size_t i = 0; i < ram_banks.size(); i++) {
-		f.write(reinterpret_cast<const char *>(&ram_banks[i]), sizeof(ram_banks[i]));
-	}
-	f.write(reinterpret_cast<const char *>(&ram_enable), sizeof(ram_enable));
-	DEBUG_MSG("done serializing rom");
-}
-
-void RomOnly::deserialize(std::ifstream &f) {
-	for (size_t i = 0; i < rom_banks.size(); i++) {
-		f.read(reinterpret_cast<char *>(&rom_banks[i]), sizeof(rom_banks[i]));
-	}
-	for (size_t i = 0; i < ram_banks.size(); i++) {
-		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
-	}
-	f.read(reinterpret_cast<char *>(&ram_enable), sizeof(ram_enable));
-	DEBUG_MSG("done deserializing rom");
 }

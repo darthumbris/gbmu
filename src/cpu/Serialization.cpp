@@ -1,6 +1,13 @@
 #include "Cpu.hpp"
 #include "Interruptor.hpp"
 #include "debug.hpp"
+#include "rom/MCB1.hpp"
+#include "rom/MCB1M.hpp"
+#include "rom/MCB2.hpp"
+#include "rom/MCB3.hpp"
+#include "rom/MCB5.hpp"
+#include "rom/Rom.hpp"
+#include "rom/RomOnly.hpp"
 #include <SDL2/SDL_filesystem.h>
 #include <fstream>
 #include <iostream>
@@ -274,4 +281,259 @@ void AudioProcessingUnit::deserialize(std::ifstream &f) {
 	apu->load_state(apu_state);
 	stereo_buffer->clear();
 	DEBUG_MSG("done deserializing apu\n");
+}
+
+void Rom::serialize(std::ofstream &f) {
+	for (size_t i = 0; i < rom_banks.size(); i++) {
+		SERIALIZE(f, rom_banks[i]);
+	}
+	for (size_t i = 0; i < ram_banks.size(); i++) {
+		SERIALIZE(f, ram_banks[i]);
+	}
+}
+
+void Rom::deserialize(std::ifstream &f) {
+	for (size_t i = 0; i < rom_banks.size(); i++) {
+		DESERIALIZE(f, rom_banks[i]);
+	}
+	for (size_t i = 0; i < ram_banks.size(); i++) {
+		DESERIALIZE(f, ram_banks[i]);
+	}
+}
+
+void MCB3::serialize(std::ofstream &f) {
+	Rom::serialize(f);
+	SERIALIZE(f, rom_bank);
+	SERIALIZE(f, ram_bank);
+	SERIALIZE(f, ram_timer_enable);
+
+	SERIALIZE(f, seconds);
+	SERIALIZE(f, minutes);
+	SERIALIZE(f, hours);
+	SERIALIZE(f, days);
+	SERIALIZE(f, flags);
+	SERIALIZE(f, latched_seconds);
+	SERIALIZE(f, latched_minutes);
+	SERIALIZE(f, latched_hours);
+	SERIALIZE(f, latched_days);
+	SERIALIZE(f, latched_flags);
+
+	SERIALIZE(f, rtc);
+	SERIALIZE(f, latch);
+	SERIALIZE(f, last_time);
+	SERIALIZE(f, last_time_cached);
+	DEBUG_MSG("done serializing rom");
+}
+
+void MCB3::deserialize(std::ifstream &f) {
+	Rom::deserialize(f);
+	DESERIALIZE(f, rom_bank);
+	DESERIALIZE(f, ram_bank);
+	DESERIALIZE(f, ram_timer_enable);
+
+	DESERIALIZE(f, seconds);
+	DESERIALIZE(f, minutes);
+	DESERIALIZE(f, hours);
+	DESERIALIZE(f, days);
+	DESERIALIZE(f, flags);
+	DESERIALIZE(f, latched_seconds);
+	DESERIALIZE(f, latched_minutes);
+	DESERIALIZE(f, latched_hours);
+	DESERIALIZE(f, latched_days);
+	DESERIALIZE(f, latched_flags);
+
+	DESERIALIZE(f, rtc);
+	DESERIALIZE(f, latch);
+	DESERIALIZE(f, last_time);
+	DESERIALIZE(f, last_time_cached);
+	DEBUG_MSG("done deserializing rom");
+}
+
+void MCB1::serialize(std::ofstream &f) {
+	Rom::serialize(f);
+	SERIALIZE(f, rom_bank);
+	SERIALIZE(f, secondary_rom_bank);
+	SERIALIZE(f, ram_bank);
+	SERIALIZE(f, ram_enable);
+	SERIALIZE(f, rom_ram_mode);
+	DEBUG_MSG("done serializing rom");
+}
+
+void MCB1::deserialize(std::ifstream &f) {
+	Rom::deserialize(f);
+	DESERIALIZE(f, rom_bank);
+	DESERIALIZE(f, secondary_rom_bank);
+	DESERIALIZE(f, ram_bank);
+	DESERIALIZE(f, ram_enable);
+	DESERIALIZE(f, rom_ram_mode);
+	DEBUG_MSG("done deserializing rom");
+}
+
+void MCB1M::serialize(std::ofstream &f) {
+	Rom::serialize(f);
+	SERIALIZE(f, rom_bank);
+	SERIALIZE(f, ram_bank);
+	SERIALIZE(f, ram_enable);
+	SERIALIZE(f, rom_ram_mode);
+	DEBUG_MSG("done serializing rom");
+}
+
+void MCB1M::deserialize(std::ifstream &f) {
+	Rom::deserialize(f);
+	DESERIALIZE(f, rom_bank);
+	DESERIALIZE(f, ram_bank);
+	DESERIALIZE(f, ram_enable);
+	DESERIALIZE(f, rom_ram_mode);
+	DEBUG_MSG("done deserializing rom");
+}
+
+void MCB2::serialize(std::ofstream &f) {
+	Rom::serialize(f);
+	SERIALIZE(f, rom_bank);
+	SERIALIZE(f, ram_enable);
+	DEBUG_MSG("done serializing rom");
+}
+
+void MCB2::deserialize(std::ifstream &f) {
+	Rom::deserialize(f);
+	DESERIALIZE(f, rom_bank);
+	DESERIALIZE(f, ram_enable);
+	DEBUG_MSG("done deserializing rom");
+}
+
+void MCB5::serialize(std::ofstream &f) {
+	Rom::serialize(f);
+	SERIALIZE(f, rom_bank);
+	SERIALIZE(f, secondary_rom_bank);
+	SERIALIZE(f, ram_bank);
+	SERIALIZE(f, ram_enable);
+	DEBUG_MSG("done serializing rom");
+}
+
+void MCB5::deserialize(std::ifstream &f) {
+	Rom::deserialize(f);
+	DESERIALIZE(f, rom_bank);
+	DESERIALIZE(f, secondary_rom_bank);
+	DESERIALIZE(f, ram_bank);
+	DESERIALIZE(f, ram_enable);
+	DEBUG_MSG("done deserializing rom");
+}
+
+void RomOnly::serialize(std::ofstream &f) {
+	Rom::serialize(f);
+	SERIALIZE(f, ram_enable);
+	DEBUG_MSG("done serializing rom");
+}
+
+void RomOnly::deserialize(std::ifstream &f) {
+	Rom::deserialize(f);
+	DESERIALIZE(f, ram_enable);
+	DEBUG_MSG("done deserializing rom");
+}
+
+void Rom::save_ram() {
+	if (!battery) {
+		return;
+	}
+	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
+	std::string full_path = path + name() + ".ram";
+	SDL_free(static_cast<void *>(path));
+	std::ofstream f(full_path, std::ios::binary);
+
+	if (!f.is_open()) {
+		DEBUG_MSG("Error: Failed to  open file for saving ram.\n");
+		return;
+	}
+	DEBUG_MSG("writing ram to: %s\n", full_path.c_str());
+	for (size_t i = 0; i < ram_banks.size(); i++) {
+		SERIALIZE(f, ram_banks[i]);
+	}
+	f.close();
+}
+
+void Rom::load_ram() {
+	if (!battery) {
+		return;
+	}
+	// TODO have a check if the file_size is correct for the amount of ram expected
+	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
+	std::string full_path = path + name() + ".ram";
+	SDL_free(static_cast<void *>(path));
+	std::ifstream f(full_path, std::ios::binary);
+
+	if (!f.is_open()) {
+		DEBUG_MSG("Error: Failed to  open file for loading ram.\n");
+		return;
+	}
+	// DEBUG_MSG("loading ram from: %s\n", full_path.c_str());
+	for (size_t i = 0; i < ram_banks.size(); i++) {
+		DESERIALIZE(f, ram_banks[i]);
+	}
+	f.close();
+}
+
+void MCB3::save_ram() {
+	if (!battery) {
+		return;
+	}
+	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
+	std::string full_path = path + name() + ".ram";
+	SDL_free(static_cast<void *>(path));
+	std::ofstream f(full_path, std::ios::binary);
+
+	if (!f.is_open()) {
+		DEBUG_MSG("Error: Failed to  open file for saving ram.\n");
+		return;
+	}
+	DEBUG_MSG("writing ram to: %s\n", full_path.c_str());
+	for (size_t i = 0; i < ram_banks.size(); i++) {
+		SERIALIZE(f, ram_banks[i]);
+	}
+	if (has_rtc) {
+		SERIALIZE(f, seconds);
+		SERIALIZE(f, minutes);
+		SERIALIZE(f, hours);
+		SERIALIZE(f, days);
+		SERIALIZE(f, flags);
+		SERIALIZE(f, latched_seconds);
+		SERIALIZE(f, latched_minutes);
+		SERIALIZE(f, latched_hours);
+		SERIALIZE(f, latched_days);
+		SERIALIZE(f, latched_flags);
+		SERIALIZE(f, last_time);
+	}
+	f.close();
+}
+
+void MCB3::load_ram() {
+	// TODO have a check if the file_size is correct for the amount of ram expected
+	if (!battery) {
+		return;
+	}
+	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
+	std::string full_path = path + name() + ".ram";
+	SDL_free(static_cast<void *>(path));
+	std::ifstream f(full_path, std::ios::binary);
+
+	if (!f.is_open()) {
+		DEBUG_MSG("Error: Failed to  open file for loading ram.\n");
+		return;
+	}
+	for (size_t i = 0; i < ram_banks.size(); i++) {
+		DESERIALIZE(f, ram_banks[i]);
+	}
+	if (has_rtc) {
+		DESERIALIZE(f, seconds);
+		DESERIALIZE(f, minutes);
+		DESERIALIZE(f, hours);
+		DESERIALIZE(f, days);
+		DESERIALIZE(f, flags);
+		DESERIALIZE(f, latched_seconds);
+		DESERIALIZE(f, latched_minutes);
+		DESERIALIZE(f, latched_hours);
+		DESERIALIZE(f, latched_days);
+		DESERIALIZE(f, latched_flags);
+		DESERIALIZE(f, last_time);
+	}
+	f.close();
 }

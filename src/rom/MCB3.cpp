@@ -1,13 +1,9 @@
 #include "rom/MCB3.hpp"
 #include "MemoryMap.hpp"
 #include "debug.hpp"
-#include <cstdint>
-#include <fstream>
-#include <iostream>
 #include <SDL2/SDL_filesystem.h>
-
-#define SERIALIZE(f, x) (f.write(reinterpret_cast<const char *>(&x), sizeof(x)))
-#define DESERIALIZE(f, x) (f.read(reinterpret_cast<char *>(&x), sizeof(x)))
+#include <cstdint>
+#include <iostream>
 
 uint8_t MCB3::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -152,104 +148,4 @@ void MCB3::update_rtc() {
 			}
 		}
 	}
-}
-
-void MCB3::save_ram() {
-	if (!battery) {
-		return;
-	}
-	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
-	std::string full_path = path + name() + ".ram";
-	SDL_free(static_cast<void *>(path));
-	std::ofstream f(full_path, std::ios::binary);
-
-	if (!f.is_open()) {
-		DEBUG_MSG("Error: Failed to  open file for saving ram.\n");
-		return;
-	}
-	DEBUG_MSG("writing ram to: %s\n", full_path.c_str());
-	for (size_t i = 0; i < ram_banks.size(); i++) {
-		SERIALIZE(f, ram_banks[i]);
-	}
-	if (has_rtc) {
-		SERIALIZE(f, seconds);
-		SERIALIZE(f, minutes);
-		SERIALIZE(f, hours);
-		SERIALIZE(f, days);
-		SERIALIZE(f, flags);
-		SERIALIZE(f, latched_seconds);
-		SERIALIZE(f, latched_minutes);
-		SERIALIZE(f, latched_hours);
-		SERIALIZE(f, latched_days);
-		SERIALIZE(f, latched_flags);
-		SERIALIZE(f, last_time);
-	}
-	f.close();
-}
-
-void MCB3::load_ram() {
-	// TODO have a check if the file_size is correct for the amount of ram expected
-	if (!battery) {
-		return;
-	}
-	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
-	std::string full_path = path + name() + ".ram";
-	SDL_free(static_cast<void *>(path));
-	std::ifstream f(full_path, std::ios::binary);
-
-	if (!f.is_open()) {
-		DEBUG_MSG("Error: Failed to  open file for loading ram.\n");
-		return;
-	}
-	for (size_t i = 0; i < ram_banks.size(); i++) {
-		DESERIALIZE(f, ram_banks[i]);
-	}
-	if (has_rtc) {
-		DESERIALIZE(f, seconds);
-		DESERIALIZE(f, minutes);
-		DESERIALIZE(f, hours);
-		DESERIALIZE(f, days);
-		DESERIALIZE(f, flags);
-		DESERIALIZE(f, latched_seconds);
-		DESERIALIZE(f, latched_minutes);
-		DESERIALIZE(f, latched_hours);
-		DESERIALIZE(f, latched_days);
-		DESERIALIZE(f, latched_flags);
-		DESERIALIZE(f, last_time);
-	}
-	f.close();
-}
-
-void MCB3::serialize(std::ofstream &f) {
-	for (size_t i = 0; i < rom_banks.size(); i++) {
-		SERIALIZE(f, rom_banks[i]);
-	}
-	for (size_t i = 0; i < ram_banks.size(); i++) {
-		SERIALIZE(f, ram_banks[i]);
-	}
-	f.write(reinterpret_cast<const char *>(&rom_bank), sizeof(rom_bank));
-	f.write(reinterpret_cast<const char *>(&ram_bank), sizeof(ram_bank));
-	f.write(reinterpret_cast<const char *>(&ram_timer_enable), sizeof(ram_timer_enable));
-	f.write(reinterpret_cast<const char *>(&seconds), sizeof(seconds));
-	f.write(reinterpret_cast<const char *>(&minutes), sizeof(minutes));
-	f.write(reinterpret_cast<const char *>(&hours), sizeof(hours));
-	f.write(reinterpret_cast<const char *>(&days), sizeof(days));
-	f.write(reinterpret_cast<const char *>(&flags), sizeof(flags));
-	DEBUG_MSG("done serializing rom");
-}
-
-void MCB3::deserialize(std::ifstream &f) {
-	for (size_t i = 0; i < rom_banks.size(); i++) {
-		f.read(reinterpret_cast<char *>(&rom_banks[i]), sizeof(rom_banks[i]));
-	}
-	for (size_t i = 0; i < ram_banks.size(); i++) {
-		f.read(reinterpret_cast<char *>(&ram_banks[i]), sizeof(ram_banks[i]));
-	}
-	f.read(reinterpret_cast<char *>(&rom_bank), sizeof(rom_bank));
-	f.read(reinterpret_cast<char *>(&ram_bank), sizeof(ram_bank));
-	f.read(reinterpret_cast<char *>(&ram_timer_enable), sizeof(ram_timer_enable));
-	f.read(reinterpret_cast<char *>(&seconds), sizeof(seconds));
-	f.read(reinterpret_cast<char *>(&minutes), sizeof(minutes));
-	f.read(reinterpret_cast<char *>(&hours), sizeof(hours));
-	DEBUG_MSG("done deserializing rom");
 }
