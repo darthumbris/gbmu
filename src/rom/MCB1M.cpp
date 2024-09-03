@@ -1,5 +1,4 @@
 #include "rom/MCB1M.hpp"
-#include "debug.hpp"
 #include <iostream>
 
 uint8_t MCB1M::read_u8(uint16_t addr) {
@@ -28,16 +27,17 @@ void MCB1M::write_u8(uint16_t addr, uint8_t val) {
 		} else if (addr <= 0x3FFF) {
 			rom_bank = (ram_bank & 0xFF) | ((val & 1) << 8);
 		}
+		rom_bank &= (uint8_t)rom_banks.size() - 1;
 		if (addr >= 0x6000 && addr <= 0x7FFF && (val == 0x00 || val == 0x01)) {
 			rom_ram_mode = val == 0x01;
 		}
 		if (addr >= 0x4000 && addr <= 0x5FFF) {
 			ram_bank = val & 0x0F * rom_ram_mode;
+			ram_bank &= (uint8_t)ram_banks.size() - 1;
 		}
 		break;
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable && ram_banks.size()) {
-			DEBUG_MSG("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
 			ram_banks[ram_bank][addr - 0xA000] = val;
 		}
 		break;

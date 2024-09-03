@@ -28,7 +28,6 @@ void RomOnly::write_u8(uint16_t addr, uint8_t val) {
 		break;
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable && ram_banks.size()) {
-			// DEBUG_MSG("writing at addr: %#06x ram_bank: 0 ram_banks size: %zu\n", addr, ram_banks.size());
 			ram_banks[0][addr - 0xA000] = val;
 		}
 		break;

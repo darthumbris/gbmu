@@ -1,6 +1,5 @@
 #include "rom/MCB3.hpp"
 #include "MemoryMap.hpp"
-#include "debug.hpp"
 #include <SDL2/SDL_filesystem.h>
 #include <cstdint>
 #include <iostream>
@@ -46,12 +45,12 @@ void MCB3::write_u8(uint16_t addr, uint8_t val) {
 		break;
 	case 0x2000 ... 0x3FFF:
 		rom_bank = val ? (val & 0x7F) : 1;
-		rom_bank &= (rom_banks.size() - 1); // TODO check if this behaves
+		rom_bank &= ((uint8_t)rom_banks.size() - 1);
 		break;
 	case 0x4000 ... 0x5FFF:
 		if (val < 0x04) {
 			ram_bank = val;
-			ram_bank &= ram_banks.size() - 1; // TODO check if this behaves
+			ram_bank &= (uint8_t)ram_banks.size() - 1;
 		} else if (val >= 0x08 && val <= 0x0C) {
 			if (has_rtc && ram_timer_enable) {
 				rtc = val;
@@ -77,7 +76,6 @@ void MCB3::write_u8(uint16_t addr, uint8_t val) {
 			return;
 		}
 		if (ram_bank >= 0 && ram_banks.size()) {
-			DEBUG_MSG("ram_bank: %u addr: %#06x val: %u\n", ram_bank, addr, val);
 			ram_banks[ram_bank][addr - 0xA000] = val;
 		} else if (has_rtc) {
 			switch (rtc) {

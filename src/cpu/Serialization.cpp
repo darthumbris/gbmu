@@ -9,6 +9,8 @@
 #include "rom/Rom.hpp"
 #include "rom/RomOnly.hpp"
 #include <SDL2/SDL_filesystem.h>
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 
@@ -391,6 +393,7 @@ void MCB2::serialize(std::ofstream &f) {
 	Rom::serialize(f);
 	SERIALIZE(f, rom_bank);
 	SERIALIZE(f, ram_enable);
+	SERIALIZE(f, ram);
 	DEBUG_MSG("done serializing rom");
 }
 
@@ -398,6 +401,7 @@ void MCB2::deserialize(std::ifstream &f) {
 	Rom::deserialize(f);
 	DESERIALIZE(f, rom_bank);
 	DESERIALIZE(f, ram_enable);
+	DESERIALIZE(f, ram);
 	DEBUG_MSG("done deserializing rom");
 }
 
@@ -455,17 +459,22 @@ void Rom::load_ram() {
 	if (!battery) {
 		return;
 	}
-	// TODO have a check if the file_size is correct for the amount of ram expected
 	char *path = SDL_GetPrefPath("GBMU-42", "gbmu");
 	std::string full_path = path + name() + ".ram";
 	SDL_free(static_cast<void *>(path));
 	std::ifstream f(full_path, std::ios::binary);
 
-	if (!f.is_open()) {
+	if (!f.is_open() || f.fail()) {
 		DEBUG_MSG("Error: Failed to  open file for loading ram.\n");
 		return;
 	}
-	// DEBUG_MSG("loading ram from: %s\n", full_path.c_str());
+	f.seekg(0, f.end);
+	size_t file_size = f.tellg();
+	f.seekg(0, f.beg);
+	if (file_size < 0x2000 * ram_banks.size()) {
+		DEBUG_MSG("Error: Ram Save file is too small.\n");
+		return;
+	}
 	for (size_t i = 0; i < ram_banks.size(); i++) {
 		DESERIALIZE(f, ram_banks[i]);
 	}
@@ -506,7 +515,6 @@ void MCB3::save_ram() {
 }
 
 void MCB3::load_ram() {
-	// TODO have a check if the file_size is correct for the amount of ram expected
 	if (!battery) {
 		return;
 	}
@@ -515,14 +523,29 @@ void MCB3::load_ram() {
 	SDL_free(static_cast<void *>(path));
 	std::ifstream f(full_path, std::ios::binary);
 
-	if (!f.is_open()) {
+	if (!f.is_open() || f.fail()) {
 		DEBUG_MSG("Error: Failed to  open file for loading ram.\n");
 		return;
 	}
+
+	f.seekg(0, f.end);
+	size_t file_size = f.tellg();
+	f.seekg(0, f.beg);
+
+	bool rtc_load = true;
+	if (file_size < 0x2000 * ram_banks.size()) {
+		DEBUG_MSG("Error: Ram Save file is too small.\n");
+		return;
+	}
+	else if (file_size < 0x2000 * ram_banks.size() + 16) {
+		DEBUG_MSG("Error: Ram has no valid RTC data. Skipping loading RTC.\n");
+		rtc_load = false;
+	}
+
 	for (size_t i = 0; i < ram_banks.size(); i++) {
 		DESERIALIZE(f, ram_banks[i]);
 	}
-	if (has_rtc) {
+	if (has_rtc && rtc_load) {
 		DESERIALIZE(f, seconds);
 		DESERIALIZE(f, minutes);
 		DESERIALIZE(f, hours);
@@ -536,4 +559,5 @@ void MCB3::load_ram() {
 		DESERIALIZE(f, last_time);
 	}
 	f.close();
+	DEBUG_MSG("Loading Ram finished.\n");
 }

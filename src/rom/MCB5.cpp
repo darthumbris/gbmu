@@ -1,5 +1,4 @@
 #include "rom/MCB5.hpp"
-#include "debug.hpp"
 #include <cstring>
 #include <iostream>
 
@@ -9,9 +8,6 @@ MCB5::MCB5(const std::string rom_path, RomHeader rheader, bool battery, bool rum
 	rom_bank = 1;
 	secondary_rom_bank = 0;
 	ram_enable = false;
-	if (MCB5::rumble) {
-		printf("hey got rumble\n");
-	}
 	for (size_t i = 0; i < ram_banks.size(); i++) {
 		for (size_t j = 0; j < ram_banks[i].size(); j++) {
 			ram_banks[i][j] = 0xFF;
@@ -27,9 +23,6 @@ uint8_t MCB5::read_u8(uint16_t addr) {
 		return rom_banks[rom_bank][addr - 0x4000];
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable && ram_banks.size()) {
-			if (addr == 0xA511) {
-				DEBUG_MSG("ram_bank: %u\n", ram_bank);
-			}
 			return ram_banks[ram_bank][addr - 0xA000];
 		}
 		return 0xFF;
@@ -49,15 +42,14 @@ void MCB5::write_u8(uint16_t addr, uint8_t val) {
 		} else if (addr <= 0x3FFF) {
 			rom_bank = (ram_bank & 0xFF) | ((val & 1) << 8); // 9th bit
 		}
+		rom_bank &= (uint8_t)rom_banks.size() - 1;
 		if (addr >= 0x4000 && addr <= 0x5FFF) {
 			ram_bank = val & 0x0F;
+			ram_bank &= (uint8_t)ram_banks.size() - 1;
 		}
 		break;
 	case 0xA000 ... 0xBFFF:
 		if (ram_enable && ram_banks.size()) {
-			if (addr == 0xA511) {
-				DEBUG_MSG("writing %u to ram_bank: %u\n", val, ram_bank);
-			}
 			ram_banks[ram_bank][addr - 0xA000] = val;
 		}
 		break;
