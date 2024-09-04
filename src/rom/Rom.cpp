@@ -1,13 +1,5 @@
 #include "rom/Rom.hpp"
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_filesystem.h>
-#include <SDL2/SDL_stdinc.h>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
 #include <fstream>
-#include <iostream>
 
 Rom::Rom(const std::string rom_path, RomHeader rheader, bool battery) : header(rheader), battery(battery) {
 	std::ifstream ifs;

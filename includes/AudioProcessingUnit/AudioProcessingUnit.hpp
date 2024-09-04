@@ -4,11 +4,9 @@
 #include "AudioProcessingUnit/Gb_Apu.h"
 #include "AudioProcessingUnit/Multi_Buffer.h"
 #include "SDL2/SDL_mutex.h"
-#include <cstdint>
 #include <fstream>
 
-/* Using gb apu from: https://github.com/stoneface86/gbapu
- */
+// Using gb apu from: https://github.com/stoneface86/gbapu
 
 constexpr unsigned SAMPLERATE = 44100;
 constexpr long CLOCKRATE = 4194304;

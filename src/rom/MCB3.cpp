@@ -1,8 +1,5 @@
 #include "rom/MCB3.hpp"
 #include "MemoryMap.hpp"
-#include <SDL2/SDL_filesystem.h>
-#include <cstdint>
-#include <iostream>
 
 uint8_t MCB3::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -33,7 +30,6 @@ uint8_t MCB3::read_u8(uint16_t addr) {
 		}
 		return 0xFF;
 	default:
-		std::cerr << "should not reach this" << std::endl;
 		return 0xFF;
 	}
 }
@@ -98,7 +94,6 @@ void MCB3::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	default:
-		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }
@@ -163,7 +158,7 @@ void MCB3::reset() {
 	latched_hours = 0;
 	latched_days = 0;
 	latched_flags = 0;
-	rtc =0;
+	rtc = 0;
 	latch = 0;
 	last_time = 0;
 	last_time_cached = 0;

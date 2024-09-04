@@ -1,7 +1,6 @@
 #ifndef ROM_HEADER_HPP
 #define ROM_HEADER_HPP
 
-#include <array>
 #include <cstdint>
 #include <string>
 
@@ -47,7 +46,7 @@ enum CartridgeType {
 class RomHeader {
 private:
 	uint32_t _entry_point;                             // 0x100-0x103
-	std::array<uint8_t, 48> _logo;                     // 0x104-0x133
+	uint8_t _logo[48];                                 // 0x104-0x133
 	char _name[15];                                    // 0x134-0x142
 	CGB_FLAGS _cgb_flag = Non_CGB_Mode;                // 0x143
 	uint16_t _license_code;                            // 0x144-0x145

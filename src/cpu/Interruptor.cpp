@@ -1,6 +1,5 @@
 #include "Interruptor.hpp"
 #include "Cpu.hpp"
-#include <cstdint>
 
 Interruptor::Interruptor(Cpu *cpu) : cpu(cpu) {}
 Interruptor::~Interruptor() {}
@@ -128,7 +127,6 @@ bool Interruptor::handle_interrupt(instruction_state state) {
 		cpu->unhalt_cpu();
 	}
 
-	// Handle the interrupt, while taking the priority into account
 	if (process_interrupts) {
 		if (masked & static_cast<uint8_t>(interrupt_type::Vblank)) {
 			delay_cycles = 0;

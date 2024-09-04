@@ -1,12 +1,5 @@
 #include "PixelProcessingUnit.hpp"
 #include "Cpu.hpp"
-#include "Interruptor.hpp"
-#include "MemoryMap.hpp"
-#include <SDL2/SDL_pixels.h>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
 PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu, uint8_t rscale) : cpu(cpu) {
 	lcd_clock = 0;

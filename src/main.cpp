@@ -1,20 +1,14 @@
 #include "Cpu.hpp"
-#include "Decoder.hpp"
-#include <SDL2/SDL.h>
+#include "debug.hpp"
 
 #define OPTSTR "i:s:dc"
 #define USAGE_FMT "%s [-i inputfile] [-d force-dmg-mode] [-c force cgb mode] [-s scale]\n"
-#define DEFAULT_PROGNAME "gbmu"
-
-void usage(char *progname) {
-	fprintf(stderr, USAGE_FMT, progname ? progname : DEFAULT_PROGNAME);
-	exit(EXIT_FAILURE);
-}
 
 int main(int argc, char *argv[]) {
 
 	if (argc < 2) {
-		usage(basename(argv[0]));
+		ERROR_MSG(USAGE_FMT, argv[0]);
+		exit(EXIT_FAILURE);
 	}
 
 	int opt;
@@ -24,7 +18,7 @@ int main(int argc, char *argv[]) {
 		switch (opt) {
 		case 'i':
 			if (!std::ifstream(optarg, std::ios::binary).is_open()) {
-				printf("Failed to open file: %s\n", optarg);
+				ERROR_MSG("Failed to open file: %s\n", optarg);
 				exit(EXIT_FAILURE);
 			}
 			options.path = optarg;
@@ -38,12 +32,13 @@ int main(int argc, char *argv[]) {
 		case 's':
 			options.scale = static_cast<uint8_t>(strtoul(optarg, nullptr, 10));
 			if (options.scale > 8 || options.scale < 1) {
-				printf("darkening options needs to be between 1-8\n");
+				ERROR_MSG("darkening options needs to be between 1-8\n");
 				exit(EXIT_FAILURE);
 			}
 			break;
 		default:
-			usage(basename(argv[0]));
+			ERROR_MSG(USAGE_FMT, argv[0]);
+			exit(EXIT_FAILURE);
 			break;
 		}
 	}

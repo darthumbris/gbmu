@@ -1,7 +1,4 @@
 #include "rom/MCB1.hpp"
-#include <cstdint>
-#include <cstdio>
-#include <iostream>
 
 uint8_t MCB1::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -18,7 +15,6 @@ uint8_t MCB1::read_u8(uint16_t addr) {
 		}
 		return 0xFF;
 	default:
-		std::cerr << "should not reach this" << std::endl;
 		return 0xFF;
 	}
 }
@@ -47,7 +43,6 @@ void MCB1::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	default:
-		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }

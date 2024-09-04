@@ -1,6 +1,4 @@
 #include "rom/MCB5.hpp"
-#include <cstring>
-#include <iostream>
 
 MCB5::MCB5(const std::string rom_path, RomHeader rheader, bool battery, bool rumble)
     : Rom(rom_path, rheader, battery), rumble(rumble) {
@@ -27,7 +25,6 @@ uint8_t MCB5::read_u8(uint16_t addr) {
 		}
 		return 0xFF;
 	default:
-		std::cerr << "should not reach this" << std::endl;
 		return 0xFF;
 	}
 }
@@ -54,7 +51,6 @@ void MCB5::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	default:
-		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }

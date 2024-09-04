@@ -252,12 +252,7 @@ void Blip_Synth_::adjust_impulse() {
 		if (p == p2)
 			error /= 2; // phase = 0.5 impulse uses same half for both sides
 		impulses[size - blip_res + p] += (short)error;
-		// printf( "error: %ld\n", error );
 	}
-
-	// for ( int i = blip_res; i--; printf( "\n" ) )
-	//   for ( int j = 0; j < width / 2; j++ )
-	//       printf( "%5ld,", impulses [j * blip_res + i + 1] );
 }
 
 void Blip_Synth_::treble_eq(blip_eq_t const &eq) {
@@ -338,7 +333,6 @@ void Blip_Synth_::volume_unit(double new_unit) {
 			}
 		}
 		delta_factor = (int)floor(factor + 0.5);
-		// printf( "delta_factor: %d, kernel_unit: %d\n", delta_factor, kernel_unit );
 	}
 }
 #endif

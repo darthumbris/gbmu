@@ -3,11 +3,7 @@
 
 #include "RomHeader.hpp"
 #include <array>
-#include <cstdint>
-#include <cstdio>
-#include <ctime>
 #include <memory>
-#include <string>
 #include <vector>
 
 using mem_16k = std::array<uint8_t, 16384>;

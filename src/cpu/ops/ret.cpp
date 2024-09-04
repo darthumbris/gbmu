@@ -1,5 +1,4 @@
 #include "Cpu.hpp"
-#include <cstdint>
 
 void Cpu::ret() {
 	pc = mmap.read_u16(sp);

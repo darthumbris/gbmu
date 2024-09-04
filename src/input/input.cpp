@@ -1,6 +1,4 @@
 #include "Cpu.hpp"
-#include <SDL2/SDL_keycode.h>
-#include <cstdio>
 
 void Cpu::handle_input(SDL_Event &e) {
 	SDL_Keymod modstate = SDL_GetModState();

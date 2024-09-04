@@ -1,17 +1,8 @@
 #include "AudioProcessingUnit/AudioProcessingUnit.hpp"
 #include "MemoryMap.hpp"
-#include "SDL2/SDL_error.h"
 #include "debug.hpp"
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_mutex.h>
-#include <SDL2/SDL_stdinc.h>
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
 #include <cstring>
-#include <iostream>
 
 AudioProcessingUnit::AudioProcessingUnit() : apu(nullptr), stereo_buffer(nullptr) {
 	sample_rate = SAMPLERATE;
@@ -58,7 +49,7 @@ void AudioProcessingUnit::init(bool cgb_mode) {
 
 	bufs = new sample_t[(long)SAMPLES * BUF_COUNT];
 	if (!bufs) {
-		std::cerr << "Out of Memory" << std::endl;
+		ERROR_MSG("Out of Memory");
 		exit(EXIT_FAILURE);
 	}
 
@@ -70,7 +61,7 @@ void AudioProcessingUnit::init(bool cgb_mode) {
 	read_buf = 0;
 	free_sem = SDL_CreateSemaphore(BUF_COUNT - 1);
 	if (!free_sem) {
-		printf("Couldn't create semaphore! SDL_Error: %s\n", SDL_GetError());
+		ERROR_MSG("Couldn't create semaphore! SDL_Error: %s\n", SDL_GetError());
 		return;
 	}
 
@@ -92,7 +83,6 @@ void AudioProcessingUnit::init(bool cgb_mode) {
 
 	SDL_PauseAudio(false); // start playing sound
 
-	// audio_buffer = new sample_t[AUDIO_BUFFER_SIZE];
 	sample_buffer = new sample_t[AUDIO_BUFFER_SIZE];
 	apu = new Gb_Apu();
 	stereo_buffer = new Stereo_Buffer();

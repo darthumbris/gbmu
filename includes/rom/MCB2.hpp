@@ -2,8 +2,6 @@
 #define MCB2_HPP
 
 #include "Rom.hpp"
-#include <array>
-#include <cstdint>
 
 constexpr std::uint16_t mask8{0b0000'0001'0000'0000}; // represents bit 8
 

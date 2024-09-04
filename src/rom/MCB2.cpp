@@ -1,6 +1,4 @@
 #include "rom/MCB2.hpp"
-#include <cstdint>
-#include <iostream>
 
 uint8_t MCB2::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -16,7 +14,6 @@ uint8_t MCB2::read_u8(uint16_t addr) {
 	case 0xA201 ... 0xBFFF:
 		return 0x00;
 	default:
-		std::cerr << "should not reach this" << std::endl;
 		return 0xFF;
 	}
 }
@@ -41,7 +38,6 @@ void MCB2::write_u8(uint16_t addr, uint8_t val) {
 	case 0xA201 ... 0xBFFF:
 		break;
 	default:
-		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }

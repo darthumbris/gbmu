@@ -3,15 +3,12 @@
 
 #include <SDL2/SDL.h>
 #include <array>
-#include <cstdint>
 #include <fstream>
 
 #include <glew.h>
 #include <GL/glu.h>
 
 class Cpu;
-
-// void check_color_rgb555(uint8_t red, uint8_t green, uint8_t blue);
 
 constexpr int SCREEN_WIDTH = 160;
 constexpr int SCREEN_HEIGHT = 144;
@@ -155,7 +152,7 @@ private:
 
 	int16_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
-	sprite sprites[40];// 0xFE00 - 0xFE9F
+	sprite sprites[40]; // 0xFE00 - 0xFE9F
 	std::array<uint8_t, 8192> vram[2];
 	uint8_t tile_data[2][384][64];
 

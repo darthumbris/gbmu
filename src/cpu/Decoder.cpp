@@ -1,8 +1,6 @@
 #include "Decoder.hpp"
 #include <fstream>
 #include <iostream>
-#include <sstream>
-#include <utility>
 
 namespace Dict {
 

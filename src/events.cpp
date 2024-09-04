@@ -1,8 +1,7 @@
 #include "Cpu.hpp"
-#include "MemoryMap.hpp"
 #include "debug.hpp"
 
-void Cpu::event_handler() {	
+void Cpu::event_handler() {
 	SDL_Event e;
 	while (SDL_PollEvent(&e)) {
 		if (e.type == SDL_QUIT) {

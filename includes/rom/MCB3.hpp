@@ -2,8 +2,6 @@
 #define MCB3_HPP
 
 #include "Rom.hpp"
-#include <cstdint>
-#include <cstdio>
 
 class MCB3 : public Rom {
 
@@ -16,12 +14,11 @@ private:
 	bool has_rtc = false;
 
 	// Clock counter registers (only if MBC3 has a timer?)
-	uint8_t seconds = 0; // 0x08 //0-59
-	uint8_t minutes = 0; // 0x09 //0-59
-	uint8_t hours = 0;   // 0x0A //0-23
-	uint16_t days = 0;   // 0-511 days
-	uint8_t flags = 0;   // 0bCH00000D:  C carry and H halt and D is for day counter most significant bit
-
+	uint8_t seconds = 0;         // 0x08 //0-59
+	uint8_t minutes = 0;         // 0x09 //0-59
+	uint8_t hours = 0;           // 0x0A //0-23
+	uint16_t days = 0;           // 0-511 days
+	uint8_t flags = 0;           // 0bCH00000D:  C carry and H halt and D is for day counter most significant bit
 	uint8_t latched_seconds = 0; // 0x08
 	uint8_t latched_minutes = 0; // 0x09
 	uint8_t latched_hours = 0;   // 0x0A

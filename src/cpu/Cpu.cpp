@@ -1,9 +1,5 @@
 #include "Cpu.hpp"
-#include "Interruptor.hpp"
 #include "OpcodeTiming.hpp"
-#include <cassert>
-#include <cstdint>
-#include <ctime>
 
 Cpu::Cpu(Decoder dec, const options options)
     : decoder(dec), mmap(options, this), ppu(this, options.scale), interruptor(this), rom_path(options.path) {

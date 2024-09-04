@@ -1,8 +1,7 @@
 #include "rom/RomHeader.hpp"
-#include <cstdint>
+#include "debug.hpp"
 #include <cstdio>
 #include <fstream>
-#include <iostream>
 
 template <typename IntegerType>
 void bits_to_int(IntegerType &result, const char *bits) {
@@ -227,7 +226,7 @@ RomHeader::RomHeader(const std::string path) {
 	ifs.open(path.c_str(), std::ifstream::binary);
 
 	if (!ifs.is_open()) {
-		std::cerr << "Error: File could not be opened" << std::endl;
+		ERROR_MSG("Error: File: %s could not be opened.\n", path.c_str());
 		exit(EXIT_FAILURE);
 	}
 	ifs.seekg(0x100);

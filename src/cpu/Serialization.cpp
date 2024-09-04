@@ -8,10 +8,6 @@
 #include "rom/MCB5.hpp"
 #include "rom/Rom.hpp"
 #include "rom/RomOnly.hpp"
-#include <SDL2/SDL_filesystem.h>
-#include <cstddef>
-#include <fstream>
-#include <iostream>
 
 #define SERIALIZE(f, x) (f.write(reinterpret_cast<const char *>(&x), sizeof(x)))
 #define DESERIALIZE(f, x) (f.read(reinterpret_cast<char *>(&x), sizeof(x)))

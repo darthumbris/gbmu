@@ -1,6 +1,5 @@
 #include "Cpu.hpp"
 #include "PixelProcessingUnit.hpp"
-#include <cstdint>
 
 void PixelProcessingUnit::init_ppu_mem() {
 	const uint8_t *initial_values;

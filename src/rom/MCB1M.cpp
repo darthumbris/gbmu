@@ -1,5 +1,4 @@
 #include "rom/MCB1M.hpp"
-#include <iostream>
 
 uint8_t MCB1M::read_u8(uint16_t addr) {
 	switch (addr) {
@@ -12,7 +11,7 @@ uint8_t MCB1M::read_u8(uint16_t addr) {
 			return ram_banks[ram_bank][addr - 0xA000];
 		}
 	default:
-		std::cerr << "should not reach this" << std::endl;
+		return 0xFF;
 	}
 	return 0xFF;
 }
@@ -42,7 +41,6 @@ void MCB1M::write_u8(uint16_t addr, uint8_t val) {
 		}
 		break;
 	default:
-		std::cerr << "should not reach this" << std::endl;
 		break;
 	}
 }

@@ -1,16 +1,12 @@
 #include "MemoryMap.hpp"
 #include "Cpu.hpp"
+#include "debug.hpp"
 #include "rom/MCB1.hpp"
 #include "rom/MCB2.hpp"
 #include "rom/MCB3.hpp"
 #include "rom/MCB5.hpp"
 #include "rom/RomHeader.hpp"
 #include "rom/RomOnly.hpp"
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
 
 MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cpu(cpu) {
 	load_file(options, false);
@@ -98,7 +94,7 @@ void MemoryMap::load_file(const options options, bool reset_header) {
 		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
 		break;
 	default:
-		std::cerr << "Cartridge type: " << header.cartridge_type() << " not supported" << std::endl;
+		ERROR_MSG("Cartridge type: %u not supported.\n", header.cartridge_type());
 		rom = Rom::make<RomOnly>(options.path, header, header.has_battery());
 		break;
 	}
@@ -106,7 +102,7 @@ void MemoryMap::load_file(const options options, bool reset_header) {
 	if ((rom->cgb_mode() && !options.force_dmg) || options.force_cgb) {
 		std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
 		if (!cgb.is_open()) {
-			std::cerr << "Error: Failed to  open file cgb boot rom." << std::endl;
+			ERROR_MSG("Error: Failed to  open file cgb boot rom.\n");
 			exit(EXIT_FAILURE);
 		}
 		cgb.seekg(0, std::ios::beg);
@@ -119,7 +115,7 @@ void MemoryMap::load_file(const options options, bool reset_header) {
 	} else {
 		std::ifstream cgb("dmg_boot.bin", std::ios::binary | std::ios::ate);
 		if (!cgb.is_open()) {
-			std::cerr << "Error: Failed to  open file dmg boot rom." << std::endl;
+			ERROR_MSG("Error: Failed to  open file dmg boot rom.\n");
 			exit(EXIT_FAILURE);
 		}
 		cgb.seekg(0, std::ios::beg);

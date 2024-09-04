@@ -1,10 +1,5 @@
 #include "PixelProcessingUnit.hpp"
-#include <GL/gl.h>
-#include <SDL2/SDL_stdinc.h>
-#include <SDL2/SDL_timer.h>
-#include <SDL2/SDL_video.h>
-#include <cstdint>
-#include <cstdlib>
+#include "debug.hpp"
 
 // bright color, higlight color, shadow color , unlit color
 constexpr uint16_t GB_COLORS_ORIGNAL[4] = {0xC240, 0xA5A0, 0x9540, 0x8900};
@@ -62,12 +57,12 @@ bool PixelProcessingUnit::init_gl() {
 	glewExperimental = GL_TRUE;
 	GLenum glewError = glewInit();
 	if (glewError != GLEW_OK) {
-		printf("Error initializing GLEW! %s\n", glewGetErrorString(glewError));
+		ERROR_MSG("Error initializing GLEW! %s\n", glewGetErrorString(glewError));
 		return false;
 	}
 
 	if (SDL_GL_SetSwapInterval(1) < 0) {
-		printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+		ERROR_MSG("Window could not be created! SDL_Error: %s\n", SDL_GetError());
 		return false;
 	}
 
@@ -88,7 +83,7 @@ bool PixelProcessingUnit::init_gl() {
 		glGetShaderInfoLog(data.program, 1024, &error_len, log);
 		SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to link shaders: %s\n", log);
 		glDeleteProgram(data.program);
-		printf("Error linking program %d error_log: %s\n", data.program, log);
+		ERROR_MSG("Error linking program %d error_log: %s\n", data.program, log);
 		return false;
 	} else {
 		glDeleteShader(vertex_shader);
@@ -96,7 +91,7 @@ bool PixelProcessingUnit::init_gl() {
 		glUseProgram(data.program);
 		data.texcoord = glGetAttribLocation(data.program, "texcoord");
 		if (data.texcoord == -1) {
-			printf("texcoord is not a valid glsl program variable!\n");
+			ERROR_MSG("texcoord is not a valid glsl program variable!\n");
 			return false;
 		} else {
 			GLfloat quad[] = {-1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f};
@@ -127,10 +122,9 @@ bool PixelProcessingUnit::init_gl() {
 
 bool PixelProcessingUnit::init_window() {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+		ERROR_MSG("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 		return false;
 	} else {
-		printf("data.scale: %u\n", data.scale);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -139,7 +133,7 @@ bool PixelProcessingUnit::init_window() {
 		data.window = SDL_CreateWindow("GBMU", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		                               SCREEN_WIDTH * data.scale, SCREEN_HEIGHT * data.scale, SDL_WINDOW_OPENGL);
 		if (data.window == nullptr) {
-			printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+			ERROR_MSG("Window could not be created! SDL_Error: %s\n", SDL_GetError());
 			return false;
 		}
 	}
