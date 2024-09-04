@@ -142,7 +142,6 @@ void AudioProcessingUnit::tick(uint16_t cycle) {
 }
 
 void AudioProcessingUnit::end_frame() {
-	DEBUG_MSG("elapsed_cycles: %u\n", elapsed_cycles);
 	apu->end_frame(elapsed_cycles);
 	stereo_buffer->end_frame(elapsed_cycles);
 
@@ -183,11 +182,9 @@ void AudioProcessingUnit::write() {
 
 uint8_t AudioProcessingUnit::read_u8(uint16_t addr) {
 	uint8_t val = apu->read_register(elapsed_cycles, addr);
-	DEBUG_MSG("apu: %u addr: %#06X elapsed_cycles: %u\n", val, addr, elapsed_cycles);
 	return val;
 }
 
 void AudioProcessingUnit::write_u8(uint16_t addr, uint8_t val) {
-	DEBUG_MSG("write apu: %u addr: %#06X\n", val, addr);
 	apu->write_register(elapsed_cycles, addr, val);
 }

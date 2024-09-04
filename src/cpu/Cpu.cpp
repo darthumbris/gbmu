@@ -6,7 +6,7 @@
 #include <ctime>
 
 Cpu::Cpu(Decoder dec, const options options)
-    : decoder(dec), mmap(options, this), ppu(this), interruptor(this), rom_path(options.path) {
+    : decoder(dec), mmap(options, this), ppu(this, options.scale), interruptor(this), rom_path(options.path) {
 	load_options = options;
 	u8_registers = {0};
 	pc = 0;
@@ -174,15 +174,13 @@ void Cpu::fetch_instruction() {
 	opcode = mmap.read_u8(pc);
 	pc += 1;
 	instruction = (opcode == 0xCB) ? instruction_list::Prefixed : instruction_list::Unprefixed;
-	DEBUG_MSG("op 0x%02X state: %u c %u\n", opcode, accurate_opcode_state, t_cycle);
 	if (opcode == 0xCB) {
 		opcode = mmap.read_u8(pc);
-		DEBUG_MSG("op 0x%02X\n", opcode);
 		pc += 1;
 		is_prefixed = true;
 	}
 #ifdef DEBUG_MODE
-	// debug_print(is_prefixed);
+	debug_print(is_prefixed);
 #endif
 }
 
@@ -246,11 +244,7 @@ uint8_t Cpu::handle_instruction() {
 			}
 		}
 		interruptor.check_cycles(t_cycle, accurate_opcode_state);
-		DEBUG_MSG("AF %u BC %u DE %u HL %u SP %u PC %u i %u c %u\n", get_16bitregister(registers::AF),
-		          get_16bitregister(registers::BC), get_16bitregister(registers::DE), get_16bitregister(registers::HL),
-		          sp, pc, mmap.read_u8(0xFF0F), t_cycle);
 		executed_cycles += t_cycle;
 	}
 	return executed_cycles;
-	// DEBUG_MSG("clockycle: %u speed: %u state: %u\n", executed_cycles, speed_multiplier, accurate_opcode_state);
 }

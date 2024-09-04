@@ -1,9 +1,9 @@
-#version 140
+#version 430
 
-in vec2 LVertexPos2D;
-out vec2 uv;
+layout(location = 0) in vec2 texcoord;
+layout(location = 0) out vec2 uv;
 
 void main() {
-    gl_Position = vec4(LVertexPos2D.x * 2 - 1.0, LVertexPos2D.y* 2 - 1.0, 0, 1);
-    uv = vec2(LVertexPos2D.x, 1.0f - LVertexPos2D.y);
+    gl_Position = vec4(texcoord.x * 2 - 1.0, texcoord.y * 2 - 1.0, 0, 1);
+    uv = vec2(texcoord.x, 1.0f - texcoord.y);
 }

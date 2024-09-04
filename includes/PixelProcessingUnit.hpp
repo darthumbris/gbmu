@@ -2,7 +2,6 @@
 #define PIXELPROCESSINGUNIT_HPP
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_video.h>
 #include <array>
 #include <cstdint>
 #include <fstream>
@@ -31,13 +30,14 @@ constexpr uint8_t MAX_PALETTES = 4;
 
 struct sdl_data {
 	SDL_Window *window;
-	SDL_Renderer *renderer;
 	SDL_GLContext context;
 	GLuint program;
-	GLint vertex_pos2d_loc = -1;
+	GLuint textere_id;
+	uint8_t scale;
+	GLint texcoord = -1;
 	GLuint vbo = 0;
 	GLuint ibo = 0;
-	GLuint textere_id;
+	GLuint vao = 0;
 	bool status;
 	bool matrix;
 	bool color_correction;
@@ -73,13 +73,6 @@ struct lcd_control {
 
 	void set(uint8_t value);
 	uint8_t get();
-};
-
-struct lcd_dma {
-	uint8_t val;
-	uint16_t cycles;
-	uint8_t offset;
-	void set(uint8_t value);
 };
 
 enum hdma_register {
@@ -125,7 +118,7 @@ private:
 	uint8_t scx = 0;              // 0xFF43
 	uint8_t ly = 0;               // 0xFF44 read only
 	uint8_t lyc = 0;              // 0xFF45
-	lcd_dma dma;                  // 0xFF46
+	uint8_t dma;                  // 0xFF46
 	uint8_t bg_palette = 0;       // 0xFF47 (Non_CGB_Mode)
 	uint8_t obj_palette_0 = 0;    // 0xFF48 (Non_CGB_Mode)
 	uint8_t obj_palette_1 = 0;    // 0xFF49 (Non_CGB_Mode)
@@ -162,8 +155,7 @@ private:
 
 	int16_t sprite_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint8_t color_cache_buffer[SCREEN_HEIGHT * SCREEN_WIDTH];
-	uint8_t oam[40][4]; // 0xFE00 - 0xFE9F
-	sprite sprites[40];
+	sprite sprites[40];// 0xFE00 - 0xFE9F
 	std::array<uint8_t, 8192> vram[2];
 	uint8_t tile_data[2][384][64];
 
@@ -207,9 +199,11 @@ private:
 
 	void render_with_ghosting();
 	void render_default();
+	void render_texture();
+	void render_quad();
 
 public:
-	PixelProcessingUnit(Cpu *cpu);
+	PixelProcessingUnit(Cpu *cpu, uint8_t scale);
 	~PixelProcessingUnit();
 
 	void tick(uint16_t &cycle);
@@ -250,13 +244,6 @@ public:
 
 	inline bool screen_ready() {
 		return draw_screen;
-	}
-	inline void screen_done() {
-		draw_screen = false;
-	}
-
-	SDL_Window *window() {
-		return data.window;
 	}
 
 	void switch_cgb_dma(uint8_t value);

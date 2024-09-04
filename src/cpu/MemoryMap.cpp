@@ -13,7 +13,7 @@
 #include <iostream>
 
 MemoryMap::MemoryMap(const options options, Cpu *cpu) : header(options.path), cpu(cpu) {
-	load_file(options);
+	load_file(options, false);
 }
 
 MemoryMap::~MemoryMap() {}
@@ -77,8 +77,10 @@ void MemoryMap::init_memory() {
 	}
 }
 
-void MemoryMap::load_file(const options options) {
-	header = RomHeader(options.path);
+void MemoryMap::load_file(const options options, bool reset_header) {
+	if (reset_header) {
+		header = RomHeader(options.path);
+	}
 	switch (header.cartridge_type()) {
 	case CartridgeType::MBC1... MBC1_RAM_BATTERY:
 		rom = Rom::make<MCB1>(options.path, header, header.has_battery());
@@ -153,13 +155,11 @@ void MemoryMap::reset_file(const options options) {
 	joypad_pressed = 0xFF;
 	boot_rom_loaded = false;
 	init_memory();
-	header = RomHeader(options.path);
-	load_file(options);
+	load_file(options, true);
 	rom->reset();
 }
 
 uint8_t MemoryMap::read_u8(uint16_t addr) {
-	// DEBUG_MSG("trying to read addr: %#06x\n", addr);
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
 		if (!boot_rom_loaded) {
@@ -219,7 +219,6 @@ uint8_t MemoryMap::read_u8(uint16_t addr) {
 		case 0xFF01:
 			return cpu->interrupt().get_serial_transfer_data();
 		case 0xFF10 ... 0xFF3F:
-			// return io_registers[addr - 0xFF00];
 			return cpu->get_apu().read_u8(addr);
 		default:
 			return io_registers[addr - 0xFF00];
@@ -245,7 +244,6 @@ uint16_t MemoryMap::read_u16(uint16_t addr) {
 }
 
 void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
-	// DEBUG_MSG("trying to write to addr: %#06x with val: %u\n", addr, val);
 	switch (addr) {
 	case 0x0000 ... 0x7FFF:
 		if (boot_rom_loaded) {
@@ -289,10 +287,8 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	case 0xFF00 ... 0xFF3F:
 		switch (addr) {
 		case 0xFF00:
-			DEBUG_MSG("writing to 0xFF00: %u\t", val);
 			joypad_register = (joypad_register & 0xCF) | (val & 0x30);
 			update_joypad();
-			DEBUG_MSG("after writing to 0xFF00: %u\n", read_u8(0xFF00));
 			break;
 		case 0xFF04:
 			cpu->interrupt().reset_timer_divider();
@@ -313,7 +309,6 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 			cpu->interrupt().set_serial_transfer_data(val);
 			break;
 		case 0xFF0F:
-			DEBUG_MSG("changing interrupt write: %u\n", val & 0x1F);
 			cpu->interrupt().overwrite_interrupt(val & 0x1F);
 			break;
 		case 0xFF10 ... 0xFF3F:
@@ -334,7 +329,6 @@ void MemoryMap::write_u8(uint16_t addr, uint8_t val) {
 	case 0xFF50:
 		if (!boot_rom_loaded && (val & 0x01) > 0) {
 			boot_rom_loaded = true;
-			DEBUG_MSG("boot_rom loaded\n");
 		}
 		break;
 	case 0xFF80 ... 0xFFFE:

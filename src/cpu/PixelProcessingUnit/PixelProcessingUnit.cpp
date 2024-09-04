@@ -2,15 +2,15 @@
 #include "Cpu.hpp"
 #include "Interruptor.hpp"
 #include "MemoryMap.hpp"
-#include "debug.hpp"
 #include <SDL2/SDL_pixels.h>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
-PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
+PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu, uint8_t rscale) : cpu(cpu) {
 	lcd_clock = 0;
+	data.scale = rscale;
 	if (!init_window()) {
 		exit(EXIT_FAILURE);
 	}
@@ -21,9 +21,9 @@ PixelProcessingUnit::PixelProcessingUnit(Cpu *cpu) : cpu(cpu) {
 	std::memset(mono_framebuffer, 0, sizeof(mono_framebuffer));
 	std::memset(rgb555_framebuffer, 0, sizeof(rgb555_framebuffer));
 	std::memset(vram, 0, sizeof(vram));
-	std::memset(oam, 0, sizeof(oam));
+	std::memset(sprites, 0, sizeof(sprites));
 	std::memset(tile_data, 0, sizeof(tile_data));
-	dma = {};
+	dma = 0;
 	is_cgb = cpu->get_mmap().is_cgb_rom();
 	ly = SCREEN_HEIGHT;
 }
@@ -32,7 +32,7 @@ PixelProcessingUnit::~PixelProcessingUnit() {}
 
 void PixelProcessingUnit::reset() {
 	lcd_clock = 0;
-	dma.set(0);
+	dma = 0;
 	data.status = false;
 	ctrl.set(0);
 	l_status.set(0);
@@ -70,7 +70,6 @@ void PixelProcessingUnit::reset() {
 	std::memset(rgb555_framebuffer, 0, sizeof(rgb555_framebuffer));
 	std::memset(sprite_cache_buffer, 0, sizeof(sprite_cache_buffer));
 	std::memset(color_cache_buffer, 0, sizeof(color_cache_buffer));
-	std::memset(oam, 0, sizeof(oam));
 	std::memset(sprites, 0, sizeof(sprites));
 	std::memset(tile_data, 0, sizeof(tile_data));
 	std::memset(cgb_bg_colors, 0, sizeof(cgb_bg_colors));
@@ -88,9 +87,6 @@ void PixelProcessingUnit::reset(bool cgb_mode) {
 
 void PixelProcessingUnit::tick(uint16_t &cycle) {
 	lcd_clock += cycle;
-	DEBUG_MSG("cycle: %u ", cycle);
-	DEBUG_MSG("%u %u %u %u %u %u %u %u %u %u %u\n", scx, scy, ly, vblank_line, lyc, window_x, window_y, lcd_clock,
-	          lcd_enabled, l_status.mode, l_status.get());
 	if (lcd_enabled) {
 		switch (l_status.mode) {
 		case ppu_modes::Horizontal_Blank:
@@ -183,7 +179,6 @@ void PixelProcessingUnit::handle_hblank(uint16_t &cycle) {
 		}
 		uint8_t stat = l_status.get();
 		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
-		DEBUG_MSG("setting lstat: %u\n", (stat & 0xFC) | (l_status.mode & 0x3));
 	}
 }
 
@@ -204,7 +199,6 @@ void PixelProcessingUnit::handle_vblank(uint16_t &cycle) {
 		l_status.mode = ppu_modes::OAM_Scan;
 		uint8_t stat = l_status.get();
 		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
-		DEBUG_MSG("setting lstat: %u\n", (stat & 0xFC) | (l_status.mode & 0x3));
 
 		interrupt_signal &= 0b0111;
 		interrupt_signal &= 0b1010;
@@ -227,7 +221,6 @@ void PixelProcessingUnit::handle_oam() {
 		interrupt_signal &= 0b1000;
 		uint8_t stat = l_status.get();
 		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
-		DEBUG_MSG("setting lstat: %u\n", (stat & 0xFC) | (l_status.mode & 0x3));
 	}
 }
 
@@ -259,7 +252,6 @@ void PixelProcessingUnit::handle_pixel_drawing(uint16_t &cycle) {
 		interrupt_signal &= 0b1000;
 		uint8_t stat = l_status.get();
 		l_status.set((stat & 0xFC) | (l_status.mode & 0x3));
-		DEBUG_MSG("setting lstat: %u\n", (stat & 0xFC) | (l_status.mode & 0x3));
 
 		if (l_status.mode_0_hblank_interrupt) {
 			if (!(interrupt_signal & mask3)) {
@@ -280,7 +272,6 @@ void PixelProcessingUnit::disable_screen() {
 	ly = 0;
 	l_status.mode = 0;
 	l_status.set(l_status.val & 0x7c);
-	DEBUG_MSG("setting lstat: %u\n", l_status.get());
 	lcd_clock = 0;
 	lcd_clock_vblank = 0;
 	interrupt_signal = 0;
@@ -381,7 +372,6 @@ void PixelProcessingUnit::render_window_cgb(uint16_t line_width, uint16_t map_ad
 		for (uint8_t pixelx = 0; pixelx < 8; pixelx++) {
 			int16_t buffer_x = (map_offset_x + pixelx + wx);
 
-			DEBUG_MSG("buffer_x: %d mof %u px %u wx %d\n", buffer_x, map_offset_x, pixelx, wx);
 			if (buffer_x < 0 || buffer_x >= SCREEN_WIDTH) {
 				continue;
 			}
@@ -396,9 +386,6 @@ void PixelProcessingUnit::render_window_cgb(uint16_t line_width, uint16_t map_ad
 			} else {
 				tile_dat = tile_data[0][tile_index][y * 8 + pixelx_pos];
 			}
-
-			DEBUG_MSG("attr %u wcgp %u pix %u adr %u bank: %u mad %u x %u\n", cgb_tile_attr, cgb_tile_pal, tile_dat,
-			          tile_address + 0x8000, (bool)(cgb_tile_attr & mask3), map_address, x);
 
 			int position = line_width + buffer_x;
 			color_cache_buffer[position] = tile_dat & 0x03;
@@ -471,7 +458,7 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 	uint8_t y = 0;
 
 	for (uint8_t i = 0; i < 40; i++) {
-		int16_t sprite_y = read_oam(i << 2) - 16;
+		int16_t sprite_y = read_sprite(i << 2).y_pos - 16;
 
 		if ((sprite_y > line) || ((sprite_y + sprite_height) <= line)) {
 			visible_sprites[i] = false;
@@ -481,8 +468,6 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 		visible_sprites[i] = sprite_limit <= 10;
 	}
 
-	DEBUG_MSG("sh %u\n", sprite_height);
-
 	for (int16_t i = 39; i >= 0; i--) {
 		if (!visible_sprites[i])
 			continue;
@@ -490,15 +475,11 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 		sprite spr = read_sprite(i << 2);
 		int16_t sprite_x = spr.x_pos - 8;
 		sprite_attributes satr = spr.attributes;
-		DEBUG_MSG("x %u y %u ti %u bg %u yf %u xf %u p %u b %u cgp %u\n", spr.x_pos, spr.y_pos, spr.tile_index,
-		          satr.background, satr.y_flip, satr.x_flip, satr.palette, satr.bank, satr.cgb_pal);
+
 		if ((sprite_x < -7) || (sprite_x >= SCREEN_WIDTH))
 			continue;
 
 		sprite_attributes atr = spr.attributes;
-		if (atr.y_flip) {
-			DEBUG_MSG("flipping sprite\n");
-		}
 		uint8_t palette = atr.palette ? obj_palette_1 : obj_palette_0;
 		uint16_t pixel_y =
 		    atr.y_flip ? ((sprite_height == 16) ? 15 : 7) - (line - (spr.y_pos - 16)) : line - (spr.y_pos - 16);
@@ -520,7 +501,7 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 			} else {
 				tile_dat = tile_data[0][tile_index][y * 8 + (!atr.x_flip ? pixelx : (7 - pixelx))];
 			}
-			DEBUG_MSG("cgp %u pix %u adr %u bank: %u\n", atr.cgb_pal, tile_dat, tile_address + 0x8000, atr.bank);
+
 			if (tile_dat == 0)
 				continue;
 
@@ -544,7 +525,6 @@ void PixelProcessingUnit::render_sprites(uint8_t line) {
 			color_cache_buffer[position] = color_cache & mask3;
 			sprite_cache_buffer[position] = sprite_x;
 			if (is_cgb) {
-				// DEBUG_MSG("c %u\n", cgb_obj_colors[atr.cgb_pal][tile_dat][1]);
 				rgb555_framebuffer[position] = cgb_obj_colors[atr.cgb_pal][tile_dat][1];
 			} else {
 				uint8_t color = (palette >> (tile_dat << 1)) & 0x03;
@@ -626,7 +606,6 @@ void PixelProcessingUnit::increase_ly() {
 
 void PixelProcessingUnit::compare_ly() {
 	if (lcd_enabled) {
-		DEBUG_MSG("before lstat compare: %u\n", l_status.get());
 		if (lyc == ly) {
 			l_status.ly_flag = true;
 			if (l_status.ly_interrupt) {
@@ -639,7 +618,6 @@ void PixelProcessingUnit::compare_ly() {
 			l_status.ly_flag = false;
 			interrupt_signal &= ~mask3;
 		}
-		DEBUG_MSG("setting lstat compare: %u\n", l_status.get());
 	}
 }
 
@@ -665,16 +643,8 @@ void lcd_status::set(uint8_t value) {
 }
 
 uint8_t lcd_status::get() {
-	// DEBUG_MSG("val: %u get: %u\n", val, (ly_interrupt << 6 | mode_2_oam_interrupt << 5 | mode_1_vblank_interrupt << 4
-	// | mode_0_hblank_interrupt << 3 | ly_flag << 2 | mode));
 	return (ly_interrupt << 6 | mode_2_oam_interrupt << 5 | mode_1_vblank_interrupt << 4 |
 	        mode_0_hblank_interrupt << 3 | ly_flag << 2 | (val & 0x80) | (val & 0x3));
-}
-
-void lcd_dma::set(uint8_t value) {
-	val = value;
-	cycles = 640; // 160 M-cycles: 640 dots (1.4 lines) in normal speed, or 320 dots
-	offset = 0;
 }
 
 void sprite_attributes::set(uint8_t value) {

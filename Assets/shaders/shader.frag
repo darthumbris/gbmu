@@ -22,7 +22,9 @@
 #define m2 0.6094
 #define m3 0.0820
 
-in vec2 uv;
+#define GHOST_ALPHA 0.80
+
+layout(location = 0) in vec2 uv;
 
 layout(binding = 0) uniform sampler2D texture_gb;
 
@@ -36,14 +38,16 @@ layout(location = 1) uniform int color_correction_enabled;
 
 // Darkening stuff
 layout(location = 2) uniform int darkening_enabled;
+layout(location = 3) uniform int ghosting;
 
 out vec4 LFragment;
 
-vec3 darkenRgb(vec3 color) {
-    return color;
-}
-
 void main() {
+    float alpha = 1.0;
+    if (ghosting == 1) {
+        alpha = GHOST_ALPHA;
+    }
+    
     vec4 tex_col = texture(texture_gb, uv);
     vec4 matrix_col;
     if (matrix_enabled == 1) {
@@ -96,13 +100,13 @@ void main() {
         color = color * adjust;
         screen = clamp(screen * lum, 0.0, 1.0);
         screen = screen * color;
-        LFragment = pow(screen, vec4(1.0 / display_gamma));
+        screen = pow(screen, vec4(1.0 / display_gamma));
+        LFragment = vec4(screen.rgb, alpha);
     }
     else {
         if (darkening_enabled == 1) {
             matrix_col = clamp(matrix_col * lum, 0.0, 1.0);
         }
-        // LFragment = vec4(matrix_col.rgb, 1.0);
-        LFragment = matrix_col;
+        LFragment = vec4(matrix_col.rgb, alpha);
     }
 }

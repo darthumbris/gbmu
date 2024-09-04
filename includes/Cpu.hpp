@@ -32,12 +32,10 @@ enum class instruction_state {
 };
 
 struct options {
-	bool matrix;
 	bool force_dmg;
 	bool force_cgb;
-	uint8_t darkening;
-	bool color_correction;
 	std::string path;
+	uint8_t scale;
 };
 
 enum instruction_list { Unprefixed, Prefixed };
@@ -232,9 +230,6 @@ private:
 			return;
 		}
 		uint8_t bit_loc = ((opcode - 0x80) >> 3);
-		if (opcode == 0x86) {
-			DEBUG_MSG("address writing to: %#06X val: %u\n", get_16bitregister(registers::HL), read_cache);
-		}
 		read_cache &= ~(1 << bit_loc);
 		mmap.write_u8(get_16bitregister(registers::HL), read_cache);
 	}
@@ -335,9 +330,6 @@ private:
 				pc -= static_cast<uint16_t>(255 - val + 1);
 			} else {
 				pc += static_cast<uint16_t>(val);
-			}
-			if (condition == condition::ZeroFlag) {
-				DEBUG_MSG("set pc to: %u\n", pc);
 			}
 		}
 	}

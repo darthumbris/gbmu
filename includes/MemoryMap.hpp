@@ -82,24 +82,24 @@ using keycode = SDL_Keycode;
 class MemoryMap {
 private:
 	RomHeader header;
-	std::unique_ptr<Rom> rom; // 0x0000 - 0x7FFF - 0xA000 - 0xBFFF   // From cartridge, switchable bank if any //32K max
-	std::array<mem_4k, 8> work_ram = {}; // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
-	std::array<mem_4k, 8> echo_ram = {}; // 0xE000 - 0xFDFF   //(mirror of C000–DDFF) use of this area is prohibited.
-	std::array<uint8_t, 96> not_usable = {};    // 0xFEA0 - 0xFEFF
+	std::unique_ptr<Rom> rom;                // 0x0000 - 0x7FFF - 0xA000 - 0xBFFF   // From cartridge, switchable bank
+	std::array<mem_4k, 8> work_ram = {};     // 0xC000 - 0xDFFF   // In CGB mode, switchable bank 1–7
+	std::array<mem_4k, 8> echo_ram = {};     // 0xE000 - 0xFDFF   //(mirror of C000–DDFF)
+	std::array<uint8_t, 96> not_usable = {}; // 0xFEA0 - 0xFEFF
 	std::array<uint8_t, 128> io_registers = {}; // 0xFF00 - 0xFF7F
 	std::array<uint8_t, 127> high_ram = {};     // 0xFF80 - 0xFFFE
-	uint8_t interrupt = 0;                    // 0xFFFF - 0xFFFF
+	uint8_t interrupt = 0;                      // 0xFFFF - 0xFFFF
 	uint8_t joypad_register = 0xFF;
 	uint8_t joypad_pressed = 0xFF;
 	bool boot_rom_loaded = false;
-    bool is_cgb_mode = false;
+	bool is_cgb_mode = false;
 
 	std::array<uint8_t, 256> gb_boot_rom = {};
 	std::array<uint8_t, 2304> cgb_boot_rom = {};
 
 	Cpu *cpu;
 
-    void load_file(const options options);
+	void load_file(const options options, bool reset_header);
 
 public:
 	MemoryMap(const options options, Cpu *cpu);
@@ -130,16 +130,16 @@ public:
 		return is_cgb_mode;
 	}
 
-    void update_clock() {
-        rom->update_clock();
-    }
+	void update_clock() {
+		rom->update_clock();
+	}
 
 	uint8_t read_io_registers(uint16_t addr);
 	void write_io_registers(uint16_t addr, uint8_t val);
 	void update_joypad();
 
-    void reset();
-    void reset_file(const options options);
+	void reset();
+	void reset_file(const options options);
 };
 
 // From Gambatte emulator

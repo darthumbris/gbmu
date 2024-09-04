@@ -22,7 +22,7 @@ void Cpu::serialize(const std::string &file) {
 	SDL_free(static_cast<void *>(path));
 	std::ofstream f(full_path, std::ios::binary);
 	if (!f.is_open()) {
-		std::cerr << "Error: Failed to  open file for serialization Cpu." << std::endl;
+		ERROR_MSG("Error: Failed to open file: %s for serialization.\n", full_path.c_str());
 		return;
 	}
 
@@ -58,9 +58,10 @@ void Cpu::deserialize(const std::string &file) {
 	std::ifstream f(full_path, std::ios::binary);
 
 	if (!f.is_open()) {
-		std::cerr << "Error: Failed to  open file for deserialization Cpu." << std::endl;
+		ERROR_MSG("Error: Failed to open file: %s for deserialization.\n", full_path.c_str());
 		return;
 	}
+	reset();
 
 	DEBUG_MSG("loading save state from: %s\n", full_path.c_str());
 	DESERIALIZE(f, u8_registers);
@@ -203,7 +204,6 @@ void PixelProcessingUnit::serialize(std::ofstream &f) {
 	SERIALIZE(f, vram);
 	SERIALIZE(f, sprite_cache_buffer);
 	SERIALIZE(f, color_cache_buffer);
-	SERIALIZE(f, oam);
 	SERIALIZE(f, sprites);
 	SERIALIZE(f, tile_data);
 	SERIALIZE(f, cgb_bg_colors);
@@ -252,7 +252,6 @@ void PixelProcessingUnit::deserialize(std::ifstream &f) {
 	DESERIALIZE(f, vram);
 	DESERIALIZE(f, sprite_cache_buffer);
 	DESERIALIZE(f, color_cache_buffer);
-	DESERIALIZE(f, oam);
 	DESERIALIZE(f, sprites);
 	DESERIALIZE(f, tile_data);
 	DESERIALIZE(f, cgb_bg_colors);
@@ -444,7 +443,7 @@ void Rom::save_ram() {
 	std::ofstream f(full_path, std::ios::binary);
 
 	if (!f.is_open()) {
-		DEBUG_MSG("Error: Failed to  open file for saving ram.\n");
+		ERROR_MSG("Error: Failed to  open file for saving ram.\n");
 		return;
 	}
 	DEBUG_MSG("writing ram to: %s\n", full_path.c_str());
@@ -464,14 +463,14 @@ void Rom::load_ram() {
 	std::ifstream f(full_path, std::ios::binary);
 
 	if (!f.is_open() || f.fail()) {
-		DEBUG_MSG("Error: Failed to  open file for loading ram.\n");
+		ERROR_MSG("Error: Failed to  open file for loading ram.\n");
 		return;
 	}
 	f.seekg(0, f.end);
 	size_t file_size = f.tellg();
 	f.seekg(0, f.beg);
 	if (file_size < 0x2000 * ram_banks.size()) {
-		DEBUG_MSG("Error: Ram Save file is too small.\n");
+		ERROR_MSG("Error: Ram Save file is too small.\n");
 		return;
 	}
 	for (size_t i = 0; i < ram_banks.size(); i++) {
@@ -490,7 +489,7 @@ void MCB3::save_ram() {
 	std::ofstream f(full_path, std::ios::binary);
 
 	if (!f.is_open()) {
-		DEBUG_MSG("Error: Failed to  open file for saving ram.\n");
+		ERROR_MSG("Error: Failed to  open file for saving ram.\n");
 		return;
 	}
 	DEBUG_MSG("writing ram to: %s\n", full_path.c_str());
@@ -523,7 +522,7 @@ void MCB3::load_ram() {
 	std::ifstream f(full_path, std::ios::binary);
 
 	if (!f.is_open() || f.fail()) {
-		DEBUG_MSG("Error: Failed to  open file for loading ram.\n");
+		ERROR_MSG("Error: Failed to  open file for loading ram.\n");
 		return;
 	}
 
@@ -533,10 +532,10 @@ void MCB3::load_ram() {
 
 	bool rtc_load = true;
 	if (file_size < 0x2000 * ram_banks.size()) {
-		DEBUG_MSG("Error: Ram Save file is too small.\n");
+		ERROR_MSG("Error: Ram Save file is too small.\n");
 		return;
 	} else if (file_size < 0x2000 * ram_banks.size() + 16) {
-		DEBUG_MSG("Error: Ram has no valid RTC data. Skipping loading RTC.\n");
+		ERROR_MSG("Error: Ram has no valid RTC data. Skipping loading RTC.\n");
 		rtc_load = false;
 	}
 

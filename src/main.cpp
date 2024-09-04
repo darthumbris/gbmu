@@ -2,19 +2,14 @@
 #include "Decoder.hpp"
 #include <SDL2/SDL.h>
 
-#define OPTSTR "i:d:fmcs"
-#define USAGE_FMT                                                                                                      \
-	"%s [-i inputfile] [-f force-dmg-mode] [-s force cgb mode] [-m matrix/raster] [-d darkening %%] [-c "              \
-	"color-correction]\n"
+#define OPTSTR "i:s:dc"
+#define USAGE_FMT "%s [-i inputfile] [-d force-dmg-mode] [-c force cgb mode] [-s scale]\n"
 #define DEFAULT_PROGNAME "gbmu"
 
 void usage(char *progname) {
 	fprintf(stderr, USAGE_FMT, progname ? progname : DEFAULT_PROGNAME);
 	exit(EXIT_FAILURE);
 }
-
-//TODO check performance optimizations
-//TODO remove most DEBUG_MSG stuff
 
 int main(int argc, char *argv[]) {
 
@@ -23,7 +18,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	int opt;
-	options options = {0, 0, 0, 0, 0, ""};
+	options options = {0, 0, "", 4};
 
 	while ((opt = getopt(argc, argv, OPTSTR)) != EOF) {
 		switch (opt) {
@@ -34,22 +29,16 @@ int main(int argc, char *argv[]) {
 			}
 			options.path = optarg;
 			break;
-		case 'f':
+		case 'd':
 			options.force_dmg = true;
 			break;
-		case 's':
+		case 'c':
 			options.force_cgb = true;
 			break;
-		case 'm':
-			options.matrix = true;
-			break;
-		case 'c':
-			options.color_correction = true;
-			break;
-		case 'd':
-			options.darkening = static_cast<uint8_t>(strtoul(optarg, nullptr, 10));
-			if (options.darkening > 100) {
-				printf("darkening options needs to be between 0-100\n");
+		case 's':
+			options.scale = static_cast<uint8_t>(strtoul(optarg, nullptr, 10));
+			if (options.scale > 8 || options.scale < 1) {
+				printf("darkening options needs to be between 1-8\n");
 				exit(EXIT_FAILURE);
 			}
 			break;

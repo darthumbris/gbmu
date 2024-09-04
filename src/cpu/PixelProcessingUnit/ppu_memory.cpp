@@ -44,7 +44,6 @@ void PixelProcessingUnit::set_tile_data(uint16_t addr) {
 
 void PixelProcessingUnit::write_oam(uint16_t addr, uint8_t val) {
 	uint16_t sprite_addr = addr & 0xFF;
-	oam[sprite_addr / 4][sprite_addr % 4] = val;
 	switch (sprite_addr & 3) {
 	case 0:
 		sprites[sprite_addr >> 2].y_pos = val;
@@ -63,7 +62,16 @@ void PixelProcessingUnit::write_oam(uint16_t addr, uint8_t val) {
 
 uint8_t PixelProcessingUnit::read_oam(uint16_t addr) {
 	uint16_t sprite_addr = addr & 0xFF;
-	return oam[sprite_addr / 4][sprite_addr % 4];
+	switch (sprite_addr & 3) {
+	case 0:
+		return sprites[sprite_addr >> 2].y_pos;
+	case 1:
+		return sprites[sprite_addr >> 2].x_pos;
+	case 2:
+		return sprites[sprite_addr >> 2].tile_index;
+	default:
+		return sprites[sprite_addr >> 2].attributes.get();
+	}
 }
 
 sprite PixelProcessingUnit::read_sprite(uint16_t addr) {
@@ -88,7 +96,7 @@ uint8_t PixelProcessingUnit::read_u8_ppu(uint16_t addr) {
 	case 0xFF45:
 		return lyc;
 	case 0xFF46:
-		return dma.val;
+		return dma;
 	case 0xFF47:
 		return bg_palette;
 	case 0xFF48:
@@ -162,7 +170,7 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		signal &= ((new_stat >> 3) & 0x0F);
 		interrupt_signal = signal;
 		l_status.set(new_stat);
-		DEBUG_MSG("changing lcd stat write: %u\n", l_status.get());
+
 		if (ctrl.lcd_enable) {
 			if (l_status.mode_0_hblank_interrupt && current_mode == 0) {
 				if (signal == 0) {
@@ -205,7 +213,7 @@ void PixelProcessingUnit::write_u8_ppu(uint16_t addr, uint8_t val) {
 		}
 		break;
 	case 0xFF46:
-		dma.set(val);
+		dma = val;
 		dma_transfer(val);
 		cpu->get_mmap().write_io_registers(addr, val);
 		break;

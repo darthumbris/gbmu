@@ -22,9 +22,8 @@ void PixelProcessingUnit::init_hdma() {
 }
 
 void PixelProcessingUnit::dma_transfer(uint8_t cycle) {
-
 	if (is_cgb) {
-		uint16_t src = (dma.val << 8);
+		uint16_t src = (dma << 8);
 		if (src < 0xE000) {
 			if (src >= 0x8000 && src < 0xA000) {
 				for (uint16_t i = 0; i < 0xA0; i++) {

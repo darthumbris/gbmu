@@ -39,8 +39,6 @@ void Cpu::ld_hl_sp_imm8() {
 void Cpu::ldh_a_imm8() {
 	uint8_t addr = mmap.read_u8(pc);
 	pc += 1;
-	DEBUG_MSG("setting register a to: %u from addr: %#06X\n", mmap.read_u8(0xFF00 + static_cast<uint16_t>(addr)),
-	          0xFF00 + static_cast<uint16_t>(addr));
 	set_register(registers::A, mmap.read_u8(0xFF00 + static_cast<uint16_t>(addr)));
 }
 
@@ -55,9 +53,6 @@ void Cpu::ld_c_a() {
 }
 
 void Cpu::ld_a_c() {
-	DEBUG_MSG("setting register A to value: %u from address: %#06X\n",
-	          mmap.read_u8(0xFF00 + static_cast<uint16_t>(get_register(registers::C))),
-	          0xFF00 + static_cast<uint16_t>(get_register(registers::C)));
 	set_register(registers::A, mmap.read_u8(0xFF00 + static_cast<uint16_t>(get_register(registers::C))));
 }
 
