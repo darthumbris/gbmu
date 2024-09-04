@@ -102,7 +102,7 @@ void MemoryMap::load_file(const options options, bool reset_header) {
 	if ((rom->cgb_mode() && !options.force_dmg) || options.force_cgb) {
 		std::ifstream cgb("cgb_boot.bin", std::ios::binary | std::ios::ate);
 		if (!cgb.is_open()) {
-			ERROR_MSG("Error: Failed to  open file cgb boot rom.\n");
+			ERROR_MSG("Error: Failed to open cgb boot rom.\n");
 			exit(EXIT_FAILURE);
 		}
 		cgb.seekg(0, std::ios::beg);
@@ -115,7 +115,7 @@ void MemoryMap::load_file(const options options, bool reset_header) {
 	} else {
 		std::ifstream cgb("dmg_boot.bin", std::ios::binary | std::ios::ate);
 		if (!cgb.is_open()) {
-			ERROR_MSG("Error: Failed to  open file dmg boot rom.\n");
+			ERROR_MSG("Error: Failed to open dmg boot rom.\n");
 			exit(EXIT_FAILURE);
 		}
 		cgb.seekg(0, std::ios::beg);
