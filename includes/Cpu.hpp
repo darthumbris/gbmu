@@ -575,8 +575,6 @@ private:
 	void execute_instruction();
 	void decrement_pc();
 
-	void debug_print(bool prefix);
-
 public:
 	uint64_t debug_count;
 	Cpu(Decoder dec, const options options);
@@ -651,6 +649,12 @@ public:
 	void handle_halt();
 
 	void reset();
+
+	void debug_print_instruction(uint8_t opcode, instruction_list list);
+	void debug_print_next_instruction();
+	void debug_print_registers();
+	void debug_execute_instruction(uint8_t opcode, instruction_list list);
+	void debug_lcd_frame(uint16_t frames);
 
 	void serialize(const std::string &file);
 	void deserialize(const std::string &file);

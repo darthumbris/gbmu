@@ -1,5 +1,6 @@
 #include "Cpu.hpp"
 #include "OpcodeTiming.hpp"
+#include <cstdint>
 
 Cpu::Cpu(Decoder dec, const options options)
     : decoder(dec), mmap(options, this), ppu(this, options.scale), interruptor(this), rom_path(options.path) {
@@ -133,16 +134,38 @@ void Cpu::process_interrupt(interrupt_type i) {
 	set_cycle(5);
 }
 
-#ifdef DEBUG_MODE
-void Cpu::debug_print(bool prefix) {
+void Cpu::debug_print_instruction(uint8_t opcode, instruction_list list) {
 	DEBUG_MSG("[%#06X] %#04X\t", pc, opcode);
-	if (prefix) {
+	if (list == instruction_list::Prefixed) {
 		decoder.prefixed_instructions[opcode].print_instruction();
 	} else {
 		decoder.instructions[opcode].print_instruction();
 	}
 }
-#endif
+
+void Cpu::debug_print_next_instruction() {
+	uint8_t temp_opcode = mmap.read_u8(pc);
+	instruction_list temp_instruction = (temp_opcode == 0xCB) ? instruction_list::Prefixed : instruction_list::Unprefixed;
+	if (opcode == 0xCB) {
+		temp_opcode = mmap.read_u8(pc + 1);
+	}
+	debug_print_instruction(temp_opcode, temp_instruction);
+}
+
+void Cpu::debug_execute_instruction(uint8_t opcode, instruction_list list) {
+	(this->*instructions[list][opcode])();
+}
+
+void Cpu::debug_print_registers() {
+	DEBUG_MSG("BC %u DE %u HL %u AF %u SP %u\n", get_16bitregister(registers::BC), get_16bitregister(registers::DE), get_16bitregister(registers::HL), get_16bitregister(registers::AF), get_16bitregister(registers::SP));
+}
+
+void Cpu::debug_lcd_frame(uint16_t frames) {
+	while (frames) {
+		tick();
+		frames--;
+	}
+}
 
 void Cpu::prefix() {}
 
@@ -176,7 +199,7 @@ void Cpu::fetch_instruction() {
 		is_prefixed = true;
 	}
 #ifdef DEBUG_MODE
-	debug_print(is_prefixed);
+	debug_print_instruction(opcode, instruction);
 #endif
 }
 
